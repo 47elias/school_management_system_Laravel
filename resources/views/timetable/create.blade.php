@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Add Timetable Slot | {{ env('SCHOOL_ACRONYM') }}</title>
+    <title>Add Timetable Slot | {{ env('SCHOOL_ACRONYM', 'SMS') }}</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,10 +24,10 @@
     </style>
 </head>
 <body class="hold-transition skin-blue sidebar-mini">
-    @include('layouts.topbar')
-    @include('layouts.sidebar')
-
     <div class="wrapper">
+        @include('layouts.topbar')
+        @include('layouts.sidebar')
+
         <div class="content-wrapper">
             <section class="content-header">
                 <h1>
@@ -77,10 +77,14 @@
                                 <div class="col-md-6 form-group">
                                     <label>Target Audience</label>
                                     <div id="class_select_wrapper">
-                                        <select id="class_id" name="class_id" class="form-control select2">
+                                        <select id="class_id" name="class_id" class="form-control select2" style="width: 100%;">
                                             <option value="">-- Choose Class --</option>
                                             @foreach($classes as $class)
-                                                <option value="{{ $class->id }}">{{ $class->class_name }}</option>
+                                                <option value="{{ $class->id }}"
+                                                        data-class-teacher-id="{{ $class->teacher_id ?? '' }}"
+                                                        data-class-teacher-name="{{ $class->teacher->name ?? 'No Class Teacher Assigned' }}">
+                                                    {{ $class->class_name }}
+                                                </option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -94,7 +98,7 @@
 
                                 <div class="col-md-6 form-group" id="subject_container">
                                     <label>Select Subject</label>
-                                    <select id="subject_id" name="subject_id" class="form-control select2" required disabled>
+                                    <select id="subject_id" name="subject_id" class="form-control select2" style="width: 100%;" required disabled>
                                         <option value="">Select class first...</option>
                                     </select>
                                 </div>
@@ -176,6 +180,7 @@
                 </div>
             </section>
         </div>
+        @include('layouts.footer')
     </div>
 
     <div class="modal fade" id="manageGlobalSlots" tabindex="-1" role="dialog">
@@ -214,7 +219,6 @@
         </div>
     </div>
 
-    @include('layouts.footer')
     @include('components.scripts')
 
     <script>
@@ -223,6 +227,11 @@
             let baseStartTime = "07:30";
 
             const pad = (n) => String(n).padStart(2, '0');
+
+            // Initialize Select2 Elements
+            if ($.fn.select2) {
+                $('.select2').select2();
+            }
 
             function updateTimes() {
                 const period = parseInt($('#period_number').val());
@@ -271,9 +280,11 @@
                     $('#all_classes_wrapper').show();
                     $('#apply_to_all_classes').val('1');
                     $('#subject_container').hide();
-                    $('#subject_id').prop('required', false).prop('disabled', true);
+                    $('#subject_id').prop('required', false).prop('disabled', true).val('').trigger('change');
                     $('#special_container').show();
                     $('#teacher_row').hide();
+                    $('#teacher_id').val('');
+                    $('#teacher_display').val('');
                     $('#day_selector_container').hide();
                     $('#all_days_label').show();
                     $('#apply_all_days').val('1');
@@ -283,7 +294,7 @@
                     $('#all_classes_wrapper').hide();
                     $('#apply_to_all_classes').val('0');
                     $('#subject_container').show();
-                    $('#subject_id').prop('required', true).prop('disabled', false);
+                    $('#subject_id').prop('required', true).prop('disabled', false).trigger('change');
                     $('#special_container').hide();
                     $('#teacher_row').show();
                     $('#day_selector_container').show();
@@ -292,27 +303,64 @@
                 }
             });
 
+            // AJAX Call to load subjects based on Class Selection
             $('#class_id').on('change', function() {
                 const classId = $(this).val();
+
+                // Clear teacher fields and reset dropdown
+                $('#teacher_display').val('');
+                $('#teacher_id').val('');
+                $('#subject_id').html('<option value="">-- Choose Subject --</option>').trigger('change');
+
                 if (!isSpecial && classId) {
-                    $('#subject_id').html('<option value="">Loading...</option>').prop('disabled', true);
+                    $('#subject_id').html('<option value="">Loading subjects...</option>').prop('disabled', true).trigger('change');
+
                     fetch(`/api/classes/${classId}/subjects`)
                         .then(response => response.json())
                         .then(data => {
                             $('#subject_id').html('<option value="">-- Select Subject --</option>');
+
                             data.forEach(sub => {
-                                $('#subject_id').append(`<option value="${sub.subject_id}" data-teacher-id="${sub.teacher_id}" data-teacher-name="${sub.teacher_name}">${sub.subject_name}</option>`);
+                                // Maps JSON keys to option tags correctly
+                                let subjectId = sub.id || sub.subject_id;
+                                let subjectName = sub.subject_name || sub.name;
+                                let teacherId = sub.teacher_id || '';
+                                let teacherName = sub.teacher_name || '';
+
+                                $('#subject_id').append(
+                                    `<option value="${subjectId}" data-teacher-id="${teacherId}" data-teacher-name="${teacherName}">
+                                        ${subjectName}
+                                    </option>`
+                                );
                             });
-                            $('#subject_id').prop('disabled', false);
+
+                            $('#subject_id').prop('disabled', false).trigger('change');
+                        })
+                        .catch(err => {
+                            console.error("Failed to load subjects:", err);
+                            $('#subject_id').html('<option value="">Error loading items</option>').trigger('change');
                         });
                 }
             });
 
+            // Detect Subject Change & Fallback to Class Teacher if necessary
             $('#subject_id').on('change', function() {
                 const selected = $(this).find(':selected');
+                const selectedClass = $('#class_id').find(':selected');
+
                 if (selected.val()) {
-                    $('#teacher_display').val(selected.data('teacher-name'));
-                    $('#teacher_id').val(selected.data('teacher-id'));
+                    let subjectTeacherId = selected.data('teacher-id');
+                    let subjectTeacherName = selected.data('teacher-name');
+
+                    if (subjectTeacherId && subjectTeacherName) {
+                        // Use the explicit subject teacher if assigned
+                        $('#teacher_display').val(subjectTeacherName);
+                        $('#teacher_id').val(subjectTeacherId);
+                    } else {
+                        // Fall back to the Class Teacher dataset values if no custom subject teacher exists
+                        $('#teacher_display').val(selectedClass.data('class-teacher-name'));
+                        $('#teacher_id').val(selectedClass.data('class-teacher-id'));
+                    }
                 }
             });
         });
