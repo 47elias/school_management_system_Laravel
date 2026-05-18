@@ -1,0 +1,13 @@
+@import 'tailwindcss';
+
+/* The following @source rules are not valid CSS at-rules and cause compile errors.
+   Move these content/source globs to your Tailwind / build configuration (e.g., tailwind.config.js or your bundler). */
+/* @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php'; */
+/* @source '../../storage/framework/views/*.php'; */
+/* @source '../** /*.blade.php'; */
+/* @source '../** /*.js'; */
+
+/*@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
