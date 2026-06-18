@@ -9,7 +9,7 @@ use App\Models\Student;
 use App\Models\Subject;
 use App\Models\SubjectAssignment;
 use App\Models\Mark;
-use App\Models\Term; // Ensure this is imported
+use App\Models\Term;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -28,8 +28,10 @@ class TeacherController extends Controller
         $myClass = SchoolClass::where('teacher_id', $teacher->id)->first();
 
         if ($myClass) {
-            $classStudents = Student::where('class_id', $myClass->id)->latest()->take(5)->get();
-            $studentCount = Student::where('class_id', $myClass->id)->count();
+            // Fetch all students registered under this class to match the complete list view
+            $classStudents = Student::where('class_id', $myClass->id)->get();
+            // This guarantees the total count exactly matches the students in this form class
+            $studentCount = $classStudents->count();
         } else {
             $classStudents = collect();
             $studentCount = 0;
@@ -82,6 +84,9 @@ class TeacherController extends Controller
         return view('teachers.students.index', compact('students', 'myClass'));
     }
 
+    /**
+     * View academic load and subject assignments.
+     */
     public function assignedSubjects()
     {
         $assignments = SubjectAssignment::with(['schoolClass', 'subject'])
@@ -120,7 +125,7 @@ class TeacherController extends Controller
     }
 
     /**
-     * UPDATED: Added Term Switcher logic to the create view
+     * Create Exam form view with Term Switcher logic.
      */
     public function examCreate(Request $request)
     {
@@ -142,7 +147,7 @@ class TeacherController extends Controller
     }
 
     /**
-     * UPDATED: Store now handles max_marks and validated term_id
+     * Store newly scheduled exam details.
      */
     public function examStore(Request $request)
     {
@@ -198,6 +203,9 @@ class TeacherController extends Controller
         return view('teachers.record_marks', compact('exam', 'students', 'marks'));
     }
 
+    /**
+     * Bulk store or update student scores.
+     */
     public function storeMarks(Request $request)
     {
         $request->validate([
@@ -225,7 +233,7 @@ class TeacherController extends Controller
                         [
                             'subject' => $exam->subject->subject_name,
                             'score' => $data['score'],
-                            'max_score' => $exam->max_marks ?? 100, // Use the exam's max marks
+                            'max_score' => $exam->max_marks ?? 100,
                         ]
                     );
                 }
@@ -235,12 +243,18 @@ class TeacherController extends Controller
         return back()->with('success', 'Marks recorded successfully!');
     }
 
+    /**
+     * Teacher personal account settings view.
+     */
     public function profile()
     {
         $user = Auth::user();
         return view('teachers.profile', compact('user'));
     }
 
+    /**
+     * Update teacher account registration details.
+     */
     public function updateProfile(Request $request)
     {
         $user = Auth::user();
@@ -263,6 +277,9 @@ class TeacherController extends Controller
         return back()->with('success', 'Profile updated successfully!');
     }
 
+    /**
+     * --- ADMIN ACCESSIBLE STAFF ERP RECORDS ---
+     */
     public function index()
     {
         $teachers = User::whereIn('role', ['teacher', 'admin', 'receptionist'])->latest()->get();
