@@ -12,6 +12,7 @@ use App\Models\Mark;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use Exception;
 
@@ -451,5 +452,55 @@ class StudentController extends Controller
                         <i class='icon fa fa-ban'></i> <b>Error:</b> Could not retrieve student profile data.
                     </div>";
         }
+    }
+    /**
+     * View the biometric enrollment interface for a student.
+     */
+    public function enrollFaceView($id)
+    {
+        $student = Student::findOrFail($id);
+        return view('students.enroll_face', compact('student'));
+    }
+
+    /**
+     * Process and store the captured biometric face data.
+     */
+    public function storeFace(Request $request, $id)
+    {
+        // 1. Validate the input
+        $request->validate(['face_image' => 'required|string']);
+
+        $student = Student::findOrFail($id);
+        $imageData = $request->face_image;
+
+        // 2. Clean the Base64 string
+        $imageData = str_replace(['data:image/jpeg;base64,', 'data:image/png;base64,'], '', $imageData);
+        $imageData = str_replace(' ', '+', $imageData);
+
+        // 3. Define path: 'biometrics/face_ID_TIMESTAMP.jpg'
+        $fileName = 'face_' . $student->id . '_' . time() . '.jpg';
+        $path = 'biometrics/' . $fileName;
+
+        // 4. Save file to storage/app/public/biometrics/
+        // Using the 'public' disk means it will be stored in storage/app/public
+        \Illuminate\Support\Facades\Storage::disk('public')->put($path, base64_decode($imageData));
+
+        // 5. CRITICAL STEP: Update the database
+        // We update the student model with the new path
+        $student->update(['face_path' => $path]);
+
+        return response()->json(['success' => true, 'path' => $path]);
+    }
+    public function getFace($id)
+    {
+        $student = Student::findOrFail($id);
+
+        // Check if face_path exists and file is on disk
+        if ($student->face_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($student->face_path)) {
+            return response()->file(storage_path('app/public/' . $student->face_path));
+        }
+
+        // If null or file missing, return a default image
+        return response()->file(public_path('img/default-avatar.png'));
     }
 }

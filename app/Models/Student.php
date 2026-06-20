@@ -36,9 +36,10 @@ class Student extends Authenticatable
         'status',
         'emergency_contact',
         'password',
+        'face_path',
         'term_id',
         'enrollment_status',
-        'class_id'
+        'class_id',
     ];
 
     /**

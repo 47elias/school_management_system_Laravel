@@ -131,6 +131,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/api/classes/{classId}/subjects', [TimetableController::class, 'getSubjectsByClass']);
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::resource('teachers', TeacherController::class);
+    Route::get('/students/{id}/enroll-face', [App\Http\Controllers\StudentController::class, 'enrollFaceView'])->name('students.enroll_face');
+    Route::post('/students/{id}/enroll-face', [App\Http\Controllers\StudentController::class, 'storeFace'])->name('students.store_face');
+    Route::get('/students/{id}/view-face', [App\Http\Controllers\StudentController::class, 'getFace'])->name('students.get_face');
     Route::get('/students/create', [StudentController::class, 'create'])->name('students.create');
     Route::post('/students/store', [StudentController::class, 'store'])->name('students.store');
     Route::delete('/students/{id}', [StudentController::class, 'destroy'])->name('students.destroy');
