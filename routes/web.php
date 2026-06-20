@@ -231,7 +231,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     });
 
 });
-
+// Remove the Closure route and use this instead:
+Route::get('/exams/{id}/verify', [App\Http\Controllers\TeacherController::class, 'examVerifyView'])->name('exams.verify');
+Route::post('/exams/verify-face', [App\Http\Controllers\TeacherController::class, 'processFaceVerification'])->name('teacher.exams.verify_face');
 /**
  * TEACHER PORTAL ROUTES
  */

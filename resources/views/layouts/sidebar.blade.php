@@ -171,7 +171,7 @@
       </li>
 
       {{-- Shared: Exams (Both Roles) --}}
-      <li class="treeview {{ Request::is('exams*') || Request::is('marks*') ? 'active' : '' }}">
+      <li class="treeview {{ Request::is('exams*') || Request::is('marks*') || Request::is('teacher/exams*') ? 'active' : '' }}">
         <a href="#">
           <i class="fa fa-hourglass" style="color: #ec4899;"></i> <span style="font-weight: 600;">Exams</span>
           <span class="pull-right-container">
@@ -184,6 +184,14 @@
               <i class="fa fa-circle-o"></i> Exam Schedule
             </a>
           </li>
+
+          {{-- NEW: Gatekeeper direct jump link --}}
+        <li class="{{ Request::is('teacher/exams/*/verify') ? 'active' : '' }}">
+        <a href="{{ route('exams.index') }}" style="padding-left: 30px;">
+            <i class="fa fa-user-secret text-success"></i> Biometric Gatekeeper
+        </a>
+        </li>
+
           <li><a href="#" style="padding-left: 30px;"><i class="fa fa-circle-o"></i> Exams Report</a></li>
         </ul>
       </li>

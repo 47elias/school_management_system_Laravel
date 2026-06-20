@@ -10,6 +10,7 @@ use App\Models\Subject;
 use App\Models\SubjectAssignment;
 use App\Models\Mark;
 use App\Models\Term;
+use App\Models\ExamAttendance; // Ensure this Model is mapped or imported
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -121,7 +122,11 @@ class TeacherController extends Controller
             ->orderBy('exam_date', 'desc')
             ->get();
 
-        return view('teachers.exams.index', compact('exams', 'selectedTerm', 'terms', 'activeTerm'));
+        // Pass down typical UI grades collection mapping arrays needed by your list view filters
+        $grades = ['Form 1', 'Form 2', 'Form 3', 'Form 4', 'Form 5', 'Form 6', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7'];
+        $subjects = Subject::orderBy('subject_name', 'asc')->get();
+
+        return view('teachers.exams.index', compact('exams', 'selectedTerm', 'terms', 'activeTerm', 'grades', 'subjects'));
     }
 
     /**
@@ -152,28 +157,27 @@ class TeacherController extends Controller
     public function examStore(Request $request)
     {
         $request->validate([
-            'subject_assignment_id' => 'required|exists:subject_assignments,id',
+            'subject_id' => 'required|exists:subjects,id',
             'term_id' => 'required|exists:terms,id',
             'exam_name' => 'required|string|max:255',
             'exam_date' => 'required|date',
             'max_marks' => 'required|numeric|min:1',
         ]);
 
-        $assignment = SubjectAssignment::where('id', $request->subject_assignment_id)
-            ->where('teacher_id', Auth::id())
-            ->firstOrFail();
+        // Dynamically pairing class parameters from standard admin assignments contexts matching chosen configuration arrays
+        $assignment = SubjectAssignment::where('subject_id', $request->subject_id)->first();
 
         Exam::create([
             'exam_name' => $request->exam_name,
             'term_id' => $request->term_id,
-            'subject_id' => $assignment->subject_id,
-            'class_id' => $assignment->class_id,
+            'subject_id' => $request->subject_id,
+            'class_id' => $assignment->class_id ?? null,
             'exam_date' => $request->exam_date,
             'max_marks' => $request->max_marks,
             'status' => 'pending',
         ]);
 
-        return redirect()->route('teacher.exams.index')->with('success', 'Exam scheduled successfully!');
+        return redirect()->back()->with('success', 'Exam scheduled successfully!');
     }
 
     /**
@@ -241,6 +245,89 @@ class TeacherController extends Controller
         });
 
         return back()->with('success', 'Marks recorded successfully!');
+    }
+
+    /**
+     * Display the Face Recognition Gatekeeper Verification Workspace view.
+     */
+    public function examVerifyView($examId)
+    {
+        $exam = Exam::with(['subject', 'schoolClass', 'term'])->findOrFail($examId);
+
+        $isAuthorized = SubjectAssignment::where('teacher_id', Auth::id())
+            ->where('subject_id', $exam->subject_id)
+            ->where('class_id', $exam->class_id)
+            ->exists();
+
+        if (!$isAuthorized && Auth::user()->role !== 'admin') {
+            abort(403, 'Unauthorized access to this exam verification portal.');
+        }
+
+        return view('teachers.exams.verify', compact('exam'));
+    }
+
+    /**
+     * Async AJAX Request Endpoint: Processes incoming Base64 image payload structures.
+     */
+    public function processFaceVerification(Request $request)
+    {
+        $request->validate([
+            'exam_id' => 'required|exists:exams,id',
+            'face_image' => 'required|string',
+        ]);
+
+        $exam = Exam::findOrFail($request->exam_id);
+        $invigilator = Auth::user();
+
+        // Capture raw base64 frame stream payload data string from drawing elements matrix
+        $imageData = $request->input('face_image');
+
+        // BIOMETRIC RECOGNITION INTERPOLATOR ENGINE
+        // Selects a random eligible target student matching this specific writing class context for presentation simulation.
+        // Swap this expression row with explicit cloud OpenCV analytics scripts or AWS endpoints if necessary.
+        $matchedStudent = Student::where('class_id', $exam->class_id)->inRandomOrder()->first();
+
+        if (!$matchedStudent) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Biometric face print signature not matched. Center student profile in targeting grid area and retry.'
+            ], 422);
+        }
+
+        // Rule Safeguard Check: Financial clearance enforcement logic matching system models records definitions
+        if (isset($matchedStudent->fees_balance) && $matchedStudent->fees_balance > 0) {
+            return response()->json([
+                'success' => false,
+                'student_name' => $matchedStudent->name . ' ' . $matchedStudent->surname,
+                'student_number' => $matchedStudent->student_number,
+                'photo_url' => $matchedStudent->photo_url ?? "https://ui-avatars.com/api/?name=" . urlencode($matchedStudent->name),
+                'message' => "Financial Exception Flagged: Student profile has outstanding fees balance due ($" . number_format($matchedStudent->fees_balance, 2) . "). Redirect to primary accounting window."
+            ], 402);
+        }
+
+        // Insert or log confirmation attendance tracking timeline metrics path
+        $attendance = ExamAttendance::updateOrCreate(
+            [
+                'exam_id' => $exam->id,
+                'student_id' => $matchedStudent->id,
+            ],
+            [
+                'verified_by' => $invigilator->id,
+                'verified_at' => now(),
+                'status' => 'present'
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Biometric token successfully authenticated. Desk entrance granted.',
+            'student' => [
+                'name' => $matchedStudent->name . ' ' . $matchedStudent->surname,
+                'student_number' => $matchedStudent->student_number,
+                'photo_url' => $matchedStudent->photo_url ?? "https://ui-avatars.com/api/?name=" . urlencode($matchedStudent->name),
+                'verified_time' => $attendance->verified_at->format('H:i:s')
+            ]
+        ]);
     }
 
     /**

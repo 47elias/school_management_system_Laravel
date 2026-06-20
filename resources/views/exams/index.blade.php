@@ -21,7 +21,7 @@
         .action-chip {
             display: inline-block;
             padding: 6px 12px;
-            border-radius: 4px; /* Slightly more professional than full pill */
+            border-radius: 4px;
             font-size: 11px;
             font-weight: 700;
             margin: 2px;
@@ -30,7 +30,8 @@
         }
         .bg-entry { background-color: #28a745; color: white; }
         .bg-report { background-color: #007bff; color: white; }
-        .action-chip:hover { opacity: 0.8; color: white; transform: translateY(-1px); }
+        .bg-gatekeeper { background-color: #605ca8; color: white; }
+        .action-chip:hover { opacity: 0.8; color: white; transform: translateY(-1px); text-decoration: none; }
 
         /* Locked Dropdown Styling */
         .form-control[disabled] { background-color: #eee !important; cursor: not-allowed; border: 1px dashed #bbb; }
@@ -82,7 +83,6 @@
                             </div>
                             <form action="{{ route('exams.store') }}" method="POST">
                                 @csrf
-                                {{-- Hidden input ensures the selected term is sent even if dropdown is disabled --}}
                                 <input type="hidden" name="term_id" value="{{ $selectedTerm->id }}">
 
                                 <div class="box-body">
@@ -91,7 +91,6 @@
                                         <select class="form-control" disabled>
                                             <option>{{ $selectedTerm->term_name }} ({{ $selectedTerm->academic_year }})</option>
                                         </select>
-                                        <small class="text-muted">Use the top switcher to change terms.</small>
                                     </div>
 
                                     <div class="form-group">
@@ -134,7 +133,7 @@
                     </div>
                     @endif
 
-                    {{-- 3. THE LIST (Filtered by selected term only) --}}
+                    {{-- 3. THE LIST --}}
                     <div class="{{ Auth::user()->role == 'admin' ? 'col-md-8' : 'col-md-12' }}">
                         <div class="box box-solid">
                             <div class="box-header with-border">
@@ -150,17 +149,15 @@
                                             <tr class="bg-gray">
                                                 <th style="width: 15%">Date</th>
                                                 <th style="width: 25%">Exam & Subject</th>
-                                                <th>Mark Entry</th>
-                                                <th class="text-center">Manage</th>
+                                                <th>Manage & Entry</th>
+                                                <th class="text-center">Action</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @forelse($exams as $exam)
                                             <tr class="exam-card">
                                                 <td>
-                                                    <span class="text-bold text-blue">
-                                                        {{ \Carbon\Carbon::parse($exam->exam_date)->format('d M, Y') }}
-                                                    </span><br>
+                                                    <span class="text-bold text-blue">{{ \Carbon\Carbon::parse($exam->exam_date)->format('d M, Y') }}</span><br>
                                                     <small class="text-muted">{{ \Carbon\Carbon::parse($exam->exam_date)->diffForHumans() }}</small>
                                                 </td>
                                                 <td>
@@ -169,10 +166,15 @@
                                                     <small class="text-muted">MAX MARKS: <span class="text-amount">{{ $exam->max_marks ?? 100 }}</span></small>
                                                 </td>
                                                 <td>
-                                                    <div class="btn-group-flex">
+                                                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+
+                                                        {{-- UPDATED: Corrected route name to 'exams.verify' --}}
+                                                        <a href="{{ route('exams.verify', $exam->id) }}" class="action-chip bg-gatekeeper" title="Scan Student Entry">
+                                                            <i class="fa fa-user-secret"></i> Scan Entry
+                                                        </a>
+
                                                         @foreach($grades as $grade)
-                                                            <a href="{{ route('marks.create', ['exam_id' => $exam->id, 'grade' => $grade]) }}"
-                                                               class="action-chip bg-entry" title="Enter Marks">
+                                                            <a href="{{ route('marks.create', ['exam_id' => $exam->id, 'grade' => $grade]) }}" class="action-chip bg-entry" title="Enter Marks">
                                                                 {{ $grade }}
                                                             </a>
                                                         @endforeach
@@ -191,7 +193,7 @@
                                             <tr>
                                                 <td colspan="4" class="text-center" style="padding: 60px;">
                                                     <i class="fa fa-folder-open-o fa-3x text-gray"></i>
-                                                    <p class="text-gray">No exams scheduled for <strong>{{ $selectedTerm->term_name }}</strong>.</p>
+                                                    <p class="text-gray">No exams scheduled.</p>
                                                 </td>
                                             </tr>
                                             @endforelse
@@ -206,7 +208,6 @@
         </div>
         @include('layouts.footer')
     </div>
-
     <script>
         $(document).ready(function() {
             $('.select2').select2();
