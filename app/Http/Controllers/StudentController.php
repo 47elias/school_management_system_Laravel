@@ -490,6 +490,14 @@ class StudentController extends Controller
         $student->update(['face_path' => $path]);
 
         return response()->json(['success' => true, 'path' => $path]);
+        $student = Student::findOrFail($id);
+
+        // Store the JSON array of 128 numbers
+        $student->update([
+            'face_descriptor' => $request->face_descriptor
+        ]);
+
+        return response()->json(['success' => true]);
     }
     public function getFace($id)
     {

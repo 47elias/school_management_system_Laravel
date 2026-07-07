@@ -159,6 +159,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::post('/classes/assign-subjects', [ClassController::class, 'storeAssignments'])->name('classes.assign.store');
     Route::get('/classes/{class}/edit', [ClassController::class, 'edit'])->name('classes.edit');
     Route::put('/classes/{class}', [ClassController::class, 'update'])->name('classes.update');
+    Route::get('/classes/{id}/students', [ClassController::class, 'showStudents'])->name('classes.students');
 
     Route::get('/subjects', [SubjectAssignmentController::class, 'index'])->name('subjects.index');
     Route::post('/subjects/store', [SubjectController::class, 'store'])->name('subjects.store');

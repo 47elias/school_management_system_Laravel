@@ -102,4 +102,8 @@ class ClassController extends Controller
 
         return back()->with('success', 'Subjects assigned successfully!');
     }
+    public function showStudents($id) {
+        $class = SchoolClass::with('students')->findOrFail($id);
+        return view('classes.students', compact('class'));
+    }
 }

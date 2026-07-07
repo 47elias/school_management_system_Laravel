@@ -40,6 +40,7 @@ class Student extends Authenticatable
         'term_id',
         'enrollment_status',
         'class_id',
+        'face_descriptor',
     ];
 
     /**
