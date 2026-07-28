@@ -1,16 +1,18 @@
 <?php
 
 namespace App\Http\Controllers;
-
 use App\Models\Payment;
 use App\Models\Student;
 use App\Models\Term;
 use App\Models\FeeStructure;
 use App\Models\Expense;
 use App\Models\Payslip;
+use App\Models\FeeTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Paynow\Payments\Paynow;
+
 
 class FeeController extends Controller
 {
@@ -341,5 +343,104 @@ class FeeController extends Controller
     {
         Payment::findOrFail($id)->delete();
         return back()->with('success', 'Payment record has been deleted successfully.');
+    }
+
+    public function payOnline(Request $request)
+    {
+        $validated = $request->validate([
+            'student_id'     => 'required|exists:students,id',
+            'term_id'        => 'required|exists:terms,id',
+            'amount_paid'    => 'required|numeric|min:0.01',
+            'online_channel' => 'required|in:paynow_link,ecocash_push,card',
+            'payer_phone'    => 'required_if:online_channel,ecocash_push|nullable|string',
+            'payer_email'    => 'nullable|email',
+            'remarks'        => 'nullable|string',
+        ]);
+
+        $student = Student::findOrFail($validated['student_id']);
+
+        // Record a pending transaction so the result webhook has something to update
+        $transaction = FeeTransaction::create([
+            'student_id' => $student->id,
+            'term_id'    => $validated['term_id'],
+            'amount'     => $validated['amount_paid'],
+            'channel'    => $validated['online_channel'],
+            'status'     => 'pending',
+            'remarks'    => $validated['remarks'] ?? null,
+        ]);
+
+        $paynow = new Paynow(
+            config('services.paynow.integration_id'),
+            config('services.paynow.integration_key'),
+            route('fees.payOnline.result'),                    // result_url
+            route('fees.payOnline.return', $transaction)        // return_url
+        );
+
+        $payment = $paynow->createPayment(
+            'FEE-' . $transaction->id,
+            $validated['payer_email'] ?: $student->parent_email
+        );
+        $payment->add(
+            "School fees - {$student->name} {$student->surname} ({$validated['term_id']})",
+            $validated['amount_paid']
+        );
+
+        if ($validated['online_channel'] === 'ecocash_push') {
+            $response = $paynow->sendMobile($payment, $validated['payer_phone'], 'ecocash');
+        } else {
+            $response = $paynow->send($payment);
+        }
+
+        if (! $response->success()) {
+            $transaction->update(['status' => 'failed']);
+            return back()->withErrors(['online_payment' => 'Could not start the Paynow transaction. Please try again.']);
+        }
+
+        $transaction->update(['poll_url' => $response->pollUrl()]);
+
+        if ($validated['online_channel'] === 'ecocash_push') {
+            // No redirect for mobile push — show the USSD instructions instead
+            return back()->with('online_success', $response->instructions());
+        }
+
+        // Card / payment-link flow — send the payer straight to Paynow
+        return redirect($response->redirectLink());
+    }
+
+    public function payOnlineResult(Request $request)
+    {
+        // Paynow posts pollurl/status/hash here — look up by reference and re-poll to confirm
+        $reference = str_replace('FEE-', '', $request->input('reference'));
+        $transaction = FeeTransaction::findOrFail($reference);
+
+        $paynow = new Paynow(
+            config('services.paynow.integration_id'),
+            config('services.paynow.integration_key')
+        );
+
+        $status = $paynow->pollTransaction($transaction->poll_url);
+
+        if ($status->paid()) {
+            $transaction->update(['status' => 'paid']);
+            // TODO: also insert into your existing fees/payments table so it
+            // shows on the student statement alongside cash payments
+        } else {
+            $transaction->update(['status' => 'failed']);
+        }
+
+        return response('OK'); // Paynow just needs a 200
+    }
+
+    public function payOnlineReturn(FeeTransaction $feeTransaction)
+    {
+        return view('fees.collect', [
+            'students' => Student::all(),
+            'terms'    => Term::all(),
+        ])->with(
+            $feeTransaction->fresh()->status === 'paid' ? 'success' : 'online_success',
+            $feeTransaction->fresh()->status === 'paid'
+                ? 'Online payment received — thank you!'
+                : 'We\'re waiting for confirmation from Paynow. Refresh in a moment.'
+        );
     }
 }

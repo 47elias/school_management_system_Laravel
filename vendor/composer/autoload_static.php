@@ -40,6 +40,7 @@ class ComposerStaticInitc514d8f7b9fc5970bdd94287905ef584
         'c72349b1fe8d0deeedd3a52e8aa814d8' => __DIR__ . '/..' . '/mockery/mockery/library/helpers.php',
         'ce9671a430e4846b44e1c68c7611f9f5' => __DIR__ . '/..' . '/mockery/mockery/library/Mockery.php',
         'a1cfe24d14977df6878b9bf804af2d1c' => __DIR__ . '/..' . '/nunomaduro/collision/src/Adapters/Phpunit/Autoload.php',
+        'b9fa40d76e3a17d43fa5f112ac14719d' => __DIR__ . '/..' . '/paynow/php-sdk/src/helper.php',
         'ec07570ca5a812141189b1fa81503674' => __DIR__ . '/..' . '/phpunit/phpunit/src/Framework/Assert/Functions.php',
     );
 
@@ -109,6 +110,7 @@ class ComposerStaticInitc514d8f7b9fc5970bdd94287905ef584
             'Psr\\Cache\\' => 10,
             'PhpParser\\' => 10,
             'PhpOption\\' => 10,
+            'Paynow\\' => 7,
         ),
         'N' =>
         array (
@@ -380,6 +382,10 @@ class ComposerStaticInitc514d8f7b9fc5970bdd94287905ef584
         'PhpOption\\' =>
         array (
             0 => __DIR__ . '/..' . '/phpoption/phpoption/src/PhpOption',
+        ),
+        'Paynow\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/paynow/php-sdk/src',
         ),
         'NunoMaduro\\Collision\\' =>
         array (
@@ -5309,6 +5315,24 @@ class ComposerStaticInitc514d8f7b9fc5970bdd94287905ef584
         'PHPUnit\\Util\\Xml' => __DIR__ . '/..' . '/phpunit/phpunit/src/Util/Xml/Xml.php',
         'PHPUnit\\Util\\Xml\\Loader' => __DIR__ . '/..' . '/phpunit/phpunit/src/Util/Xml/Loader.php',
         'PHPUnit\\Util\\Xml\\XmlException' => __DIR__ . '/..' . '/phpunit/phpunit/src/Util/Exception/XmlException.php',
+        'Paynow\\Core\\CanFail' => __DIR__ . '/..' . '/paynow/php-sdk/src/Core/CanFail.php',
+        'Paynow\\Core\\Constants' => __DIR__ . '/..' . '/paynow/php-sdk/src/Core/Constants.php',
+        'Paynow\\Core\\InitResponse' => __DIR__ . '/..' . '/paynow/php-sdk/src/Core/InitResponse.php',
+        'Paynow\\Core\\Logger' => __DIR__ . '/..' . '/paynow/php-sdk/src/Core/Logger.php',
+        'Paynow\\Core\\StatusResponse' => __DIR__ . '/..' . '/paynow/php-sdk/src/Core/StatusResponse.php',
+        'Paynow\\Http\\Client' => __DIR__ . '/..' . '/paynow/php-sdk/src/Http/Client.php',
+        'Paynow\\Http\\ConnectionException' => __DIR__ . '/..' . '/paynow/php-sdk/src/Http/ConnectionException.php',
+        'Paynow\\Http\\RequestInfo' => __DIR__ . '/..' . '/paynow/php-sdk/src/Http/RequestInfo.php',
+        'Paynow\\Payments\\EmptyCartException' => __DIR__ . '/..' . '/paynow/php-sdk/src/Payments/EmptyCartException.php',
+        'Paynow\\Payments\\EmptyTransactionReferenceException' => __DIR__ . '/..' . '/paynow/php-sdk/src/Payments/EmptyTransactionReferenceException.php',
+        'Paynow\\Payments\\FluentBuilder' => __DIR__ . '/..' . '/paynow/php-sdk/src/Payments/FluentBuilder.php',
+        'Paynow\\Payments\\HashMismatchException' => __DIR__ . '/..' . '/paynow/php-sdk/src/Payments/HashMismatchException.php',
+        'Paynow\\Payments\\InvalidIntegrationException' => __DIR__ . '/..' . '/paynow/php-sdk/src/Payments/InvalidIntegrationException.php',
+        'Paynow\\Payments\\InvalidUrlException' => __DIR__ . '/..' . '/paynow/php-sdk/src/Payments/InvalidUrlException.php',
+        'Paynow\\Payments\\NotImplementedException' => __DIR__ . '/..' . '/paynow/php-sdk/src/Payments/NotImplementedException.php',
+        'Paynow\\Payments\\Payment' => __DIR__ . '/..' . '/paynow/php-sdk/src/Payments/Payment.php',
+        'Paynow\\Payments\\Paynow' => __DIR__ . '/..' . '/paynow/php-sdk/src/Payments/Paynow.php',
+        'Paynow\\Util\\Hash' => __DIR__ . '/..' . '/paynow/php-sdk/src/Util/Hash.php',
         'PharIo\\Manifest\\Application' => __DIR__ . '/..' . '/phar-io/manifest/src/values/Application.php',
         'PharIo\\Manifest\\ApplicationName' => __DIR__ . '/..' . '/phar-io/manifest/src/values/ApplicationName.php',
         'PharIo\\Manifest\\Author' => __DIR__ . '/..' . '/phar-io/manifest/src/values/Author.php',

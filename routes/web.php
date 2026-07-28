@@ -181,6 +181,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::post('/terms', [TermController::class, 'store'])->name('terms.store');
     Route::get('/terms/activate/{id}', [TermController::class, 'activate'])->name('terms.activate');
 
+    //Fees and Financials Routes
     Route::get('/fees/payment', [FeeController::class, 'create'])->name('fees.create');
     Route::post('/fees/payment', [FeeController::class, 'store'])->name('fees.store');
     Route::get('/fees/history', [FeeController::class, 'index'])->name('fees.index');
@@ -189,9 +190,16 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/fees/balance-report', [FeeController::class, 'balanceReport'])->name('fees.report');
     Route::get('/fees/{id}', [App\Http\Controllers\FeeController::class, 'show'])->name('fees.show');
     Route::delete('/fees/{id}', [FeeController::class, 'destroy'])->name('fees.destroy');
-    Route::delete('/fees/structure/{id}', [App\Http\Controllers\FeeController::class, 'destroyStructure'])
-        ->name('fees.structure.destroy');
+    Route::delete('/fees/structure/{id}', [App\Http\Controllers\FeeController::class, 'destroyStructure'])->name('fees.structure.destroy');
     Route::post('/fees/deduct-credit/{id}', [App\Http\Controllers\FeeController::class, 'deductCredit'])->name('fees.deduct_credit');
+    Route::post('/fees/pay-online', [FeeController::class, 'payOnline'])->name('fees.payOnline');
+    // Paynow calls this server-to-server to confirm payment status — must be public, no auth/CSRF
+    Route::post('/fees/pay-online/result', [FeeController::class, 'payOnlineResult'])
+        ->name('fees.payOnline.result')
+        ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+    // Paynow redirects the payer's browser back here after they pay
+    Route::get('/fees/pay-online/return/{feeTransaction}', [FeeController::class, 'payOnlineReturn'])
+    ->name('fees.payOnline.return');
 
     Route::get('/settings/change-password', [DashboardController::class, 'showChangePassword'])->name('admin.change_password');
     Route::post('/settings/update-password', [DashboardController::class, 'updatePassword'])->name('admin.update_password');

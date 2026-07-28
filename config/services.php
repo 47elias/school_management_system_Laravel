@@ -36,7 +36,12 @@ return [
     ],
 
     'gemini' => [
-    'key' => env('GEMINI_API_KEY'),
-],
+        'key' => env('GEMINI_API_KEY'),
+    ],
+
+    'paynow' => [
+        'integration_id'  => env('PAYNOW_INTEGRATION_ID'),
+        'integration_key' => env('PAYNOW_INTEGRATION_KEY'),
+    ],
 
 ];
