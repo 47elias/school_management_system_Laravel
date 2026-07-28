@@ -336,36 +336,40 @@ class StudentController extends Controller
     }
 
     public function processMassPromotion(Request $request)
-    {
-        $request->validate([
-            'target_term_id' => 'required|exists:terms,id',
-            'promote' => 'required|array',
-        ]);
+{
+    $request->validate([
+        'target_term_id' => 'required|exists:terms,id',
+        'promote' => 'required|array',
+    ]);
 
-        $promotions = $request->input('promote');
-        $targetTermId = $request->input('target_term_id');
-        $count = 0;
+    $promotions = $request->input('promote');
+    $targetTermId = $request->input('target_term_id');
+    $count = 0;
 
-        DB::transaction(function () use ($promotions, $targetTermId, &$count) {
-            foreach ($promotions as $item) {
-                if (isset($item['active']) && !empty($item['to_grade'])) {
-                    $updated = Student::where('grade', $item['from_grade'])
-                        ->where('status', 'active')
-                        ->update([
-                            'grade' => $item['to_grade'],
-                            'term_id' => $targetTermId,
-                            'status' => ($item['to_grade'] === 'Graduated') ? 'alumni' : 'active'
-                        ]);
+    DB::transaction(function () use ($promotions, $targetTermId, &$count) {
+        foreach ($promotions as $item) {
+            // Check if row is selected and destination class_id is set
+            if (isset($item['active']) && !empty($item['to_class_id'])) {
 
-                    $count += $updated;
-                }
+                $fromClassId = $item['from_class_id'];
+                $toClassId = $item['to_class_id']; // This could be an ID or a string "graduated"
+
+                $updated = Student::where('class_id', $fromClassId)
+                    ->where('status', 'active')
+                    ->update([
+                        'class_id' => ($toClassId === 'graduated') ? null : $toClassId,
+                        'enrollment_term_id' => $targetTermId,
+                        'status' => ($toClassId === 'graduated') ? 'alumni' : 'active'
+                    ]);
+
+                $count += $updated;
             }
-        });
+        }
+    });
 
-        return redirect()->route('students.promote')
-            ->with('success', "Success! $count students have been transitioned to the new term.");
-    }
-
+    return redirect()->route('students.promote')
+        ->with('success', "Success! $count students have been transitioned to the new classes.");
+}
     /**
      * Show student profile data for Modal Popup (AJAX)
      */
