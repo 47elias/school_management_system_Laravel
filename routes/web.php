@@ -8,6 +8,7 @@ use App\Http\Controllers\TermController;
 use App\Http\Controllers\FeeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExamController;
+use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\Student\Auth\LoginController as StudentLoginController;
 use App\Http\Controllers\Student\PortalController;
 use App\Http\Controllers\TeacherController;
@@ -121,6 +122,12 @@ Route::middleware(['auth', 'role:admin,teacher'])->group(function () {
     Route::delete('/exams/{id}', [ExamController::class, 'destroy'])->name('exams.destroy');
     Route::get('/exams/{exam_id}/{grade}/marks', [ExamController::class, 'createMarks'])->name('exams.create_marks');
     Route::get('/exams/{exam_id}/{grade}/report', [ExamController::class, 'examReport'])->name('exams.report');
+
+    /**
+     * CONTINUOUS ASSESSMENT (shared: admin can view teacher-recorded activities too)
+     * Fully independent of the Exams routes above - no fixed schedule required.
+     */
+    Route::get('/activities', [ActivityController::class, 'adminIndex'])->name('activities.index');
 });
 
 /**
@@ -265,6 +272,20 @@ Route::middleware(['auth', 'role:teacher'])->prefix('teacher')->name('teacher.')
     Route::get('/marks/manage/{exam_id}', [ExamController::class, 'teacherManageMarks'])->name('marks.manage');
     Route::post('/marks/store', [ExamController::class, 'teacherBulkStore'])->name('marks.store');
     Route::post('/marks/bulk-store', [ExamController::class, 'teacherBulkStore'])->name('marks.bulk_store');
+
+    /**
+     * CONTINUOUS ASSESSMENT (CA) — independent of Exams above.
+     * Daily classwork/homework/quiz/participation/practical/project marks,
+     * no fixed schedule, recordable any day.
+     */
+    Route::prefix('activities')->name('activities.')->group(function () {
+        Route::get('/', [ActivityController::class, 'teacherIndex'])->name('index');
+        Route::post('/', [ActivityController::class, 'store'])->name('store');
+        Route::get('/{id}/record', [ActivityController::class, 'recordMarks'])->name('record');
+        Route::post('/marks/store', [ActivityController::class, 'bulkStore'])->name('marks.store');
+        Route::get('/assignment/{assignmentId}/history', [ActivityController::class, 'history'])->name('history');
+        Route::delete('/{id}', [ActivityController::class, 'destroy'])->name('destroy');
+    });
 });
 
 /**

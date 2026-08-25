@@ -196,6 +196,13 @@
         </ul>
       </li>
 
+      {{-- Continuous Assessment: daily class activity marks, independent of Exams above --}}
+      <li class="{{ Request::is('activities*') || Request::is('teacher/activities*') ? 'active' : '' }}">
+        <a href="{{ route('activities.index') }}" style="padding: 12px 20px;">
+          <i class="fa fa-tasks" style="color: #22c55e;"></i> <span style="font-weight: 600;">Continuous Assessment</span>
+        </a>
+      </li>
+
       @if(auth()->user()->role === 'admin')
       {{-- Fees (Admin Only) --}}
       <li class="treeview {{ Request::is('fees*') ? 'active' : '' }}">

@@ -72,6 +72,13 @@
         </ul>
       </li>
 
+      {{-- Continuous Assessment: independent of Exams, no fixed schedule --}}
+      <li class="{{ Request::is('teacher/activities*') ? 'active' : '' }}">
+        <a href="{{ route('teacher.activities.index') }}">
+          <i class="fa fa-tasks"></i> <span>Continuous Assessment</span>
+        </a>
+      </li>
+
       <li class="header">COMMUNICATION</li>
       <li>
         <a href="#">

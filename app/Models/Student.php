@@ -183,6 +183,40 @@ class Student extends Authenticatable
         return $this->hasMany(Mark::class, 'student_id');
     }
 
+    /**
+     * CONTINUOUS ASSESSMENT: All daily classwork/homework/quiz/etc. scores,
+     * independent of exam marks above.
+     */
+    public function activityMarks(): HasMany
+    {
+        return $this->hasMany(ActivityMark::class, 'student_id');
+    }
+
+    /**
+     * Compute this student's Continuous Assessment average (%) for a given
+     * subject + term, weighted by each activity's `weight`. Runs as a
+     * single aggregate query (no N+1) so it stays cheap even with a large
+     * number of daily activity records.
+     */
+    public function continuousAssessmentAverage(int $subjectId, int $termId): float
+    {
+        $row = ActivityMark::query()
+            ->join('class_activities', 'class_activities.id', '=', 'activity_marks.class_activity_id')
+            ->join('subject_assignments', 'subject_assignments.id', '=', 'class_activities.subject_assignment_id')
+            ->where('activity_marks.student_id', $this->id)
+            ->where('class_activities.term_id', $termId)
+            ->where('subject_assignments.subject_id', $subjectId)
+            ->selectRaw('SUM((activity_marks.score / class_activities.max_score) * 100 * class_activities.weight) as weighted_sum')
+            ->selectRaw('SUM(class_activities.weight) as weight_total')
+            ->first();
+
+        if (!$row || !$row->weight_total) {
+            return 0.0;
+        }
+
+        return round((float) $row->weighted_sum / (float) $row->weight_total, 2);
+    }
+
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class, 'student_id');

@@ -71,4 +71,14 @@ class SubjectAssignment extends Model
     {
         return $this->hasMany(Student::class, 'class_id', 'class_id');
     }
+
+    /**
+     * CONTINUOUS ASSESSMENT: All class activities (classwork, homework,
+     * quizzes, etc.) logged against this teaching assignment. Independent
+     * of the `exams` table entirely.
+     */
+    public function activities()
+    {
+        return $this->hasMany(ClassActivity::class, 'subject_assignment_id');
+    }
 }
