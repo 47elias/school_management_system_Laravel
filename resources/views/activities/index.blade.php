@@ -22,6 +22,9 @@
                     <li><a href="{{ route('dashboard') }}"><i class="fa fa-dashboard"></i> Home</a></li>
                     <li class="active">Continuous Assessment</li>
                 </ol>
+                <a href="{{ route('activities.analytics') }}" class="btn btn-primary" style="position:absolute; top:15px; right:15px;">
+                    <i class="fa fa-bar-chart"></i> View Analytics Dashboard
+                </a>
             </section>
 
             <section class="content">

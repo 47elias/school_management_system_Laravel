@@ -51,25 +51,32 @@
       {{-- Academic Management --}}
       <li class="treeview {{ Request::is('teacher/exams*') || Request::is('teacher/marks*') ? 'active menu-open' : '' }}">
         <a href="#">
-          <i class="fa fa-edit"></i> <span>Academic Management</span>
+          <i class="fa fa-edit"></i> <span>Exams & Grading</span>
           <span class="pull-right-container">
             <i class="fa fa-angle-left pull-right"></i>
           </span>
         </a>
         <ul class="treeview-menu">
-          {{-- Continous Assessment: independent of Exams, no fixed schedule --}}
-          <li class="{{ Request::is('teacher/activities*') ? 'active' : '' }}">
-            <a href="{{ route('teacher.activities.index') }}">
-              <i class="fa fa-tasks"></i> <span>Continuous Assessment</span>
-            </a>
-          </li>
           {{-- Shows only exams for subjects this teacher teaches --}}
           <li class="{{ Request::is('teacher/exams*') ? 'active' : '' }}">
             <a href="{{ route('teacher.exams.index') }}">
               <i class="fa fa-calendar"></i> Exam Schedule
             </a>
           </li>
+          {{-- Leads to Subject list so they can select WHICH subject to enter marks for --}}
+          <li class="{{ Request::is('teacher/marks*') ? 'active' : '' }}">
+            <a href="{{ route('teacher.subjects') }}">
+              <i class="fa fa-pencil-square"></i> Record Marks
+            </a>
+          </li>
         </ul>
+      </li>
+
+      {{-- Continuous Assessment: independent of Exams, no fixed schedule --}}
+      <li class="{{ Request::is('teacher/activities*') ? 'active' : '' }}">
+        <a href="{{ route('teacher.activities.index') }}">
+          <i class="fa fa-tasks"></i> <span>Continuous Assessment</span>
+        </a>
       </li>
 
       <li class="header">COMMUNICATION</li>

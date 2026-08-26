@@ -197,10 +197,25 @@
       </li>
 
       {{-- Continuous Assessment: daily class activity marks, independent of Exams above --}}
-      <li class="{{ Request::is('activities*') || Request::is('teacher/activities*') ? 'active' : '' }}">
-        <a href="{{ route('activities.index') }}" style="padding: 12px 20px;">
+      <li class="treeview {{ Request::is('activities*') || Request::is('teacher/activities*') ? 'active menu-open' : '' }}">
+        <a href="#" style="padding: 12px 20px;">
           <i class="fa fa-tasks" style="color: #22c55e;"></i> <span style="font-weight: 600;">Continuous Assessment</span>
+          <span class="pull-right-container">
+            <i class="fa fa-angle-left pull-right"></i>
+          </span>
         </a>
+        <ul class="treeview-menu" style="background: #0f172a;">
+          <li class="{{ Request::is('activities') ? 'active' : '' }}">
+            <a href="{{ route('activities.index') }}" style="padding-left: 30px;">
+              <i class="fa fa-circle-o"></i> All Logged Activities
+            </a>
+          </li>
+          <li class="{{ Request::is('activities/analytics') ? 'active' : '' }}">
+            <a href="{{ route('activities.analytics') }}" style="padding-left: 30px;">
+              <i class="fa fa-bar-chart"></i> Analytics & AI Insights
+            </a>
+          </li>
+        </ul>
       </li>
 
       @if(auth()->user()->role === 'admin')

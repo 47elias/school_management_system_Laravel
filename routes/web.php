@@ -9,6 +9,7 @@ use App\Http\Controllers\FeeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExamController;
 use App\Http\Controllers\ActivityController;
+use App\Http\Controllers\ActivityAnalyticsController;
 use App\Http\Controllers\Student\Auth\LoginController as StudentLoginController;
 use App\Http\Controllers\Student\PortalController;
 use App\Http\Controllers\TeacherController;
@@ -128,6 +129,16 @@ Route::middleware(['auth', 'role:admin,teacher'])->group(function () {
      * Fully independent of the Exams routes above - no fixed schedule required.
      */
     Route::get('/activities', [ActivityController::class, 'adminIndex'])->name('activities.index');
+
+    /**
+     * CA STATISTICAL ANALYSIS DASHBOARD
+     * Charts (class ranking, subject breakdown, weekly trend, grade distribution,
+     * activity-type breakdown, top/bottom students) plus an on-demand AI-generated
+     * written analysis of the same aggregates (best/worst class, trend, risks,
+     * recommendations). Read-only, aggregate-only - no individual privacy exposure.
+     */
+    Route::get('/activities/analytics', [ActivityAnalyticsController::class, 'dashboard'])->name('activities.analytics');
+    Route::post('/activities/analytics/ai-insights', [ActivityAnalyticsController::class, 'aiInsights'])->name('activities.analytics.ai_insights');
 });
 
 /**
