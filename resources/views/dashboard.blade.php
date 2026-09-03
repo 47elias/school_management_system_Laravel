@@ -16,6 +16,7 @@
             --grad-green: linear-gradient(45deg, #00a65a, #2ecc71);
             --grad-orange: linear-gradient(45deg, #f39c12, #ffcc33);
             --grad-red: linear-gradient(45deg, #dd4b39, #ed5565);
+            --grad-dark: linear-gradient(45deg, #2c3e50, #34495e);
         }
 
         body { background-color: #f0f3f7 !important; font-family: 'Source Sans Pro', sans-serif; }
@@ -38,6 +39,7 @@
         .bg-green-grad { background: var(--grad-green) !important; color: #fff; }
         .bg-orange-grad { background: var(--grad-orange) !important; color: #fff; }
         .bg-red-grad { background: var(--grad-red) !important; color: #fff; }
+        .bg-dark-grad { background: var(--grad-dark) !important; color: #fff; }
 
         /* Box Styling */
         .box { border-radius: 12px; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
@@ -72,7 +74,43 @@
             </section>
 
             <section class="content">
-                {{-- Stats Cards --}}
+                {{-- Financial Stats Row --}}
+                <h4 class="text-bold" style="margin-top: 10px; margin-bottom: 15px; color: #333; padding-left: 15px;">Financial Overview</h4>
+                <div class="row">
+                    <div class="col-lg-4 col-xs-12">
+                        <div class="small-box bg-green-grad">
+                            <div class="inner">
+                                <h3>${{ number_format($totalRevenue, 2) }}</h3>
+                                <p>Total Revenue (Payments)</p>
+                            </div>
+                            <div class="icon"><i class="fa fa-money"></i></div>
+                            <a href="{{ route('fees.index') }}" class="small-box-footer">View Income <i class="fa fa-arrow-circle-right"></i></a>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-xs-12">
+                        <div class="small-box bg-red-grad">
+                            <div class="inner">
+                                <h3>${{ number_format($totalExpenses, 2) }}</h3>
+                                <p>Total Expenses & Payroll</p>
+                            </div>
+                            <div class="icon"><i class="fa fa-shopping-cart"></i></div>
+                            <a href="{{ route('expenses.index') }}" class="small-box-footer">View Outgoings <i class="fa fa-arrow-circle-right"></i></a>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-xs-12">
+                        <div class="small-box {{ $netBalance >= 0 ? 'bg-blue-grad' : 'bg-orange-grad' }}">
+                            <div class="inner">
+                                <h3>${{ number_format($netBalance, 2) }}</h3>
+                                <p>Net Balance</p>
+                            </div>
+                            <div class="icon"><i class="fa fa-bank"></i></div>
+                            <a href="{{ route('fees.report') }}" class="small-box-footer">Full Balance Report <i class="fa fa-arrow-circle-right"></i></a>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- General Stats Row --}}
+                <h4 class="text-bold" style="margin-top: 10px; margin-bottom: 15px; color: #333; padding-left: 15px;">Academic & Operations</h4>
                 <div class="row">
                     <div class="col-lg-3 col-xs-6">
                         <div class="small-box bg-blue-grad">
@@ -105,7 +143,7 @@
                         </div>
                     </div>
                     <div class="col-lg-3 col-xs-6">
-                        <div class="small-box bg-red-grad">
+                        <div class="small-box bg-dark-grad">
                             <div class="inner">
                                 <h3>{{ $userCount }}</h3>
                                 <p>Staff Accounts</p>
@@ -151,7 +189,7 @@
                                 </ul>
                             </div>
                             <div class="box-footer text-center">
-                                <a href="#" class="text-orange small text-bold uppercase">View Inventory Report</a>
+                                <a href="{{ route('inventory.index') }}" class="text-orange small text-bold uppercase">View Inventory Report</a>
                             </div>
                         </div>
                     </div>
