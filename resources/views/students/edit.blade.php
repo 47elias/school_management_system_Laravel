@@ -150,7 +150,7 @@
                                     <div class="row">
                                         <div class="col-md-3 form-group">
                                             <label>Date of Birth</label>
-                                            <input type="date" class="form-control" name="date_of_birth" value="{{ old('date_of_birth', $student->date_of_birth) }}" required>
+                                            <input type="date" class="form-control" name="date_of_birth" value="{{ old('date_of_birth', $student->date_of_birth ? \Carbon\Carbon::parse($student->date_of_birth)->format('Y-m-d') : '') }}" required>
                                         </div>
                                         <div class="col-md-3 form-group">
                                             <label>Gender</label>

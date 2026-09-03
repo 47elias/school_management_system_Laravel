@@ -205,6 +205,8 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/fees/history', [FeeController::class, 'index'])->name('fees.index');
     Route::get('/fees/structure', [FeeController::class, 'showStructure'])->name('fees.structure');
     Route::post('/fees/structure', [FeeController::class, 'storeStructure'])->name('fees.structure.store');
+    Route::post('/fees/structure/bulk', [FeeController::class, 'bulkStoreStructure'])->name('fees.structure.bulkStore');
+    Route::post('/fees/structure/process-invoices', [FeeController::class, 'processInvoices'])->name('fees.structure.process_invoices');
     Route::get('/fees/balance-report', [FeeController::class, 'balanceReport'])->name('fees.report');
     Route::get('/fees/{id}', [App\Http\Controllers\FeeController::class, 'show'])->name('fees.show');
     Route::delete('/fees/{id}', [FeeController::class, 'destroy'])->name('fees.destroy');
@@ -212,12 +214,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::post('/fees/deduct-credit/{id}', [App\Http\Controllers\FeeController::class, 'deductCredit'])->name('fees.deduct_credit');
     Route::post('/fees/pay-online', [FeeController::class, 'payOnline'])->name('fees.payOnline');
     // Paynow calls this server-to-server to confirm payment status — must be public, no auth/CSRF
-    Route::post('/fees/pay-online/result', [FeeController::class, 'payOnlineResult'])
-        ->name('fees.payOnline.result')
-        ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+    Route::post('/fees/pay-online/result', [FeeController::class, 'payOnlineResult'])->name('fees.payOnline.result')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
     // Paynow redirects the payer's browser back here after they pay
-    Route::get('/fees/pay-online/return/{feeTransaction}', [FeeController::class, 'payOnlineReturn'])
-    ->name('fees.payOnline.return');
+    Route::get('/fees/pay-online/return/{feeTransaction}', [FeeController::class, 'payOnlineReturn'])->name('fees.payOnline.return');
 
     Route::get('/settings/change-password', [DashboardController::class, 'showChangePassword'])->name('admin.change_password');
     Route::post('/settings/update-password', [DashboardController::class, 'updatePassword'])->name('admin.update_password');

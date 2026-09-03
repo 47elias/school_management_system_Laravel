@@ -170,30 +170,38 @@ class StudentController extends Controller
             return DB::transaction(function () use ($validatedData) {
                 $schoolClass = SchoolClass::where('class_name', $validatedData['grade'])->first();
 
+                // Generate Unique Student Number (e.g., STU20260001)
+                $studentCount = Student::count() + 1;
+                $studentNumber = env('SCHOOL_ACRONYM') . date('Y') . str_pad($studentCount, 4, '0', STR_PAD_LEFT);
+
+                // Generate a default email address based on name
+                $generatedEmail = strtolower(substr($validatedData['name'], 0, 1) . $validatedData['surname']) . $studentCount . '@student.local';
+
                 $studentData = $validatedData;
                 $studentData['class_id'] = $schoolClass ? $schoolClass->id : null;
                 $studentData['status'] = 'active';
                 $studentData['enrollment_date'] = now();
-
-                // Map emergency_contact to parent_contact for DB consistency
                 $studentData['parent_contact'] = $validatedData['emergency_contact'];
-
-                // Calculate age from date_of_birth for the 'age' integer column
                 $studentData['age'] = Carbon::parse($validatedData['date_of_birth'])->age;
+                
+                // Assign generated values
+                $studentData['student_number'] = $studentNumber;
+                $studentData['email'] = $generatedEmail;
 
                 $student = Student::create($studentData);
 
                 User::create([
                     'name'        => $validatedData['name'] . ' ' . $validatedData['surname'],
-                    'email'       => $student->email,
+                    'email'       => $generatedEmail,
                     'national_id' => $validatedData['national_id'],
                     'ec_number'   => $validatedData['national_id'],
-                    'password'    => Hash::make($validatedData['national_id']),
+                    // Password matches UI description: lowercase surname + 123
+                    'password'    => Hash::make(strtolower($validatedData['surname']) . '123'),
                     'role'        => 'student',
                     'base_salary' => 0,
                 ]);
 
-                return redirect()->route('students.index')->with('success', "Registration successful: {$student->name} {$student->surname}");
+                return redirect()->route('students.index')->with('success', "Registration successful: {$student->name} {$student->surname} (ID: {$studentNumber})");
             });
         } catch (Exception $e) {
             return back()->withInput()->with('error', 'Error creating student: ' . $e->getMessage());
@@ -508,7 +516,7 @@ class StudentController extends Controller
         $student = Student::findOrFail($id);
 
         // Check if face_path exists and file is on disk
-        if ($student->face_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($student->face_path)) {
+        if ($student->face_path && Storage::disk('public')->exists($student->face_path)) {
             return response()->file(storage_path('app/public/' . $student->face_path));
         }
 
