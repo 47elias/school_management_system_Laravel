@@ -343,6 +343,47 @@ class FeeController extends Controller
         return view('fees.create', compact('students', 'terms'));
     }
 
+    public function bulkStoreStructure(Request $request)
+    {
+        $request->validate([
+            'term_id'  => 'required|exists:terms,id',
+            'grades'   => 'required|array',
+            'fee_name' => 'required|string|max:255',
+            'amount'   => 'required|numeric|min:0',
+        ]);
+
+        $termId = $request->term_id;
+        $feeName = $request->fee_name;
+        $amount = $request->amount;
+
+        $insertedCount = 0;
+
+        foreach ($request->grades as $grade) {
+            // Optional: Prevent duplicate identical fees for the same grade/term
+            $exists = FeeStructure::where('term_id', $termId)
+                ->where('grade', $grade)
+                ->where('fee_name', $feeName)
+                ->whereNull('student_id')
+                ->exists();
+
+            if (!$exists) {
+                FeeStructure::create([
+                    'term_id'  => $termId,
+                    'grade'    => $grade,
+                    'fee_name' => $feeName,
+                    'amount'   => $amount,
+                ]);
+                $insertedCount++;
+            }
+        }
+
+        if ($insertedCount > 0) {
+            return back()->with('success', "Successfully applied {$feeName} to {$insertedCount} classes.");
+        }
+
+        return back()->with('info', "No new fees were added. They might already exist for the selected classes.");
+    }
+
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -469,4 +510,63 @@ class FeeController extends Controller
                 : 'We\'re waiting for confirmation from Paynow. Refresh in a moment.'
         );
     }
+    public function processInvoices(Request $request)
+    {
+        $request->validate(['term_id' => 'required|exists:terms,id']);
+        $term = Term::findOrFail($request->term_id);
+
+        $structures = FeeStructure::where('term_id', $term->id)->get();
+        
+        // Only charge active students
+        $students = Student::where('status', 'active')->get();
+
+        $chargedCount = 0;
+        $skippedCount = 0;
+
+        foreach ($students as $student) {
+            
+            // 1. Prevent Double Charging: Check if a system charge already exists for this term
+            $alreadyCharged = Payment::where('student_id', $student->id)
+                ->where('term_id', $term->id)
+                ->where('amount_paid', '<', 0) // Charges are negative in the ledger
+                ->where('payment_method', 'Term Invoice')
+                ->exists();
+
+            if ($alreadyCharged) {
+                $skippedCount++;
+                continue;
+            }
+
+            // 2. Calculate Total Term Fee
+            $gradeFees = $structures->where('grade', $student->grade)->whereNull('student_id')->sum('amount');
+            $specialFees = $structures->where('student_id', $student->id)->sum('amount');
+            $totalTermFee = $gradeFees + $specialFees;
+
+            // 3. Apply the Charge
+            if ($totalTermFee > 0) {
+                
+                // Insert the charge into the ledger as a negative payment
+                Payment::create([
+                    'student_id'     => $student->id,
+                    'term_id'        => $term->id,
+                    'amount_paid'    => -$totalTermFee, // Negative posts it to the Charge (Dr) column
+                    'payment_date'   => now(),
+                    'payment_method' => 'Term Invoice', // Identifies it as a system charge
+                    'remarks'        => 'Term Fees Charged (' . $term->term_name . ')',
+                    'reference_no'   => 'INV-' . $term->id . '-' . $student->id
+                ]);
+
+                // Update the student's running total (if your system tracks it directly on the student table)
+                if (isset($student->expected_total)) {
+                    $student->expected_total += $totalTermFee;
+                    $student->save();
+                }
+
+                $chargedCount++;
+            }
+        }
+
+        return back()->with('success', "Invoicing Complete: {$chargedCount} students charged successfully. ({$skippedCount} skipped to prevent double-billing).");
+    }
+
 }
