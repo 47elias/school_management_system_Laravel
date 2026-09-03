@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Models\Payment;
 use App\Models\Student;
 use App\Models\Term;
@@ -12,7 +13,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Paynow\Payments\Paynow;
-
 
 class FeeController extends Controller
 {
@@ -173,17 +173,32 @@ class FeeController extends Controller
 
         $students = $query->get();
 
-        $report = $students->map(function ($student) use ($currentTerm) {
-            $pastExpected = FeeStructure::where('term_id', '!=', $currentTerm->id)
-                ->where('term_id', '>=', $student->term_id)
-                ->where(function($q) use ($student) {
-                    $q->where('student_id', $student->id)
-                      ->orWhere(function($sq) use ($student) {
-                          $sq->where('grade', $student->grade)->whereNull('student_id');
-                      });
-                })->sum('amount');
+        // N+1 Optimization: Load all relevant structures and payments into memory once
+        $studentIds = $students->pluck('id');
+        $studentGrades = $students->pluck('grade')->unique();
 
-            $pastPaid = Payment::where('student_id', $student->id)
+        $allPayments = Payment::whereIn('student_id', $studentIds)->get()->groupBy('student_id');
+        
+        $allFeeStructures = FeeStructure::whereIn('student_id', $studentIds)
+            ->orWhere(function($q) use ($studentGrades) {
+                $q->whereIn('grade', $studentGrades)->whereNull('student_id');
+            })->get();
+
+        $report = $students->map(function ($student) use ($currentTerm, $allPayments, $allFeeStructures) {
+            
+            // Filter collections in memory for this specific student
+            $studentPayments = $allPayments->get($student->id, collect());
+            
+            $studentFees = $allFeeStructures->filter(function($fee) use ($student) {
+                return $fee->student_id == $student->id || ($fee->student_id === null && $fee->grade == $student->grade);
+            });
+
+            $pastExpected = $studentFees
+                ->where('term_id', '!=', $currentTerm->id)
+                ->where('term_id', '>=', $student->term_id)
+                ->sum('amount');
+
+            $pastPaid = $studentPayments
                 ->where('term_id', '!=', $currentTerm->id)
                 ->sum('amount_paid');
 
@@ -191,16 +206,12 @@ class FeeController extends Controller
 
             $termRawExpected = 0;
             if ($currentTerm->id >= $student->term_id) {
-                $termRawExpected = FeeStructure::where('term_id', $currentTerm->id)
-                    ->where(function($q) use ($student) {
-                        $q->where('student_id', $student->id)
-                          ->orWhere(function($sq) use ($student) {
-                              $sq->where('grade', $student->grade)->whereNull('student_id');
-                          });
-                    })->sum('amount');
+                $termRawExpected = $studentFees
+                    ->where('term_id', $currentTerm->id)
+                    ->sum('amount');
             }
 
-            $termPaid = Payment::where('student_id', $student->id)
+            $termPaid = $studentPayments
                 ->where('term_id', $currentTerm->id)
                 ->sum('amount_paid');
 
@@ -304,9 +315,24 @@ class FeeController extends Controller
         return back()->with('success', 'Fee item removed.');
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $payments = Payment::with(['student', 'term'])->orderBy('payment_date', 'desc')->paginate(20);
+        $query = Payment::with(['student', 'term'])->orderBy('payment_date', 'desc');
+
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->whereHas('student', function($sq) use ($search) {
+                    $sq->where('name', 'like', "%{$search}%")
+                       ->orWhere('surname', 'like', "%{$search}%")
+                       ->orWhere('student_number', 'like', "%{$search}%");
+                })->orWhere('reference_no', 'like', "%{$search}%");
+            });
+        }
+
+        // Keep search parameter in pagination links
+        $payments = $query->paginate(20)->appends($request->all());
+        
         return view('fees.index', compact('payments'));
     }
 
@@ -433,7 +459,7 @@ class FeeController extends Controller
 
     public function payOnlineReturn(FeeTransaction $feeTransaction)
     {
-        return view('fees.collect', [
+        return view('fees.create', [
             'students' => Student::all(),
             'terms'    => Term::all(),
         ])->with(

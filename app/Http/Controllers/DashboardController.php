@@ -8,12 +8,15 @@ use App\Models\Exam;
 use App\Models\Subject;
 use App\Models\User;
 use App\Models\Mark;
-use App\Models\InventoryStock; // Added
-use App\Models\InventoryItem;  // Added
+use App\Models\InventoryStock;
+use App\Models\InventoryItem;
+use App\Models\Payment;
+use App\Models\Expense;
+use App\Models\Payslip;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon; // Added
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -22,11 +25,14 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        // Statistics
-        $studentCount = Student::count();
-        $examCount = Exam::count();
-        $subjectCount = Subject::count();
-        $userCount = User::count();
+        // Core Statistics
+        $studentCount = Student::count();$examCount = Exam::count();
+        $subjectCount = Subject::count();$userCount = User::count();
+
+        // Financial Metrics for Dashboard
+        $totalRevenue = Payment::sum('amount_paid');$totalGeneralExpenses = Expense::sum('amount');
+        $totalSalaries = Payslip::sum('net_salary');$totalExpenses = $totalGeneralExpenses +$totalSalaries;
+        $netBalance = $totalRevenue -$totalExpenses;
 
         $recentExams = Exam::with('subject')->orderBy('exam_date', 'desc')->take(5)->get();
 
@@ -37,10 +43,9 @@ class DashboardController extends Controller
             ->get();
 
         // Performance Chart Data
-        $passCount = Mark::where('score', '>=', 50)->count();
-        $failCount = Mark::where('score', '<', 50)->count();
+        $passCount = Mark::where('score', '>=', 50)->count();$failCount = Mark::where('score', '<', 50)->count();
 
-        // NEW: Weekly Stock Issuance Data (Last 7 Days)
+        // Weekly Stock Issuance Data (Last 7 Days)
         $days = collect(range(6, 0))->map(function($i) {
             return Carbon::now()->subDays($i)->format('D');
         });
@@ -51,7 +56,7 @@ class DashboardController extends Controller
                 ->sum('quantity');
         });
 
-        // NEW: Top 5 Most Issued Items
+        // Top 5 Most Issued Items
         $topIssuedItems = InventoryStock::with('item')
             ->select('inventory_item_id', DB::raw('SUM(quantity) as total_issued'))
             ->where('type', 'out')
@@ -62,6 +67,7 @@ class DashboardController extends Controller
 
         return view('dashboard', compact(
             'studentCount', 'examCount', 'subjectCount', 'userCount',
+            'totalRevenue', 'totalExpenses', 'netBalance',
             'recentExams', 'gradesData', 'passCount', 'failCount',
             'days', 'stockOutData', 'topIssuedItems'
         ));
@@ -72,13 +78,13 @@ class DashboardController extends Controller
      */
     public function editProfile()
     {
-        $admin = Auth::user(); // Fixed to use Static Facade
+        $admin = Auth::user(); 
         return view('settings.profile', compact('admin'));
     }
 
     public function updateProfile(Request $request)
     {
-        $admin = Auth::user(); // Fixed to use Static Facade
+        $admin = Auth::user();
 
         $request->validate([
             'name'  => 'required|string|max:255',
@@ -98,7 +104,7 @@ class DashboardController extends Controller
      */
     public function showChangePassword()
     {
-        return view('settings.change_password');
+        return view('settings.change-password');
     }
 
     public function updatePassword(Request $request)
@@ -108,14 +114,13 @@ class DashboardController extends Controller
             'password' => 'required|min:8|confirmed',
         ]);
 
-        $admin = Auth::user(); // Fixed to use Static Facade
+        $admin = Auth::user();
 
-        if (!Hash::check($request->old_password, $admin->password)) {
+        if (!Hash::check($request->old_password,$admin->password)) {
             return back()->withErrors(['old_password' => 'The current password you entered is incorrect.']);
         }
 
-        $admin->password = Hash::make($request->password);
-        $admin->save();
+        $admin->password = Hash::make($request->password);$admin->save();
 
         return back()->with('success', 'Admin password updated successfully!');
     }
