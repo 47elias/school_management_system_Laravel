@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jul 28, 2026 at 09:32 AM
+-- Generation Time: Sep 03, 2026 at 11:08 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -20,6 +20,43 @@ SET time_zone = "+00:00";
 --
 -- Database: `sit`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `activity_log`
+--
+
+CREATE TABLE `activity_log` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `log_name` varchar(255) DEFAULT NULL,
+  `description` text NOT NULL,
+  `subject_type` varchar(255) DEFAULT NULL,
+  `event` varchar(255) DEFAULT NULL,
+  `subject_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `causer_type` varchar(255) DEFAULT NULL,
+  `causer_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `properties` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`properties`)),
+  `batch_uuid` char(36) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `activity_marks`
+--
+
+CREATE TABLE `activity_marks` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `class_activity_id` bigint(20) UNSIGNED NOT NULL,
+  `student_id` bigint(20) UNSIGNED NOT NULL,
+  `score` decimal(6,2) NOT NULL,
+  `comment` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -81,6 +118,27 @@ CREATE TABLE `cache_locks` (
   `key` varchar(255) NOT NULL,
   `owner` varchar(255) NOT NULL,
   `expiration` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `class_activities`
+--
+
+CREATE TABLE `class_activities` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `subject_assignment_id` bigint(20) UNSIGNED NOT NULL,
+  `term_id` bigint(20) UNSIGNED NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `type` enum('classwork','homework','quiz','participation','practical','project','other') NOT NULL DEFAULT 'classwork',
+  `activity_date` date NOT NULL,
+  `max_score` smallint(5) UNSIGNED NOT NULL DEFAULT 100,
+  `weight` decimal(5,2) NOT NULL DEFAULT 1.00,
+  `notes` text DEFAULT NULL,
+  `created_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -215,6 +273,29 @@ INSERT INTO `fee_structures` (`id`, `fee_name`, `amount`, `grade`, `term_id`, `c
 (59, 'fees', 150.00, 'Form 1', 2, '2026-02-07 15:16:25', '2026-02-07 15:16:25', NULL),
 (60, 'fees', 150.00, 'Form 1', 3, '2026-02-07 15:18:18', '2026-02-07 15:18:18', NULL),
 (62, 'School Fees', 160.00, 'Form 2', 3, '2026-02-09 10:54:12', '2026-02-09 10:54:12', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `fee_transactions`
+--
+
+CREATE TABLE `fee_transactions` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `student_id` bigint(20) UNSIGNED NOT NULL,
+  `term_id` bigint(20) UNSIGNED NOT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `channel` varchar(255) NOT NULL,
+  `status` varchar(255) NOT NULL DEFAULT 'pending',
+  `poll_url` text DEFAULT NULL,
+  `paynow_reference` varchar(255) DEFAULT NULL,
+  `payer_phone` varchar(255) DEFAULT NULL,
+  `payer_email` varchar(255) DEFAULT NULL,
+  `remarks` text DEFAULT NULL,
+  `payment_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -385,7 +466,13 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (52, '2026_03_05_095050_add_special_type_to_timetables_table', 40),
 (53, '2026_06_18_105852_create_exam_attendances_table', 41),
 (54, '2026_06_20_150554_add_face_path_to_students_table', 42),
-(55, '2026_06_20_153001_add_face_descriptor_to_students_table', 43);
+(55, '2026_06_20_153001_add_face_descriptor_to_students_table', 43),
+(56, '2026_07_28_074018_fees_transactions', 44),
+(57, '2026_08_25_120000_create_class_activities_table', 44),
+(58, '2026_08_25_120001_create_activity_marks_table', 44),
+(59, '2026_08_25_125946_create_activity_log_table', 44),
+(60, '2026_08_25_125947_add_event_column_to_activity_log_table', 44),
+(61, '2026_08_25_125948_add_batch_uuid_column_to_activity_log_table', 44);
 
 -- --------------------------------------------------------
 
@@ -495,7 +582,7 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('oQOGImFFybIzxZOsOJDNR8hxgAziKpSlcvJ0eR2K', 5, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiUVR4QnpTclk1aEI5OGdpYXl0bEZwSmV5RDUyc2FUY3ZZZEI4N2hUdiI7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6MzQ6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9mZWVzL3BheW1lbnQiO3M6NToicm91dGUiO3M6MTE6ImZlZXMuY3JlYXRlIjt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6NTt9', 1785223118);
+('11wNUarseKf1w340ds8OvMB171DdwqL7lLEge0Yr', 5, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiWGpROTB3SVZLYkJOaTRCaEJRc05ZTllDalRwSG1vQWhLTjU4MU52eSI7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6MzQ6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9mZWVzL2hpc3RvcnkiO3M6NToicm91dGUiO3M6MTA6ImZlZXMuaW5kZXgiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX1zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aTo1O30=', 1788426167);
 
 -- --------------------------------------------------------
 
@@ -699,6 +786,23 @@ INSERT INTO `users` (`id`, `dob`, `employee_id`, `name`, `email`, `national_id`,
 --
 
 --
+-- Indexes for table `activity_log`
+--
+ALTER TABLE `activity_log`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `subject` (`subject_type`,`subject_id`),
+  ADD KEY `causer` (`causer_type`,`causer_id`),
+  ADD KEY `activity_log_log_name_index` (`log_name`);
+
+--
+-- Indexes for table `activity_marks`
+--
+ALTER TABLE `activity_marks`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `activity_marks_unique` (`class_activity_id`,`student_id`),
+  ADD KEY `activity_marks_student_id_index` (`student_id`);
+
+--
 -- Indexes for table `admissions`
 --
 ALTER TABLE `admissions`
@@ -717,6 +821,15 @@ ALTER TABLE `cache`
 --
 ALTER TABLE `cache_locks`
   ADD PRIMARY KEY (`key`);
+
+--
+-- Indexes for table `class_activities`
+--
+ALTER TABLE `class_activities`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `class_activities_term_id_foreign` (`term_id`),
+  ADD KEY `class_activities_created_by_foreign` (`created_by`),
+  ADD KEY `class_activities_lookup_idx` (`subject_assignment_id`,`term_id`,`activity_date`);
 
 --
 -- Indexes for table `class_subject`
@@ -764,6 +877,15 @@ ALTER TABLE `fee_structures`
   ADD PRIMARY KEY (`id`),
   ADD KEY `fee_structures_term_id_foreign` (`term_id`),
   ADD KEY `fee_structures_student_id_foreign` (`student_id`);
+
+--
+-- Indexes for table `fee_transactions`
+--
+ALTER TABLE `fee_transactions`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fee_transactions_student_id_foreign` (`student_id`),
+  ADD KEY `fee_transactions_term_id_foreign` (`term_id`),
+  ADD KEY `fee_transactions_payment_id_foreign` (`payment_id`);
 
 --
 -- Indexes for table `inventory_items`
@@ -903,10 +1025,28 @@ ALTER TABLE `users`
 --
 
 --
+-- AUTO_INCREMENT for table `activity_log`
+--
+ALTER TABLE `activity_log`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `activity_marks`
+--
+ALTER TABLE `activity_marks`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `admissions`
 --
 ALTER TABLE `admissions`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT for table `class_activities`
+--
+ALTER TABLE `class_activities`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `class_subject`
@@ -945,6 +1085,12 @@ ALTER TABLE `fee_structures`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=63;
 
 --
+-- AUTO_INCREMENT for table `fee_transactions`
+--
+ALTER TABLE `fee_transactions`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `inventory_items`
 --
 ALTER TABLE `inventory_items`
@@ -972,7 +1118,7 @@ ALTER TABLE `marks`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=62;
 
 --
 -- AUTO_INCREMENT for table `payments`
@@ -1039,6 +1185,21 @@ ALTER TABLE `users`
 --
 
 --
+-- Constraints for table `activity_marks`
+--
+ALTER TABLE `activity_marks`
+  ADD CONSTRAINT `activity_marks_class_activity_id_foreign` FOREIGN KEY (`class_activity_id`) REFERENCES `class_activities` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `activity_marks_student_id_foreign` FOREIGN KEY (`student_id`) REFERENCES `students` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `class_activities`
+--
+ALTER TABLE `class_activities`
+  ADD CONSTRAINT `class_activities_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `class_activities_subject_assignment_id_foreign` FOREIGN KEY (`subject_assignment_id`) REFERENCES `subject_assignments` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `class_activities_term_id_foreign` FOREIGN KEY (`term_id`) REFERENCES `terms` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `class_subject`
 --
 ALTER TABLE `class_subject`
@@ -1067,6 +1228,14 @@ ALTER TABLE `exam_attendances`
 ALTER TABLE `fee_structures`
   ADD CONSTRAINT `fee_structures_student_id_foreign` FOREIGN KEY (`student_id`) REFERENCES `students` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fee_structures_term_id_foreign` FOREIGN KEY (`term_id`) REFERENCES `terms` (`id`);
+
+--
+-- Constraints for table `fee_transactions`
+--
+ALTER TABLE `fee_transactions`
+  ADD CONSTRAINT `fee_transactions_payment_id_foreign` FOREIGN KEY (`payment_id`) REFERENCES `payments` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fee_transactions_student_id_foreign` FOREIGN KEY (`student_id`) REFERENCES `students` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fee_transactions_term_id_foreign` FOREIGN KEY (`term_id`) REFERENCES `terms` (`id`);
 
 --
 -- Constraints for table `inventory_stocks`
