@@ -1,6 +1,53 @@
 @extends('layouts.student')
 
 @section('content')
+{{-- 1. DATA PREPARATION: Calculate Active Term Balance --}}
+@php
+    // Identify the active term
+    $activeTerm = $currentTerm ?? \App\Models\Term::where('is_current', true)->first();
+    
+    $activeTermBalance = 0;
+    $paymentPercentage = 0;
+    $totalDue = 0;
+    $carriedForward = 0;
+
+    if ($activeTerm) {
+        // Calculate Arrears (Brought Forward)
+        $pastTransactions = \App\Models\Payment::where('student_id', $student->id)
+            ->whereHas('term', function($q) use ($activeTerm) {
+                $q->where('start_date', '<', $activeTerm->start_date);
+            })->get();
+
+        foreach($pastTransactions as $pt) {
+            $carriedForward += ($pt->amount_paid < 0) ? abs($pt->amount_paid) : -$pt->amount_paid;
+        }
+
+        // Get Current Term Transactions
+        $termTransactions = \App\Models\Payment::where('student_id', $student->id)
+            ->where('term_id', $activeTerm->id)
+            ->get();
+
+        $termCharges = $termTransactions->where('amount_paid', '<', 0)->sum(function($q) { return abs($q->amount_paid); });
+        $termPayments = $termTransactions->where('amount_paid', '>', 0)->sum('amount_paid');
+
+        // The exact balance for this specific term (excluding arrears)
+        $activeTermBalance = $termCharges - $termPayments;
+        
+        // The total amount they owe right now (Arrears + Active Term Balance)
+        $totalDue = $carriedForward + $activeTermBalance;
+
+        // Calculate progress percentage for the active term's fees
+        if ($termCharges > 0) {
+            $paymentPercentage = ($termPayments / $termCharges) * 100;
+            $paymentPercentage = min(100, max(0, $paymentPercentage));
+        } else {
+            $paymentPercentage = 100;
+        }
+    } else {
+        $totalDue = $calculatedBalance ?? 0;
+    }
+@endphp
+
 <section class="content-header">
     <h1>
         Academic Portal
@@ -17,7 +64,7 @@
     <div class="row">
         {{-- GRADE BOX --}}
         <div class="col-md-3 col-sm-6 col-xs-12">
-            <div class="info-box bg-aqua">
+            <div class="info-box bg-aqua shadow">
                 <span class="info-box-icon"><i class="fa fa-graduation-cap"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Grade / Level</span>
@@ -28,18 +75,18 @@
             </div>
         </div>
 
-        {{-- FEE STATUS BOX --}}
+        {{-- ACTIVE TERM BALANCE BOX --}}
         <div class="col-md-3 col-sm-6 col-xs-12">
-            <div class="info-box {{ $calculatedBalance > 0 ? 'bg-red' : 'bg-green' }}">
+            <div class="info-box {{ $totalDue > 0 ? 'bg-red' : 'bg-green' }} shadow">
                 <span class="info-box-icon"><i class="fa fa-money"></i></span>
                 <div class="info-box-content">
-                    <span class="info-box-text">Fee Balance</span>
-                    <span class="info-box-number">{{ env('CURRENCY_SYMBOL') }}{{ number_format($calculatedBalance, 2) }}</span>
+                    <span class="info-box-text" title="Includes Arrears + Current Term">Total Due Balance</span>
+                    <span class="info-box-number">{{ env('CURRENCY_SYMBOL', '$') }}{{ number_format($totalDue, 2) }}</span>
                     <div class="progress">
                         <div class="progress-bar" style="width: {{ $paymentPercentage }}%"></div>
                     </div>
                     <span class="progress-description">
-                        {{ number_format($paymentPercentage, 0) }}% Cleared
+                        {{ number_format($paymentPercentage, 0) }}% Term Cleared
                     </span>
                 </div>
             </div>
@@ -47,21 +94,20 @@
 
         {{-- TERM BOX --}}
         <div class="col-md-3 col-sm-6 col-xs-12">
-            <div class="info-box bg-yellow">
+            <div class="info-box bg-yellow shadow">
                 <span class="info-box-icon"><i class="fa fa-calendar-check-o"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Active Term</span>
-                    {{-- Priority logic: uses current term or fallbacks to student's assigned term --}}
-                    <span class="info-box-number">{{ $currentTerm->term_name ?? $student->term->name ?? 'N/A' }}</span>
+                    <span class="info-box-number">{{ $activeTerm->term_name ?? 'N/A' }}</span>
                     <div class="progress"><div class="progress-bar" style="width: 100%"></div></div>
-                    <span class="progress-description">Academic Year {{ date('Y') }}</span>
+                    <span class="progress-description">Academic Year {{ $activeTerm->academic_year ?? date('Y') }}</span>
                 </div>
             </div>
         </div>
 
         {{-- PERFORMANCE BOX --}}
         <div class="col-md-3 col-sm-6 col-xs-12">
-            <div class="info-box bg-purple">
+            <div class="info-box bg-purple shadow">
                 <span class="info-box-icon"><i class="fa fa-line-chart"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">Academic Status</span>
@@ -81,11 +127,11 @@
         {{-- LEFT COLUMN: PROFILE --}}
         <div class="col-md-3">
             {{-- Profile Image Box --}}
-            <div class="box box-primary">
+            <div class="box box-primary shadow">
                 <div class="box-body box-profile">
                     <div style="position: relative; text-align: center;">
                         <img class="profile-user-img img-responsive img-circle"
-                             src="{{ asset($avatar) }}"
+                             src="{{ asset($avatar ?? '') }}"
                              onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($student->name) }}&background=3c8dbc&color=fff'"
                              alt="Student profile"
                              style="width: 100px; height: 100px; object-fit: cover;">
@@ -114,7 +160,7 @@
             </div>
 
             {{-- School Contact Box --}}
-            <div class="box box-solid">
+            <div class="box box-solid shadow">
                 <div class="box-header with-border">
                     <h3 class="box-title text-bold">Campus Info</h3>
                 </div>
@@ -133,7 +179,7 @@
 
         {{-- RIGHT COLUMN: CONTENT TABS --}}
         <div class="col-md-9">
-            <div class="nav-tabs-custom">
+            <div class="nav-tabs-custom shadow">
                 <ul class="nav nav-tabs">
                     <li class="active"><a href="#activity" data-toggle="tab"><i class="fa fa-clock-o"></i> Timeline</a></li>
                     <li><a href="#personal" data-toggle="tab"><i class="fa fa-user"></i> Full Profile</a></li>
@@ -147,19 +193,19 @@
 
                             {{-- Finance Timeline Item --}}
                             <li>
-                                <i class="fa fa-money bg-{{ $calculatedBalance > 0 ? 'red' : 'green' }}"></i>
+                                <i class="fa fa-money bg-{{ $totalDue > 0 ? 'red' : 'green' }}"></i>
                                 <div class="timeline-item">
                                     <span class="time"><i class="fa fa-clock-o"></i> {{ date('H:i') }}</span>
                                     <h3 class="timeline-header text-bold"><a href="#">Financial Overview</a></h3>
                                     <div class="timeline-body">
-                                        Your current account balance for the active term is
-                                        <span class="text-{{ $calculatedBalance > 0 ? 'red' : 'green' }} text-bold">
-                                            {{ env('CURRENCY_SYMBOL') }}{{ number_format($calculatedBalance, 2) }}
+                                        Your total due balance for the active term (including any arrears) is 
+                                        <span class="text-{{ $totalDue > 0 ? 'red' : 'green' }} text-bold">
+                                            {{ env('CURRENCY_SYMBOL', '$') }}{{ number_format($totalDue, 2) }}
                                         </span>.
-                                        Please ensure all payments are made before the end of the month.
+                                        Please ensure all payments are made promptly to avoid interruptions.
                                     </div>
                                     <div class="timeline-footer">
-                                        <a href="{{ route('student.fees') }}" class="btn btn-xs btn-default">Details</a>
+                                        <a href="{{ route('student.fees') }}" class="btn btn-xs btn-default">View Full Statement</a>
                                     </div>
                                 </div>
                             </li>
@@ -200,7 +246,7 @@
                                 <i class="fa fa-user-secret"></i>
                             </div>
                             <h4 class="text-bold">Guardian / Next of Kin</h4>
-                            <p class="text-muted">For emergency notifications or payment queries, we contact:</p>
+                            <p class="text-muted">For emergency notifications, academic updates, or payment queries, we contact:</p>
                             <h2 class="text-primary text-bold" style="letter-spacing: 1px;">
                                 {{ $student->parent_contact ?? 'N/A' }}
                             </h2>
@@ -210,7 +256,7 @@
             </div>
 
             {{-- WELCOME CALLOUT --}}
-            <div class="callout callout-info" style="border-left: 5px solid #0073b7 !important; background-color: #f4f7f9 !important; color: #444 !important;">
+            <div class="callout callout-info shadow" style="border-left: 5px solid #0073b7 !important; background-color: #f4f7f9 !important; color: #444 !important;">
                 <h4 class="text-bold text-blue">Welcome back, {{ $student->name }}!</h4>
                 <p>Welcome to the <strong>{{ env('SCHOOL_NAME') }}</strong> Academic Portal. You can track your academic progress, monitor your financial status, and update your personal records here.</p>
             </div>
@@ -219,7 +265,8 @@
 </section>
 
 <style>
-    .info-box-number { font-size: 22px !important; }
+    .info-box-number { font-size: 24px !important; }
+    .shadow { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24) !important; }
     .profile-user-img { border: 3px solid #d2d6de; padding: 3px; transition: all 0.3s ease; }
     .profile-user-img:hover { border-color: #3c8dbc; }
     .nav-tabs-custom > .nav-tabs > li.active { border-top-color: #3c8dbc; }
