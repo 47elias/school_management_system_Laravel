@@ -23,7 +23,7 @@ class FeeController extends Controller
     {
         $student = Student::findOrFail($id);
 
-        $allTerms = Term::orderBy('academic_year', 'desc')->get();
+        $allTerms = Term::orderBy('academic_year', 'desc')->orderBy('start_date', 'desc')->get();
         $selectedTermId = $request->get('term_id');
 
         $term = $selectedTermId
@@ -34,41 +34,35 @@ class FeeController extends Controller
             return back()->with('error', 'Please set an active term first.');
         }
 
-        // 1. CALCULATE CARRY FORWARD
-        $pastExpected = FeeStructure::where('term_id', '!=', $term->id)
-            ->where('term_id', '>=', $student->term_id)
-            ->where(function($q) use ($student) {
-                $q->where('student_id', $student->id)
-                  ->orWhere(function($sq) use ($student) {
-                      $sq->where('grade', $student->grade)->whereNull('student_id');
-                  });
-            })->sum('amount');
+        // 1. CALCULATE CARRY FORWARD (Strictly from the Ledger)
+        $pastTransactions = Payment::where('student_id', $student->id)
+            ->whereHas('term', function($q) use ($term) {
+                $q->where('start_date', '<', $term->start_date);
+            })->get();
 
-        $pastPaid = Payment::where('student_id', $student->id)
-            ->where('term_id', '!=', $term->id)
-            ->sum('amount_paid');
-
-        $carriedForward = (float)$pastExpected - (float)$pastPaid;
-
-        // 2. CURRENT TERM RAW BILLING
-        $termRawExpected = 0;
-        if ($term->id >= $student->term_id) {
-            $termRawExpected = FeeStructure::where('term_id', $term->id)
-                ->where(function($q) use ($student) {
-                    $q->where('student_id', $student->id)
-                      ->orWhere(function($sq) use ($student) {
-                          $sq->where('grade', $student->grade)->whereNull('student_id');
-                      });
-                })->sum('amount');
+        $carriedForward = 0;
+        foreach($pastTransactions as $pt) {
+            if ($pt->amount_paid < 0) {
+                $carriedForward += abs($pt->amount_paid); // Charges increase arrears
+            } else {
+                $carriedForward -= $pt->amount_paid; // Payments reduce arrears
+            }
         }
 
-        $termPaid = Payment::where('student_id', $student->id)
+        // 2. CURRENT TERM LEDGER CALCULATION
+        $termTransactions = Payment::where('student_id', $student->id)
             ->where('term_id', $term->id)
-            ->sum('amount_paid');
+            ->get();
+
+        $termRawExpected = $termTransactions->where('amount_paid', '<', 0)->sum(function($q) { 
+            return abs($q->amount_paid); 
+        });
+        
+        $termPaid = $termTransactions->where('amount_paid', '>', 0)->sum('amount_paid');
 
         // 3. FINAL CALCULATIONS
-        $adjustedTermExpected = (float)$termRawExpected + $carriedForward;
-        $trueBalance = $adjustedTermExpected - (float)$termPaid;
+        $adjustedTermExpected = $termRawExpected + $carriedForward;
+        $trueBalance = $carriedForward + $termRawExpected - $termPaid;
 
         $student->carried_forward = $carriedForward;
         $student->expected_total = $adjustedTermExpected;
@@ -88,7 +82,6 @@ class FeeController extends Controller
 
     /**
      * Handle credit deduction / withdrawal.
-     * Deducts money from the current term pool by recording a negative payment.
      */
     public function deductCredit(Request $request, $id)
     {
@@ -100,11 +93,10 @@ class FeeController extends Controller
             'remarks' => 'nullable|string'
         ]);
 
-        // Create a negative payment record to offset the credit
         Payment::create([
             'student_id' => $student->id,
             'term_id' => $data['term_id'],
-            'amount_paid' => -abs($data['amount']), // Forces the value to be negative
+            'amount_paid' => -abs($data['amount']),
             'payment_date' => now(),
             'payment_method' => 'Credit Withdrawal',
             'reference_no' => 'WD-' . strtoupper(uniqid()),
@@ -173,50 +165,40 @@ class FeeController extends Controller
 
         $students = $query->get();
 
-        // N+1 Optimization: Load all relevant structures and payments into memory once
+        // N+1 Optimization: Load all ledger payments into memory
         $studentIds = $students->pluck('id');
-        $studentGrades = $students->pluck('grade')->unique();
+        $allPayments = Payment::with('term')->whereIn('student_id', $studentIds)->get()->groupBy('student_id');
 
-        $allPayments = Payment::whereIn('student_id', $studentIds)->get()->groupBy('student_id');
-        
-        $allFeeStructures = FeeStructure::whereIn('student_id', $studentIds)
-            ->orWhere(function($q) use ($studentGrades) {
-                $q->whereIn('grade', $studentGrades)->whereNull('student_id');
-            })->get();
-
-        $report = $students->map(function ($student) use ($currentTerm, $allPayments, $allFeeStructures) {
+        $report = $students->map(function ($student) use ($currentTerm, $allPayments) {
             
-            // Filter collections in memory for this specific student
             $studentPayments = $allPayments->get($student->id, collect());
             
-            $studentFees = $allFeeStructures->filter(function($fee) use ($student) {
-                return $fee->student_id == $student->id || ($fee->student_id === null && $fee->grade == $student->grade);
+            // Calculate Carried Forward from Ledger
+            $pastTransactions = $studentPayments->filter(function($p) use ($currentTerm) {
+                return $p->term && $p->term->start_date < $currentTerm->start_date;
             });
 
-            $pastExpected = $studentFees
-                ->where('term_id', '!=', $currentTerm->id)
-                ->where('term_id', '>=', $student->term_id)
-                ->sum('amount');
-
-            $pastPaid = $studentPayments
-                ->where('term_id', '!=', $currentTerm->id)
-                ->sum('amount_paid');
-
-            $carriedForward = (float)$pastExpected - (float)$pastPaid;
-
-            $termRawExpected = 0;
-            if ($currentTerm->id >= $student->term_id) {
-                $termRawExpected = $studentFees
-                    ->where('term_id', $currentTerm->id)
-                    ->sum('amount');
+            $carriedForward = 0;
+            foreach($pastTransactions as $pt) {
+                if ($pt->amount_paid < 0) {
+                    $carriedForward += abs($pt->amount_paid);
+                } else {
+                    $carriedForward -= $pt->amount_paid;
+                }
             }
 
-            $termPaid = $studentPayments
-                ->where('term_id', $currentTerm->id)
-                ->sum('amount_paid');
+            // Current Term calculations
+            $termTransactions = $studentPayments->filter(function($p) use ($currentTerm) {
+                return $p->term_id == $currentTerm->id;
+            });
 
-            $adjustedTermExpected = (float)$termRawExpected + $carriedForward;
-            $trueBalance = $adjustedTermExpected - (float)$termPaid;
+            $termRawExpected = $termTransactions->where('amount_paid', '<', 0)->sum(function($q) { 
+                return abs($q->amount_paid); 
+            });
+            $termPaid = $termTransactions->where('amount_paid', '>', 0)->sum('amount_paid');
+
+            $adjustedTermExpected = $termRawExpected + $carriedForward;
+            $trueBalance = $carriedForward + $termRawExpected - $termPaid;
 
             return (object)[
                 'id'              => $student->id,
@@ -330,7 +312,6 @@ class FeeController extends Controller
             });
         }
 
-        // Keep search parameter in pagination links
         $payments = $query->paginate(20)->appends($request->all());
         
         return view('fees.index', compact('payments'));
@@ -355,11 +336,9 @@ class FeeController extends Controller
         $termId = $request->term_id;
         $feeName = $request->fee_name;
         $amount = $request->amount;
-
         $insertedCount = 0;
 
         foreach ($request->grades as $grade) {
-            // Optional: Prevent duplicate identical fees for the same grade/term
             $exists = FeeStructure::where('term_id', $termId)
                 ->where('grade', $grade)
                 ->where('fee_name', $feeName)
@@ -426,7 +405,6 @@ class FeeController extends Controller
 
         $student = Student::findOrFail($validated['student_id']);
 
-        // Record a pending transaction so the result webhook has something to update
         $transaction = FeeTransaction::create([
             'student_id' => $student->id,
             'term_id'    => $validated['term_id'],
@@ -439,14 +417,15 @@ class FeeController extends Controller
         $paynow = new Paynow(
             config('services.paynow.integration_id'),
             config('services.paynow.integration_key'),
-            route('fees.payOnline.result'),                    // result_url
-            route('fees.payOnline.return', $transaction)        // return_url
+            route('fees.payOnline.result'),
+            route('fees.payOnline.return', $transaction)
         );
 
         $payment = $paynow->createPayment(
             'FEE-' . $transaction->id,
             $validated['payer_email'] ?: $student->parent_email
         );
+        
         $payment->add(
             "School fees - {$student->name} {$student->surname} ({$validated['term_id']})",
             $validated['amount_paid']
@@ -466,17 +445,14 @@ class FeeController extends Controller
         $transaction->update(['poll_url' => $response->pollUrl()]);
 
         if ($validated['online_channel'] === 'ecocash_push') {
-            // No redirect for mobile push — show the USSD instructions instead
             return back()->with('online_success', $response->instructions());
         }
 
-        // Card / payment-link flow — send the payer straight to Paynow
         return redirect($response->redirectLink());
     }
 
     public function payOnlineResult(Request $request)
     {
-        // Paynow posts pollurl/status/hash here — look up by reference and re-poll to confirm
         $reference = str_replace('FEE-', '', $request->input('reference'));
         $transaction = FeeTransaction::findOrFail($reference);
 
@@ -489,13 +465,11 @@ class FeeController extends Controller
 
         if ($status->paid()) {
             $transaction->update(['status' => 'paid']);
-            // TODO: also insert into your existing fees/payments table so it
-            // shows on the student statement alongside cash payments
         } else {
             $transaction->update(['status' => 'failed']);
         }
 
-        return response('OK'); // Paynow just needs a 200
+        return response('OK');
     }
 
     public function payOnlineReturn(FeeTransaction $feeTransaction)
@@ -510,14 +484,17 @@ class FeeController extends Controller
                 : 'We\'re waiting for confirmation from Paynow. Refresh in a moment.'
         );
     }
+
+    /**
+     * Issue Invoices strictly checking if a charge already exists.
+     * Skips students already charged. Does NOT create reversals.
+     */
     public function processInvoices(Request $request)
     {
         $request->validate(['term_id' => 'required|exists:terms,id']);
         $term = Term::findOrFail($request->term_id);
 
         $structures = FeeStructure::where('term_id', $term->id)->get();
-        
-        // Only charge active students
         $students = Student::where('status', 'active')->get();
 
         $chargedCount = 0;
@@ -525,48 +502,43 @@ class FeeController extends Controller
 
         foreach ($students as $student) {
             
-            // 1. Prevent Double Charging: Check if a system charge already exists for this term
+            // 🚨 FOOLPROOF CHECK: Has this student already been billed for THIS term?
+            // This prevents the double-charge shown in your image.
             $alreadyCharged = Payment::where('student_id', $student->id)
                 ->where('term_id', $term->id)
-                ->where('amount_paid', '<', 0) // Charges are negative in the ledger
-                ->where('payment_method', 'Term Invoice')
+                ->where(function($query) {
+                    $query->where('payment_method', 'Term Invoice')
+                          ->orWhere('remarks', 'LIKE', '%Term Fees Charged%');
+                })
                 ->exists();
 
             if ($alreadyCharged) {
+                // If they already have the blue "Term Fees Charged", SKIP them completely!
                 $skippedCount++;
-                continue;
+                continue; 
             }
 
-            // 2. Calculate Total Term Fee
+            // Calculate total fee owed for this term
             $gradeFees = $structures->where('grade', $student->grade)->whereNull('student_id')->sum('amount');
             $specialFees = $structures->where('student_id', $student->id)->sum('amount');
             $totalTermFee = $gradeFees + $specialFees;
 
-            // 3. Apply the Charge
             if ($totalTermFee > 0) {
-                
-                // Insert the charge into the ledger as a negative payment
+                // Post the initial invoice as a negative ledger entry
                 Payment::create([
                     'student_id'     => $student->id,
                     'term_id'        => $term->id,
                     'amount_paid'    => -$totalTermFee, // Negative posts it to the Charge (Dr) column
-                    'payment_date'   => now(),
-                    'payment_method' => 'Term Invoice', // Identifies it as a system charge
+                    'payment_date'   => now()->format('Y-m-d'),
+                    'payment_method' => 'Term Invoice',
                     'remarks'        => 'Term Fees Charged (' . $term->term_name . ')',
                     'reference_no'   => 'INV-' . $term->id . '-' . $student->id
                 ]);
-
-                // Update the student's running total (if your system tracks it directly on the student table)
-                if (isset($student->expected_total)) {
-                    $student->expected_total += $totalTermFee;
-                    $student->save();
-                }
 
                 $chargedCount++;
             }
         }
 
-        return back()->with('success', "Invoicing Complete: {$chargedCount} students charged successfully. ({$skippedCount} skipped to prevent double-billing).");
+        return back()->with('success', "Invoicing Complete: {$chargedCount} students charged successfully. ({$skippedCount} skipped as they were already charged).");
     }
-
 }

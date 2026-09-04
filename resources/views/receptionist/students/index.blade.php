@@ -29,8 +29,7 @@
 </head>
 <body class="hold-transition skin-blue sidebar-mini">
     <div class="wrapper">
-        @include('layouts.topbar')
-        @include('layouts.receptionist_sidebar')
+        @include('layouts.layout_separator')
 
         <div class="content-wrapper">
             {{-- 1. PRIMARY LOGIC: Identify the Active and Displayed Terms --}}

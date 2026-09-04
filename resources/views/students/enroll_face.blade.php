@@ -17,8 +17,7 @@
 </head>
 <body class="hold-transition skin-blue sidebar-mini">
     <div class="wrapper">
-        @include('layouts.topbar')
-        @include('layouts.sidebar')
+        @include('layouts.layout_separator')
 
         <div class="content-wrapper">
             <section class="content-header">

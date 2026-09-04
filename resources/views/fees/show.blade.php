@@ -86,9 +86,7 @@
 </head>
 <body class="hold-transition skin-blue sidebar-mini">
     <div class="wrapper">
-
-        @include('layouts.topbar')
-        @include('layouts.sidebar')
+        @include('layouts.layout_separator')
 
         <div class="content-wrapper">
 
@@ -284,13 +282,14 @@
                                             @endif
 
                                             {{-- 3. Payments and Deductions (Chronological) --}}
-                                            @forelse($student->payments->where('term_id', $displayTerm->id)->sortBy('payment_date') as $payment)
+                                            {{-- NOTE: We are intentionally hiding 'Term Invoice' here so it doesn't print twice --}}
+                                            @forelse($student->payments->where('term_id', $displayTerm->id)->where('payment_method', '!=', 'Term Invoice')->sortBy('payment_date') as $payment)
                                                 @php $runningBalance -= $payment->amount_paid; @endphp
                                                 <tr>
                                                     <td style="color: #475569;">{{ \Carbon\Carbon::parse($payment->payment_date)->format('d M Y') }}</td>
                                                     <td>
                                                         <span style="font-weight: 600; color: #1e293b;">
-                                                            {{ $payment->amount_paid < 0 ? 'Refund / Reversal' : 'Payment' }} ({{ $payment->payment_method }})
+                                                            {{ $payment->payment_method === 'Credit Withdrawal' ? 'Credit Withdrawal' : ($payment->amount_paid < 0 ? 'Adjustment / Reversal' : 'Payment') }} ({{ $payment->payment_method }})
                                                         </span>
                                                         @if($payment->reference_no || $payment->remarks)
                                                             <br>
