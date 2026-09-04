@@ -88,8 +88,7 @@
     </style>
 </head>
 <body class="hold-transition skin-blue sidebar-mini">
-    @include('layouts.topbar')
-    @include('layouts.sidebar')
+    @include('layouts.layout_separator')
 
     <div class="wrapper fee-page">
         <div class="content-wrapper">

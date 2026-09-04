@@ -36,12 +36,12 @@
         </a>
         <ul class="treeview-menu">
           <li class="{{ Request::is('receptionist/students') ? 'active' : '' }}">
-            <a href="{{ route('receptionist.students.index') }}">
-              <i class="fa fa-list"></i> View All Students
+            <a href="{{ route('fees.report') }}">
+              <i class="fa fa-list"></i> Financial Report
             </a>
           </li>
           <li class="{{ Request::is('receptionist/students/create') ? 'active' : '' }}">
-            <a href="{{ route('receptionist.students.create') }}">
+            <a href="{{ route('students.create') }}">
               <i class="fa fa-user-plus"></i> New Admission
             </a>
           </li>
@@ -58,12 +58,12 @@
         </a>
         <ul class="treeview-menu">
           <li class="{{ Request::is('receptionist/payments/create') ? 'active' : '' }}">
-            <a href="{{ route('receptionist.payments.create') }}">
+            <a href="{{ route('fees.create') }}">
               <i class="fa fa-plus"></i> Collect Payment
             </a>
           </li>
           <li class="{{ Request::is('receptionist/payments') ? 'active' : '' }}">
-            <a href="{{ route('receptionist.payments.index') }}">
+            <a href="{{ route('fees.index') }}">
               <i class="fa fa-history"></i> Payment Logs
             </a>
           </li>

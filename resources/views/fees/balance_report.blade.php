@@ -66,13 +66,12 @@
 </head>
 <body class="hold-transition skin-blue sidebar-mini">
 <div class="wrapper">
-    @include('layouts.topbar')
-    @include('layouts.sidebar')
+    @include('layouts.layout_separator')
 
     <div class="content-wrapper">
         {{-- Formal Print Header --}}
         <div class="print-header">
-            <h2 style="margin:0;">{{ env('SCHOOL_NAME', 'Knowledge Planet College') }}</h2>
+            <h2 style="margin:0;">{{ env('SCHOOL_NAME', 'Mukahlera School Management System') }}</h2>
             <h4 style="text-transform: uppercase; letter-spacing: 2px;">Financial Balance Report</h4>
             <p><b>Target Term:</b> {{ $currentTerm->term_name }} | <b>Date:</b> {{ date('d/m/Y H:i') }}</p>
         </div>
