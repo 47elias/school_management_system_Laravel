@@ -210,24 +210,24 @@ Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
     Route::post('/subject-assignments', [SubjectAssignmentController::class, 'store'])->name('subject-assignments.store');
     Route::delete('/subject-assignments/{id}', [SubjectAssignmentController::class, 'destroy'])->name('subject-assignments.destroy');
 
-    Route::get('/terms', [TermController::class, 'index'])->name('terms.index');
-    Route::post('/terms', [TermController::class, 'store'])->name('terms.store');
-    Route::get('/terms/activate/{id}', [TermController::class, 'activate'])->name('terms.activate');
+    Route::get('/terms', [TermController::class, 'index'])->middleware('permission:term_management')->name('terms.index');
+    Route::post('/terms', [TermController::class, 'store'])->middleware('permission:term_management')->name('terms.store');
+    Route::get('/terms/activate/{id}', [TermController::class, 'activate'])->middleware('permission:term_management')->name('terms.activate');
 
     //Fees and Financials Routes
-    Route::get('/fees/payment', [FeeController::class, 'create'])->name('fees.create');
-    Route::post('/fees/payment', [FeeController::class, 'store'])->name('fees.store');
-    Route::get('/fees/history', [FeeController::class, 'index'])->name('fees.index');
-    Route::get('/fees/structure', [FeeController::class, 'showStructure'])->name('fees.structure');
-    Route::post('/fees/structure', [FeeController::class, 'storeStructure'])->name('fees.structure.store');
-    Route::post('/fees/structure/bulk', [FeeController::class, 'bulkStoreStructure'])->name('fees.structure.bulkStore');
-    Route::post('/fees/structure/process-invoices', [FeeController::class, 'processInvoices'])->name('fees.structure.process_invoices');
-    Route::get('/fees/balance-report', [FeeController::class, 'balanceReport'])->name('fees.report');
-    Route::get('/fees/{id}', [App\Http\Controllers\FeeController::class, 'show'])->name('fees.show');
-    Route::delete('/fees/{id}', [FeeController::class, 'destroy'])->name('fees.destroy');
-    Route::delete('/fees/structure/{id}', [App\Http\Controllers\FeeController::class, 'destroyStructure'])->name('fees.structure.destroy');
-    Route::post('/fees/deduct-credit/{id}', [App\Http\Controllers\FeeController::class, 'deductCredit'])->name('fees.deduct_credit');
-    Route::post('/fees/pay-online', [FeeController::class, 'payOnline'])->name('fees.payOnline');
+    Route::get('/fees/payment', [FeeController::class, 'create'])->middleware('permission:manage-fees')->name('fees.create');
+    Route::post('/fees/payment', [FeeController::class, 'store'])->middleware('permission:manage-fees')->name('fees.store');
+    Route::get('/fees/history', [FeeController::class, 'index'])->middleware('permission:manage-fees')->name('fees.index');
+    Route::get('/fees/structure', [FeeController::class, 'showStructure'])->middleware('permission:manage-fees')->name('fees.structure');
+    Route::post('/fees/structure', [FeeController::class, 'storeStructure'])->middleware('permission:manage-fees')->name('fees.structure.store');
+    Route::post('/fees/structure/bulk', [FeeController::class, 'bulkStoreStructure'])->middleware('permission:manage-fees')->name('fees.structure.bulkStore');
+    Route::post('/fees/structure/process-invoices', [FeeController::class, 'processInvoices'])->middleware('permission:manage-fees')->name('fees.structure.process_invoices');
+    Route::get('/fees/balance-report', [FeeController::class, 'balanceReport'])->middleware('permission:manage-fees')->name('fees.report');
+    Route::get('/fees/{id}', [App\Http\Controllers\FeeController::class, 'show'])->middleware('permission:manage-fees')->name('fees.show');
+    Route::delete('/fees/{id}', [FeeController::class, 'destroy'])->middleware('permission:manage-fees')->name('fees.destroy');
+    Route::delete('/fees/structure/{id}', [App\Http\Controllers\FeeController::class, 'destroyStructure'])->middleware('permission:manage-fees')->name('fees.structure.destroy');
+    Route::post('/fees/deduct-credit/{id}', [App\Http\Controllers\FeeController::class, 'deductCredit'])->middleware('permission:manage-fees')->name('fees.deduct_credit');
+    Route::post('/fees/pay-online', [FeeController::class, 'payOnline'])->middleware('permission:manage-fees')->name('fees.payOnline');
     // Paynow calls this server-to-server to confirm payment status — must be public, no auth/CSRF
     Route::post('/fees/pay-online/result', [FeeController::class, 'payOnlineResult'])->name('fees.payOnline.result')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
     // Paynow redirects the payer's browser back here after they pay
@@ -238,48 +238,48 @@ Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
     Route::get('/settings/profile', [DashboardController::class, 'editProfile'])->name('admin.profile');
     Route::post('/settings/profile', [DashboardController::class, 'updateProfile'])->name('admin.update_profile');
 
-    Route::get('/teachers', [TeacherController::class, 'index'])->name('teachers.index');
-    Route::post('/teachers', [TeacherController::class, 'store'])->name('teachers.store');
+    Route::get('/teachers', [TeacherController::class, 'index'])->middleware('permission:manage-users')->name('teachers.index');
+    Route::post('/teachers', [TeacherController::class, 'store'])->middleware('permission:manage-users')->name('teachers.store');
 
-    Route::get('/payroll', [PayrollController::class, 'index'])->name('payroll.index');
-    Route::post('/payroll/store', [PayrollController::class, 'store'])->name('payroll.store');
-    Route::delete('/payroll/{id}', [PayrollController::class, 'destroy'])->name('payroll.destroy');
-    Route::get('/payroll/print/{id}', [PayrollController::class, 'print'])->name('payroll.print');
+    Route::get('/payroll', [PayrollController::class, 'index'])->middleware('permission:manage-payroll')->name('payroll.index');
+    Route::post('/payroll/store', [PayrollController::class, 'store'])->middleware('permission:manage-payroll')->name('payroll.store');
+    Route::delete('/payroll/{id}', [PayrollController::class, 'destroy'])->middleware('permission:manage-payroll')->name('payroll.destroy');
+    Route::get('/payroll/print/{id}', [PayrollController::class, 'print'])->middleware('permission:manage-payroll')->name('payroll.print');
 
     // Main Inventory Dashboard
-    Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
-    Route::get('/inventory/create', [InventoryController::class, 'create'])->name('inventory.create');
-    Route::post('/inventory/store', [InventoryController::class, 'store'])->name('inventory.store');
-    Route::post('/inventory/update-stock', [InventoryController::class, 'updateStock'])->name('inventory.updateStock');
-    Route::get('/inventory/logs', [InventoryController::class, 'logs'])->name('inventory.logs');
-    Route::get('/inventory/{id}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
-    Route::put('/inventory/{id}', [InventoryController::class, 'update'])->name('inventory.update');
-    Route::get('/inventory/alerts', [InventoryController::class, 'lowStockAlerts'])->name('inventory.alerts');
-    Route::delete('/inventory/{id}', [InventoryController::class, 'destroy'])->name('inventory.destroy');
+    Route::get('/inventory', [InventoryController::class, 'index'])->middleware('permission:manage-inventory')->name('inventory.index');
+    Route::get('/inventory/create', [InventoryController::class, 'create'])->middleware('permission:manage-inventory')->name('inventory.create');
+    Route::post('/inventory/store', [InventoryController::class, 'store'])->middleware('permission:manage-inventory')->name('inventory.store');
+    Route::post('/inventory/update-stock', [InventoryController::class, 'updateStock'])->middleware('permission:manage-inventory')->name('inventory.updateStock');
+    Route::get('/inventory/logs', [InventoryController::class, 'logs'])->middleware('permission:manage-inventory')->name('inventory.logs');
+    Route::get('/inventory/{id}/edit', [InventoryController::class, 'edit'])->middleware('permission:manage-inventory')->name('inventory.edit');
+    Route::put('/inventory/{id}', [InventoryController::class, 'update'])->middleware('permission:manage-inventory')->name('inventory.update');
+    Route::get('/inventory/alerts', [InventoryController::class, 'lowStockAlerts'])->middleware('permission:manage-inventory')->name('inventory.alerts');
+    Route::delete('/inventory/{id}', [InventoryController::class, 'destroy'])->middleware('permission:manage-inventory')->name('inventory.destroy');
 
     // Expense Management Routes
     Route::prefix('expenses')->group(function () {
-        Route::get('/', [ExpenseController::class, 'index'])->name('expenses.index');
-        Route::get('/create', [ExpenseController::class, 'create'])->name('expenses.create');
-        Route::post('/store', [ExpenseController::class, 'store'])->name('expenses.store');
-        Route::get('/{id}/edit', [ExpenseController::class, 'edit'])->name('expenses.edit');
-        Route::put('/{id}', [ExpenseController::class, 'update'])->name('expenses.update');
-        Route::delete('/{id}', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
-        Route::get('/categories', [ExpenseController::class, 'categories'])->name('expenses.categories');
+        Route::get('/', [ExpenseController::class, 'index'])->middleware('permission:manage-expenses')->name('expenses.index');
+        Route::get('/create', [ExpenseController::class, 'create'])->middleware('permission:manage-expenses')->name('expenses.create');
+        Route::post('/store', [ExpenseController::class, 'store'])->middleware('permission:manage-expenses')->name('expenses.store');
+        Route::get('/{id}/edit', [ExpenseController::class, 'edit'])->middleware('permission:manage-expenses')->name('expenses.edit');
+        Route::put('/{id}', [ExpenseController::class, 'update'])->middleware('permission:manage-expenses')->name('expenses.update');
+        Route::delete('/{id}', [ExpenseController::class, 'destroy'])->middleware('permission:manage-expenses')->name('expenses.destroy');
+        Route::get('/categories', [ExpenseController::class, 'categories'])->middleware('permission:manage-expenses')->name('expenses.categories');
     });
 
     //Admission Routes for Admin
     Route::prefix('admissions')->group(function () {
-        Route::get('/', [AdmissionController::class, 'manage'])->name('admissions.manage');
-        Route::put('/{id}', [AdmissionController::class, 'update'])->name('admissions.update');
+        Route::get('/', [AdmissionController::class, 'manage'])->middleware('permission:admissions')->name('admissions.manage');
+        Route::put('/{id}', [AdmissionController::class, 'update'])->middleware('permission:admissions')->name('admissions.update');
     });
 
     Route::prefix('administration')->name('roles.')->group(function () {
-        Route::get('/roles', [RolePermissionController::class, 'index'])->name('index');
-        Route::post('/roles', [RolePermissionController::class, 'storeRole'])->name('store_role');
-        Route::post('/permissions', [RolePermissionController::class, 'storePermission'])->name('store_permission');
-        Route::delete('/roles/{id}', [RolePermissionController::class, 'destroyRole'])->name('destroy_role');
-        Route::delete('/permissions/{id}', [RolePermissionController::class, 'destroyPermission'])->name('destroy_permission');
+        Route::get('/roles', [RolePermissionController::class, 'index'])->middleware('permission:manage-users')->name('index');
+        Route::post('/roles', [RolePermissionController::class, 'storeRole'])->middleware('permission:manage-users')->name('store_role');
+        Route::post('/permissions', [RolePermissionController::class, 'storePermission'])->middleware('permission:manage-users')->name('store_permission');
+        Route::delete('/roles/{id}', [RolePermissionController::class, 'destroyRole'])->middleware('permission:manage-users')->name('destroy_role');
+        Route::delete('/permissions/{id}', [RolePermissionController::class, 'destroyPermission'])->middleware('permission:manage-users')->name('destroy_permission');
     });
 
 });
