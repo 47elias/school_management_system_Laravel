@@ -10,8 +10,37 @@
     <ul class="sidebar-menu" data-widget="tree" style="margin-top: 10px;">
       <li class="header" style="color: #64748b; background: transparent; padding: 15px 25px 10px; font-size: 11px; font-weight: 700; letter-spacing: 1px;">MAIN NAVIGATION</li>
 
+      @if(auth()->user()->role === 'admin' || (method_exists(auth()->user(), 'hasRole') && auth()->user()->hasRole('admin')))
+      {{-- NEW: Administration (On Top of Everything Else) --}}
+      <li class="treeview {{ Request::is('roles*') || Request::is('permissions*') || Request::is('teachers*') ? 'active menu-open' : '' }}">
+        <a href="#">
+          <i class="fa fa-shield" style="color: #ef4444;"></i> <span style="font-weight: 600;">Administration</span>
+          <span class="pull-right-container">
+            <i class="fa fa-angle-left pull-right"></i>
+          </span>
+        </a>
+        <ul class="treeview-menu" style="background: #0f172a;">
+          <li class="{{ Request::is('roles*') || Request::is('permissions*') ? 'active' : '' }}">
+            <a href="{{ Route::has('roles.index') ? route('roles.index') : '/roles' }}" style="padding-left: 30px;">
+              <i class="fa fa-key"></i> Roles & Permissions
+            </a>
+          </li>
+          <li class="{{ Request::is('teachers/create') ? 'active' : '' }}">
+            <a href="{{ route('teachers.create') }}" style="padding-left: 30px;">
+              <i class="fa fa-user-plus"></i> Add New Staff
+            </a>
+          </li>
+          <li class="{{ Request::is('teachers') && !Request::is('teachers/create') ? 'active' : '' }}">
+            <a href="{{ route('teachers.index') }}" style="padding-left: 30px;">
+              <i class="fa fa-users"></i> View All Staff
+            </a>
+          </li>
+        </ul>
+      </li>
+      @endif
+
       {{-- Dashboard: Admin vs Teacher --}}
-      @if(auth()->user()->role === 'admin')
+      @if(auth()->user()->role === 'admin' || (method_exists(auth()->user(), 'hasRole') && auth()->user()->hasRole('admin')))
       <li class="{{ Request::is('dashboard*') ? 'active' : '' }}">
         <a href="{{ route('dashboard') }}" style="padding: 12px 20px; border-left-color: #6366f1;">
           <i class="fa fa-th-large" style="color: #818cf8;"></i> <span style="font-weight: 600;">Admin Dashboard</span>
@@ -25,6 +54,7 @@
       </li>
       @endif
 
+      @if(auth()->user()->role === 'admin' || (method_exists(auth()->user(), 'hasRole') && auth()->user()->hasRole('admin')))
       {{-- Payroll Module (Admin Only) --}}
       <li class="treeview {{ Request::is('payroll*') ? 'active' : '' }}">
         <a href="#">
@@ -36,25 +66,6 @@
         <ul class="treeview-menu" style="background: #0f172a;">
           <li class="{{ Request::is('payroll') ? 'active' : '' }}">
             <a href="{{ route('payroll.index') }}" style="padding-left: 30px;"><i class="fa fa-circle-o"></i> Manage Payroll</a>
-          </li>
-        </ul>
-      </li>
-
-      @if(auth()->user()->role === 'admin')
-      {{-- NEW: Manage Staff (Admin, Teacher, Receptionist) --}}
-      <li class="treeview {{ Request::is('teachers*') ? 'active' : '' }}">
-        <a href="#">
-          <i class="fa fa-user-secret" style="color: #38bdf8;"></i> <span style="font-weight: 600;">Manage Staff</span>
-          <span class="pull-right-container">
-            <i class="fa fa-angle-left pull-right"></i>
-          </span>
-        </a>
-        <ul class="treeview-menu" style="background: #0f172a;">
-          <li class="{{ Request::is('teachers/create') ? 'active' : '' }}">
-            <a href="{{ route('teachers.create') }}" style="padding-left: 30px;"><i class="fa fa-plus-circle"></i> Add New Staff</a>
-          </li>
-          <li class="{{ Request::is('teachers') ? 'active' : '' }}">
-            <a href="{{ route('teachers.index') }}" style="padding-left: 30px;"><i class="fa fa-list-ul"></i> View All Staff</a>
           </li>
         </ul>
       </li>
@@ -186,11 +197,11 @@
           </li>
 
           {{-- NEW: Gatekeeper direct jump link --}}
-        <li class="{{ Request::is('teacher/exams/*/verify') ? 'active' : '' }}">
-        <a href="{{ route('exams.index') }}" style="padding-left: 30px;">
-            <i class="fa fa-user-secret text-success"></i> Biometric Gatekeeper
-        </a>
-        </li>
+          <li class="{{ Request::is('teacher/exams/*/verify') ? 'active' : '' }}">
+          <a href="{{ route('exams.index') }}" style="padding-left: 30px;">
+              <i class="fa fa-user-secret text-success"></i> Biometric Gatekeeper
+          </a>
+          </li>
 
           <li><a href="#" style="padding-left: 30px;"><i class="fa fa-circle-o"></i> Exams Report</a></li>
         </ul>
@@ -218,7 +229,7 @@
         </ul>
       </li>
 
-      @if(auth()->user()->role === 'admin')
+      @if(auth()->user()->role === 'admin' || (method_exists(auth()->user(), 'hasRole') && auth()->user()->hasRole('admin')))
       {{-- Fees (Admin Only) --}}
       <li class="treeview {{ Request::is('fees*') ? 'active' : '' }}">
         <a href="#">

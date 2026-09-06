@@ -27,6 +27,11 @@
             padding-right: 10px;
             padding-bottom: 10px;
         }
+        .role-label {
+            margin-right: 3px;
+            display: inline-block;
+            margin-bottom: 3px;
+        }
     </style>
 </head>
 <body class="hold-transition skin-blue sidebar-mini">
@@ -60,11 +65,15 @@
             <div class="box box-primary">
                 <div class="box-header with-border">
                     <h3 class="box-title text-bold">Active Staff Directory</h3>
+                    
+                    {{-- Spatie Role Check: Only Admins can add new staff --}}
+                    @role('admin')
                     <div class="box-tools">
                         <a href="{{ route('teachers.create') }}" class="btn btn-sm btn-success btn-flat">
                             <i class="fa fa-user-plus"></i> Add New Staff
                         </a>
                     </div>
+                    @endrole
                 </div>
 
                 <div class="box-body no-padding" style="padding-top: 15px !important;">
@@ -73,11 +82,13 @@
                             <tr>
                                 <th>Name</th>
                                 <th>EC Number</th>
-                                <th>Role</th>
-                                <th>National ID</th> {{-- Updated Column --}}
-                                <th>DOB</th> {{-- Added Column --}}
+                                <th>Role(s)</th>
+                                <th>National ID</th>
+                                <th>DOB</th>
                                 <th>Contact</th>
+                                @role('admin')
                                 <th class="text-right">Actions</th>
+                                @endrole
                             </tr>
                         </thead>
                         <tbody>
@@ -89,17 +100,29 @@
                                 </td>
                                 <td><code>{{ $staff->ec_number }}</code></td>
                                 <td>
-                                    @if($staff->role == 'admin')
-                                        <span class="label label-danger">Administrator</span>
-                                    @elseif($staff->role == 'receptionist')
-                                        <span class="label label-warning">Receptionist</span>
-                                    @else
-                                        <span class="label label-info">Teacher</span>
-                                    @endif
+                                    {{-- Spatie Dynamic Roles Implementation --}}
+                                    @forelse($staff->roles as $role)
+                                        @if($role->name === 'admin')
+                                            <span class="label label-danger role-label">Administrator</span>
+                                        @elseif($role->name === 'receptionist')
+                                            <span class="label label-warning role-label">Receptionist</span>
+                                        @elseif($role->name === 'bursar')
+                                            <span class="label label-success role-label">Bursar</span>
+                                        @elseif($role->name === 'teacher')
+                                            <span class="label label-info role-label">Teacher</span>
+                                        @else
+                                            <span class="label label-primary role-label">{{ ucfirst($role->name) }}</span>
+                                        @endif
+                                    @empty
+                                        <span class="label label-default role-label">Unassigned</span>
+                                    @endforelse
                                 </td>
-                                <td>{{ $staff->national_id }}</td> {{-- Updated Field --}}
-                                <td>{{ $staff->dob ? $staff->dob->format('d M Y') : 'N/A' }}</td> {{-- Added Field --}}
+                                <td>{{ $staff->national_id }}</td>
+                                <td>{{ $staff->dob ? $staff->dob->format('d M Y') : 'N/A' }}</td>
                                 <td>{{ $staff->phone_number ?? 'N/A' }}</td>
+                                
+                                {{-- Spatie Role Check: Only Admins see the Edit actions --}}
+                                @role('admin')
                                 <td class="text-right">
                                     <div class="btn-group">
                                         <a href="{{ route('teachers.edit', $staff->id) }}" class="btn btn-default btn-sm" title="Edit">
@@ -107,6 +130,7 @@
                                         </a>
                                     </div>
                                 </td>
+                                @endrole
                             </tr>
                             @endforeach
                         </tbody>

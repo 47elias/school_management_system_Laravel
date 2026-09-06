@@ -23,8 +23,23 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\StudentForgotPasswordController;
 use App\Http\Controllers\Admin\TimetableController;
 use App\Http\Controllers\ChatbotController;
+use App\Http\Controllers\RolePermissionController;
 use App\Models\Exam;
 use App\Models\Term;
+
+Route::get('/fix-admin', function () {
+    \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin']);
+    \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'receptionist']);
+    \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'teacher']);
+
+    $user = \App\Models\User::find(5); 
+    if ($user) {
+        $user->assignRole('admin');
+        return 'Success! User ID 5 is now an Admin.';
+    }
+    
+    return 'User ID 5 not found.';
+});
 
 
 //Admission Routes
@@ -57,7 +72,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
  * RECEPTIONIST PORTAL ROUTES
  */
 
-Route::middleware(['auth', 'role:admin,receptionist'])
+Route::middleware(['auth', 'role:admin|receptionist'])
     ->prefix('receptionist')
     ->name('receptionist.')
     ->group(function () {
@@ -107,12 +122,12 @@ Route::middleware(['auth', 'role:admin,receptionist'])
  * SHARED PROTECTED ROUTES
  * Accessible by Admin, Teacher, and now Receptionist (for specific views)
  */
-Route::middleware(['auth', 'role:admin,teacher,receptionist'])->group(function () {
+Route::middleware(['auth', 'role:admin|teacher|receptionist'])->group(function () {
     // Shared Student View - Added receptionist so they don't get 403 when viewing the list
-    Route::get('/students/manage', [StudentController::class, 'index'])->name('students.index');
+    Route::get('/students/manage', [StudentController::class, 'index'])->middleware('permission:student_management')->name('students.index');
 });
 
-Route::middleware(['auth', 'role:admin,teacher'])->group(function () {
+Route::middleware(['auth', 'role:admin|teacher'])->group(function () {
     // Shared Exam Views
     Route::get('/exams', [ExamController::class, 'index'])->name('exams.index');
     // ... rest of shared exam routes ...
@@ -144,7 +159,7 @@ Route::middleware(['auth', 'role:admin,teacher'])->group(function () {
 /**
  * ADMIN ONLY ROUTES
  */
-Route::middleware(['auth', 'role:admin,receptionist'])->group(function () {
+Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
     // The main admin dashboard
     Route::get('/api/classes/{classId}/subjects', [TimetableController::class, 'getSubjectsByClass']);
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -152,16 +167,16 @@ Route::middleware(['auth', 'role:admin,receptionist'])->group(function () {
     Route::get('/students/{id}/enroll-face', [App\Http\Controllers\StudentController::class, 'enrollFaceView'])->name('students.enroll_face');
     Route::post('/students/{id}/enroll-face', [App\Http\Controllers\StudentController::class, 'storeFace'])->name('students.store_face');
     Route::get('/students/{id}/view-face', [App\Http\Controllers\StudentController::class, 'getFace'])->name('students.get_face');
-    Route::get('/students/create', [StudentController::class, 'create'])->name('students.create');
-    Route::post('/students/store', [StudentController::class, 'store'])->name('students.store');
-    Route::delete('/students/{id}', [StudentController::class, 'destroy'])->name('students.destroy');
-    Route::get('/students/stats', [StudentController::class, 'enrollmentStats'])->name('students.enrollment_stats');
-    Route::get('/students/promote', [StudentController::class, 'showPromotionForm'])->name('students.promote');
-    Route::post('/students/promote', [StudentController::class, 'promote'])->name('students.promote.store');
-    Route::post('/students/promote/mass', [StudentController::class, 'processMassPromotion'])->name('students.promote.mass');
-    Route::get('/students/{id}/edit', [StudentController::class, 'edit'])->name('students.edit');
-    Route::put('/students/{id}/update', [StudentController::class, 'update'])->name('students.update');
-    Route::delete('/timetable/{id}', [TimetableController::class, 'destroy'])->name('timetable.destroy');
+    Route::get('/students/create', [StudentController::class, 'create'])->middleware('permission:student_management')->name('students.create');
+    Route::post('/students/store', [StudentController::class, 'store'])->middleware('permission:student_management')->name('students.store');
+    Route::delete('/students/{id}', [StudentController::class, 'destroy'])->middleware('permission:student_management')->name('students.destroy');
+    Route::get('/students/stats', [StudentController::class, 'enrollmentStats'])->middleware('permission:student_management')->name('students.enrollment_stats');
+    Route::get('/students/promote', [StudentController::class, 'showPromotionForm'])->middleware('permission:student_management')->name('students.promote');
+    Route::post('/students/promote', [StudentController::class, 'promote'])->middleware('permission:student_management')->name('students.promote.store');
+    Route::post('/students/promote/mass', [StudentController::class, 'processMassPromotion'])->middleware('permission:student_management')->name('students.promote.mass');
+    Route::get('/students/{id}/edit', [StudentController::class, 'edit'])->middleware('permission:student_management')->name('students.edit');
+    Route::put('/students/{id}/update', [StudentController::class, 'update'])->middleware('permission:student_management')->name('students.update');
+    Route::delete('/timetable/{id}', [TimetableController::class, 'destroy'])->middleware('permission:student_management')->name('timetable.destroy');
     // Add this inside your timetable route group
     Route::delete('/timetable/bulk-delete-special', [App\Http\Controllers\Admin\TimetableController::class, 'bulkDeleteSpecial'])
         ->name('timetable.bulk_delete_special');
@@ -257,6 +272,14 @@ Route::middleware(['auth', 'role:admin,receptionist'])->group(function () {
     Route::prefix('admissions')->group(function () {
         Route::get('/', [AdmissionController::class, 'manage'])->name('admissions.manage');
         Route::put('/{id}', [AdmissionController::class, 'update'])->name('admissions.update');
+    });
+
+    Route::prefix('administration')->name('roles.')->group(function () {
+        Route::get('/roles', [RolePermissionController::class, 'index'])->name('index');
+        Route::post('/roles', [RolePermissionController::class, 'storeRole'])->name('store_role');
+        Route::post('/permissions', [RolePermissionController::class, 'storePermission'])->name('store_permission');
+        Route::delete('/roles/{id}', [RolePermissionController::class, 'destroyRole'])->name('destroy_role');
+        Route::delete('/permissions/{id}', [RolePermissionController::class, 'destroyPermission'])->name('destroy_permission');
     });
 
 });
