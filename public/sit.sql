@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 03, 2026 at 11:08 AM
+-- Generation Time: Sep 06, 2026 at 08:49 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -92,7 +92,7 @@ CREATE TABLE `admissions` (
 
 INSERT INTO `admissions` (`id`, `tracking_id`, `identity_number`, `student_name`, `date_of_birth`, `applied_grade`, `address`, `guardian_name`, `guardian_phone`, `guardian_email`, `previous_school`, `status`, `admin_remarks`, `created_at`, `updated_at`, `subjects_passed`, `results_file`, `recommendation_letter`, `academic_history`) VALUES
 (1, 'KPC-2026-ODMYRS', '12345678D9', 'Musa Elias Mukahlera', '2008-09-24', 'Form 1', NULL, 'Musa Kufa', '0787247792', NULL, NULL, 'approved', 'Congradulation on being part of us', '2026-02-05 16:14:19', '2026-02-06 09:06:34', 'Maths D\r\nEnglish E', 'admissions/results/aI8hSUKzYlRqX2dyUNKX9LmX12kbCV5yNjLAb7iz.jpg', 'admissions/recommendations/VlKIId3rQ4Dj3MNjU6iVVB4PU5yVxY02wVZ7Sc7w.jpg', NULL),
-(2, 'KPC-2026-RO7VKR', '212223A24', 'Neville Mupasa', '2026-02-18', 'Form 1', '3094 Budiriro 2', 'Musa Elias Mukahlera', '+263787247792', 'musamukahlera@gmail.com', 'Masvingo Day School', 'pending', NULL, '2026-02-22 09:22:16', '2026-03-30 16:40:33', '8 Subjects', 'admissions/results/kz2Vu1xY9b4uJ9arg5HjMgaaSoNNKYdEFv6RGFVu.png', 'admissions/recommendations/Hi5vyYJF1F9kaF5kWpUb1tqyhCCQq00hLBHXIEhf.png', 'qwsedfghj'),
+(2, 'KPC-2026-RO7VKR', '212223A24', 'Neville Mupasa', '2026-02-18', 'Form 1', '3094 Budiriro 2', 'Musa Elias Mukahlera', '+263787247792', 'musamukahlera@gmail.com', 'Masvingo Day School', 'approved', NULL, '2026-02-22 09:22:16', '2026-09-06 13:26:45', '8 Subjects', 'admissions/results/kz2Vu1xY9b4uJ9arg5HjMgaaSoNNKYdEFv6RGFVu.png', 'admissions/recommendations/Hi5vyYJF1F9kaF5kWpUb1tqyhCCQq00hLBHXIEhf.png', 'qwsedfghj'),
 (3, 'KPC-2026-NFN8ZY', '12345678D12', 'Tafadzwa Mukahlera', '2026-02-13', 'Form 1', 'Mutondwe', 'MUSA ELIAS MUKAHLERA', '07455855662', 'b240336a@students.buse.ac.zw', 'ghgfd', 'approved', NULL, '2026-02-27 17:58:10', '2026-02-27 18:00:27', '7 Sun', 'admissions/results/tdZC4FCmD5fEQ0RaNbcDdKscmySWfhdDkKUXOSjg.jpg', NULL, 'wsedsrfghfdsa'),
 (4, 'KPC-2026-G2OTQM', '12345678Q9', 'Takudzwa Masiwa', '2004-09-02', 'Form 2', '3094 Budiriro 2', 'Punha Masiwa', '+263787247792', 'punhamasiwa@gmail.com', 'Masvingo Day School', 'approved', NULL, '2026-03-04 18:03:16', '2026-03-30 16:38:31', '8 Subjects', 'admissions/results/h9hmZigjzM4qp7yd774xw2FptoKLjmfYFppvpW3N.png', NULL, 'qawsedtfghj');
 
@@ -107,6 +107,13 @@ CREATE TABLE `cache` (
   `value` mediumtext NOT NULL,
   `expiration` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `cache`
+--
+
+INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
+('elias-academy-college-portal-cache-spatie.permission.cache', 'a:3:{s:5:\"alias\";a:3:{s:1:\"a\";s:2:\"id\";s:1:\"b\";s:4:\"name\";s:1:\"c\";s:10:\"guard_name\";}s:11:\"permissions\";a:10:{i:0;a:3:{s:1:\"a\";i:1;s:1:\"b\";s:10:\"admissions\";s:1:\"c\";s:3:\"web\";}i:1;a:3:{s:1:\"a\";i:2;s:1:\"b\";s:12:\"manage-users\";s:1:\"c\";s:3:\"web\";}i:2;a:3:{s:1:\"a\";i:3;s:1:\"b\";s:21:\"roles_and_permissions\";s:1:\"c\";s:3:\"web\";}i:3;a:3:{s:1:\"a\";i:4;s:1:\"b\";s:18:\"student_management\";s:1:\"c\";s:3:\"web\";}i:4;a:3:{s:1:\"a\";i:6;s:1:\"b\";s:11:\"manage-fees\";s:1:\"c\";s:3:\"web\";}i:5;a:3:{s:1:\"a\";i:7;s:1:\"b\";s:15:\"term_management\";s:1:\"c\";s:3:\"web\";}i:6;a:3:{s:1:\"a\";i:8;s:1:\"b\";s:7:\"payroll\";s:1:\"c\";s:3:\"web\";}i:7;a:3:{s:1:\"a\";i:9;s:1:\"b\";s:16:\"manage-inventory\";s:1:\"c\";s:3:\"web\";}i:8;a:3:{s:1:\"a\";i:10;s:1:\"b\";s:14:\"manage-payroll\";s:1:\"c\";s:3:\"web\";}i:9;a:3:{s:1:\"a\";i:11;s:1:\"b\";s:15:\"manage-expenses\";s:1:\"c\";s:3:\"web\";}}s:5:\"roles\";a:0:{}}', 1788805584);
 
 -- --------------------------------------------------------
 
@@ -187,14 +194,6 @@ CREATE TABLE `exams` (
   `class_id` bigint(20) UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `exams`
---
-
-INSERT INTO `exams` (`id`, `exam_name`, `term_id`, `subject_id`, `exam_date`, `status`, `created_at`, `updated_at`, `subject_assignment_id`, `class_id`) VALUES
-(10, 'Mid Year', 3, 6, '2026-02-11', 'pending', '2026-02-11 10:50:01', '2026-02-11 10:50:01', NULL, NULL),
-(14, 'Mid Year', 2, 1, '2026-02-25', 'pending', '2026-02-25 18:56:05', '2026-02-25 18:56:05', NULL, NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -231,6 +230,13 @@ CREATE TABLE `expenses` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `expenses`
+--
+
+INSERT INTO `expenses` (`id`, `description`, `amount`, `expense_date`, `category`, `reference_no`, `notes`, `created_at`, `updated_at`) VALUES
+(3, 'School Bus Fuel Costs', 300.00, '2026-09-04', 'Other', 'TOTAL123', 'LKFLQF', '2026-09-04 08:49:47', '2026-09-04 08:49:47');
 
 -- --------------------------------------------------------
 
@@ -270,9 +276,16 @@ CREATE TABLE `fee_structures` (
 --
 
 INSERT INTO `fee_structures` (`id`, `fee_name`, `amount`, `grade`, `term_id`, `created_at`, `updated_at`, `student_id`) VALUES
-(59, 'fees', 150.00, 'Form 1', 2, '2026-02-07 15:16:25', '2026-02-07 15:16:25', NULL),
-(60, 'fees', 150.00, 'Form 1', 3, '2026-02-07 15:18:18', '2026-02-07 15:18:18', NULL),
-(62, 'School Fees', 160.00, 'Form 2', 3, '2026-02-09 10:54:12', '2026-02-09 10:54:12', NULL);
+(69, 'Tution', 100.00, 'Form 1', 2, '2026-09-03 11:37:10', '2026-09-03 11:37:10', NULL),
+(70, 'Tution', 100.00, 'Form 2', 2, '2026-09-03 11:37:10', '2026-09-03 11:37:10', NULL),
+(71, 'Sporting Levy', 30.00, 'Form 1', 2, '2026-09-03 11:37:22', '2026-09-03 11:37:22', NULL),
+(72, 'Sporting Levy', 30.00, 'Form 2', 2, '2026-09-03 11:37:22', '2026-09-03 11:37:22', NULL),
+(73, 'Transportation', 10.00, 'Form 1', 2, '2026-09-03 11:37:53', '2026-09-03 11:37:53', NULL),
+(74, 'Transportation', 10.00, 'Form 2', 2, '2026-09-03 11:37:53', '2026-09-03 11:37:53', NULL),
+(75, 'SDC', 10.00, 'Form 1', 2, '2026-09-03 11:38:12', '2026-09-03 11:38:12', NULL),
+(76, 'SDC', 10.00, 'Form 2', 2, '2026-09-03 11:38:13', '2026-09-03 11:38:13', NULL),
+(77, 'School Fees', 150.00, 'Form 1', 3, '2026-09-03 11:47:31', '2026-09-03 11:47:31', NULL),
+(78, 'School Fees', 150.00, 'Form 2', 3, '2026-09-03 11:47:31', '2026-09-03 11:47:31', NULL);
 
 -- --------------------------------------------------------
 
@@ -472,7 +485,59 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (58, '2026_08_25_120001_create_activity_marks_table', 44),
 (59, '2026_08_25_125946_create_activity_log_table', 44),
 (60, '2026_08_25_125947_add_event_column_to_activity_log_table', 44),
-(61, '2026_08_25_125948_add_batch_uuid_column_to_activity_log_table', 44);
+(61, '2026_08_25_125948_add_batch_uuid_column_to_activity_log_table', 44),
+(62, '2026_09_06_160914_create_permission_tables', 45);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `model_has_permissions`
+--
+
+CREATE TABLE `model_has_permissions` (
+  `permission_id` bigint(20) UNSIGNED NOT NULL,
+  `model_type` varchar(255) NOT NULL,
+  `model_id` bigint(20) UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `model_has_permissions`
+--
+
+INSERT INTO `model_has_permissions` (`permission_id`, `model_type`, `model_id`) VALUES
+(1, 'App\\Models\\User', 5),
+(2, 'App\\Models\\User', 5),
+(3, 'App\\Models\\User', 5),
+(4, 'App\\Models\\User', 5),
+(6, 'App\\Models\\User', 5),
+(7, 'App\\Models\\User', 5),
+(8, 'App\\Models\\User', 5),
+(9, 'App\\Models\\User', 5),
+(10, 'App\\Models\\User', 5),
+(11, 'App\\Models\\User', 5);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `model_has_roles`
+--
+
+CREATE TABLE `model_has_roles` (
+  `role_id` bigint(20) UNSIGNED NOT NULL,
+  `model_type` varchar(255) NOT NULL,
+  `model_id` bigint(20) UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `model_has_roles`
+--
+
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(1, 'App\\Models\\User', 5),
+(2, 'App\\Models\\User', 21),
+(3, 'App\\Models\\User', 12),
+(3, 'App\\Models\\User', 13),
+(4, 'App\\Models\\User', 5);
 
 -- --------------------------------------------------------
 
@@ -511,9 +576,32 @@ CREATE TABLE `payments` (
 --
 
 INSERT INTO `payments` (`id`, `student_id`, `term_id`, `amount_paid`, `payment_date`, `payment_method`, `reference_no`, `received_by`, `remarks`, `created_at`, `updated_at`) VALUES
-(56, 166, 2, 150.00, '2026-02-25', 'Cash', 'ny12', NULL, 'qwertyu', '2026-02-25 17:47:31', '2026-02-25 17:47:31'),
-(57, 166, 3, 10.00, '2026-03-05', 'Cash', 'incentie', NULL, NULL, '2026-03-05 08:58:37', '2026-03-05 08:58:37'),
-(58, 166, 3, -10.00, '2026-03-05', 'Credit Withdrawal', 'WD-69A964E4DDF65', NULL, 'Paid More Extra fees', '2026-03-05 09:11:32', '2026-03-05 09:11:32');
+(77, 175, 2, -150.00, '2026-09-04', 'Term Invoice', 'INV-2-175', NULL, 'Term Fees Charged (Term 1)', '2026-09-04 08:03:12', '2026-09-04 08:03:12'),
+(78, 176, 2, -150.00, '2026-09-04', 'Term Invoice', 'INV-2-176', NULL, 'Term Fees Charged (Term 1)', '2026-09-04 08:03:12', '2026-09-04 08:03:12'),
+(79, 177, 2, -150.00, '2026-09-04', 'Term Invoice', 'INV-2-177', NULL, 'Term Fees Charged (Term 1)', '2026-09-04 08:03:12', '2026-09-04 08:03:12'),
+(80, 178, 2, -150.00, '2026-09-04', 'Term Invoice', 'INV-2-178', NULL, 'Term Fees Charged (Term 1)', '2026-09-04 08:03:12', '2026-09-04 08:03:12'),
+(81, 175, 3, 150.06, '2026-09-04', 'Cash', 'RC1230', NULL, 'School Fees', '2026-09-04 08:21:04', '2026-09-04 08:21:04'),
+(82, 176, 2, 160.00, '2026-09-04', 'Cash', 'RC1231', NULL, '12341234', '2026-09-04 08:22:41', '2026-09-04 08:22:41'),
+(83, 177, 3, 150.46, '2026-09-04', 'Cash', 'qweqe1', NULL, 'fees', '2026-09-04 08:23:29', '2026-09-04 08:23:29'),
+(84, 178, 3, 299.82, '2026-09-04', 'Card', 'TXN-1234', NULL, '12341234', '2026-09-04 08:23:58', '2026-09-04 08:23:58'),
+(85, 177, 3, 150.15, '2026-09-04', 'Cash', 'TXN-1234', NULL, '11223344', '2026-09-04 08:27:21', '2026-09-04 08:27:21'),
+(86, 175, 3, -150.00, '2026-09-04', 'Term Invoice', 'INV-3-175', NULL, 'Term Fees Charged (Term 2)', '2026-09-04 08:28:14', '2026-09-04 08:28:14'),
+(87, 176, 3, -150.00, '2026-09-04', 'Term Invoice', 'INV-3-176', NULL, 'Term Fees Charged (Term 2)', '2026-09-04 08:28:14', '2026-09-04 08:28:14'),
+(88, 177, 3, -150.00, '2026-09-04', 'Term Invoice', 'INV-3-177', NULL, 'Term Fees Charged (Term 2)', '2026-09-04 08:28:14', '2026-09-04 08:28:14'),
+(89, 178, 3, -150.00, '2026-09-04', 'Term Invoice', 'INV-3-178', NULL, 'Term Fees Charged (Term 2)', '2026-09-04 08:28:14', '2026-09-04 08:28:14'),
+(90, 175, 3, 150.00, '2026-09-04', 'Cash', 'TXN-1234', NULL, '123123', '2026-09-04 08:30:37', '2026-09-04 08:30:37'),
+(91, 176, 3, 150.00, '2026-09-04', 'Cash', NULL, NULL, NULL, '2026-09-04 08:31:47', '2026-09-04 08:31:47'),
+(92, 178, 3, 600.00, '2026-09-04', 'ZIPIT', 'CBZsdkk123=', NULL, 'Fees/1231/232', '2026-09-04 08:34:02', '2026-09-04 08:34:02'),
+(93, 175, 3, -0.06, '2026-09-04', 'Credit Withdrawal', 'WD-6A9A9ED2A4076', NULL, 'Refund to Parent', '2026-09-04 08:34:58', '2026-09-04 08:34:58'),
+(94, 178, 3, -599.82, '2026-09-04', 'Credit Withdrawal', 'WD-6A9A9F35BDBC5', NULL, 'Refund to Parent', '2026-09-04 08:36:37', '2026-09-04 08:36:37'),
+(95, 178, 3, 0.01, '2026-09-04', 'Cash', NULL, NULL, NULL, '2026-09-04 08:37:42', '2026-09-04 08:37:42'),
+(96, 175, 2, 150.00, '2026-09-04', 'Cash', '123', NULL, '123', '2026-09-04 08:39:56', '2026-09-04 08:39:56'),
+(97, 177, 3, 150.00, '2026-09-04', 'Cash', 'querty123', NULL, 'keyboard Investments', '2026-09-04 08:42:24', '2026-09-04 08:42:24'),
+(98, 177, 3, -150.00, '2026-09-04', 'Credit Withdrawal', 'WD-6A9AA0BF8E652', NULL, 'SDK error (Reservsal Transaction)', '2026-09-04 08:43:11', '2026-09-04 08:43:11'),
+(99, 177, 2, 150.00, '2026-09-04', 'Cash', 'querty123', NULL, '123123', '2026-09-04 08:43:43', '2026-09-04 08:43:43'),
+(100, 178, 3, 150.00, '2026-09-04', 'Cash', 'querty123', NULL, 'grrwwgfwg', '2026-09-04 08:44:46', '2026-09-04 08:44:46'),
+(101, 176, 3, 69.79, '2026-09-04', 'Cash', 'owvnwv', NULL, NULL, '2026-09-04 08:47:21', '2026-09-04 08:47:21'),
+(102, 176, 2, 69.79, '2026-09-04', 'Cash', 'owvnwv', NULL, NULL, '2026-09-04 08:47:41', '2026-09-04 08:47:41');
 
 -- --------------------------------------------------------
 
@@ -533,6 +621,84 @@ CREATE TABLE `payslips` (
   `remarks` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `payslips`
+--
+
+INSERT INTO `payslips` (`id`, `user_id`, `pay_period`, `base_salary`, `allowances`, `deductions`, `net_salary`, `payment_date`, `remarks`, `created_at`, `updated_at`) VALUES
+(11, 5, 'September', 299.66, 60.00, 2.86, 356.80, '2026-09-06', 'bank', '2026-09-06 12:20:36', '2026-09-06 12:20:36');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `permissions`
+--
+
+CREATE TABLE `permissions` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `guard_name` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `permissions`
+--
+
+INSERT INTO `permissions` (`id`, `name`, `guard_name`, `created_at`, `updated_at`) VALUES
+(1, 'admissions', 'web', '2026-09-06 15:06:05', '2026-09-06 15:06:05'),
+(2, 'manage-users', 'web', '2026-09-06 15:06:32', '2026-09-06 15:06:32'),
+(3, 'roles_and_permissions', 'web', '2026-09-06 15:06:54', '2026-09-06 15:06:54'),
+(4, 'student_management', 'web', '2026-09-06 15:07:33', '2026-09-06 15:07:33'),
+(6, 'manage-fees', 'web', '2026-09-06 16:07:48', '2026-09-06 16:07:48'),
+(7, 'term_management', 'web', '2026-09-06 16:15:26', '2026-09-06 16:15:26'),
+(8, 'payroll', 'web', '2026-09-06 16:19:22', '2026-09-06 16:19:22'),
+(9, 'manage-inventory', 'web', '2026-09-06 16:20:42', '2026-09-06 16:20:42'),
+(10, 'manage-payroll', 'web', '2026-09-06 16:20:53', '2026-09-06 16:20:53'),
+(11, 'manage-expenses', 'web', '2026-09-06 16:21:07', '2026-09-06 16:21:07');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `roles`
+--
+
+CREATE TABLE `roles` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `guard_name` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `roles`
+--
+
+INSERT INTO `roles` (`id`, `name`, `guard_name`, `created_at`, `updated_at`) VALUES
+(1, 'admin', 'web', '2026-09-06 14:34:46', '2026-09-06 14:34:46'),
+(2, 'receptionist', 'web', '2026-09-06 14:34:47', '2026-09-06 14:34:47'),
+(3, 'teacher', 'web', '2026-09-06 14:34:47', '2026-09-06 14:34:47'),
+(4, 'super_admin', 'web', '2026-09-06 15:28:44', '2026-09-06 15:28:44'),
+(5, 'clerk', 'web', '2026-09-06 16:14:52', '2026-09-06 16:14:52'),
+(6, 'bursar', 'web', '2026-09-06 16:15:04', '2026-09-06 16:15:04'),
+(7, 'librarian', 'web', '2026-09-06 16:24:56', '2026-09-06 16:24:56'),
+(8, 'hod', 'web', '2026-09-06 16:25:08', '2026-09-06 16:25:08'),
+(9, 'principal', 'web', '2026-09-06 16:26:12', '2026-09-06 16:26:12'),
+(10, 'deputy head', 'web', '2026-09-06 16:26:23', '2026-09-06 16:26:23');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `role_has_permissions`
+--
+
+CREATE TABLE `role_has_permissions` (
+  `permission_id` bigint(20) UNSIGNED NOT NULL,
+  `role_id` bigint(20) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -582,7 +748,9 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('11wNUarseKf1w340ds8OvMB171DdwqL7lLEge0Yr', 5, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiWGpROTB3SVZLYkJOaTRCaEJRc05ZTllDalRwSG1vQWhLTjU4MU52eSI7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6MzQ6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9mZWVzL2hpc3RvcnkiO3M6NToicm91dGUiO3M6MTA6ImZlZXMuaW5kZXgiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX1zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aTo1O30=', 1788426167);
+('tJxlqp5Zn9ZR72jxmpdVZDnddxE8OLw7xrGgdM21', 5, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoieVdmdGZRa1h6QjE0UmVpVFpaQWMyWG1kNFl1cDc5VlZwMnRBZHRhNiI7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6NDI6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9hZG1pbmlzdHJhdGlvbi9yb2xlcyI7czo1OiJyb3V0ZSI7czoxMToicm9sZXMuaW5kZXgiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX1zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aTo1O30=', 1788720355),
+('YBicOVfGCaIU6JPsgTrAEbscdl95UB6cSs9KdR9y', 21, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiVVhKYmRVNmRpZmZkOGd4NjQ3a1VVNVZrVFd6QWNHdU84bElJSnYyWCI7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6NDI6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9yZWNlcHRpb25pc3QvY2xhc3NlcyI7czo1OiJyb3V0ZSI7czoyNjoicmVjZXB0aW9uaXN0LmNsYXNzZXMuaW5kZXgiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX1zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aToyMTt9', 1788718277),
+('YcuYNkijcyHZ0Z6ezLmJDnkSnYmq8oknKjFuYrTN', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiWGRVS29ES3BvdkdHY0d4N1BOYzU1eFNFb1ZnRGhpeGhVWHcwZkxMeSI7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6MjE6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMCI7czo1OiJyb3V0ZSI7czo1OiJsb2dpbiI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1788718263);
 
 -- --------------------------------------------------------
 
@@ -637,8 +805,10 @@ CREATE TABLE `students` (
 --
 
 INSERT INTO `students` (`id`, `class_id`, `term_id`, `student_number`, `name`, `surname`, `date_of_birth`, `gender`, `national_id`, `grade`, `enrollment_status`, `address`, `parent_contact`, `email`, `phone`, `enrollment_date`, `enrollment_term_id`, `status`, `photo_path`, `emergency_contact`, `password`, `created_at`, `updated_at`, `remember_token`, `balance`, `face_path`, `face_descriptor`) VALUES
-(166, NULL, 3, 'EAC260001', 'Musa Elias', 'Mukahlera', '2004-09-24', 'Male', '222042235E22', 'Form 1', 'active', '3094 Budiriro 2', 'Musa Elias Mukahlera', 'eac260001@eac.cac.zw', '+263787247792', '2026-02-25', 3, 'alumni', NULL, 'Musa Elias Mukahlera', '$2y$12$SwN65L4KvWiZE/lS0Fp.nOjNK5pWPWX3Mdn6OCshWqyjTTFKpwjKq', '2026-02-25 11:01:44', '2026-07-07 15:17:57', NULL, 0.00, 'biometrics/face_166_1781968841.jpg', NULL),
-(167, NULL, 2, 'EAC260167', 'Nancy', 'Deke', '2004-09-24', 'Female', '152024401N15', 'Form 2', 'active', '3094 Budiriro 2\r\nOnline', 'ALFERO1', 'eac260167@eac.cac.zw', '+263787247792', '2026-06-20', 3, 'alumni', NULL, 'ALFERO1', '$2y$12$EuZBW6Qn4lZ5IFHvryQEmeBujLqwkkKOKRRr/noocWnCgZTrQ2bmq', '2026-06-20 13:01:25', '2026-07-07 15:17:57', NULL, 0.00, 'biometrics/face_167_1781968877.jpg', NULL);
+(175, 15, 2, 'EAC260001', 'Musa Elias', 'Mukahlera', '2004-09-24', 'Male', '222042235E22', 'Form 1', 'active', '3094 Budiriro 2\r\nOnline', 'Musa Elias Mukahlera', 'eac260001@eac.cac.zw', '+263787247792', '2026-09-03', NULL, 'active', NULL, 'Musa Elias Mukahlera', '$2y$12$pnV2tIL3Y3ogDAJp5xLsz.J53kr8EWBeaYJLeSIyxG0kbP/ZrRilm', '2026-09-03 11:30:25', '2026-09-03 11:30:25', NULL, 0.00, NULL, NULL),
+(176, 16, 2, 'EAC260176', 'Hamamunashe', 'Tirekerwi', '2001-01-01', 'Male', '12121212D12', 'Form 2', 'active', '3094 Budiriro 2\r\nOnline', 'Musa Elias Mukahlera', 'eac260176@eac.cac.zw', '+263787247792', '2026-09-03', NULL, 'active', NULL, 'Musa Elias Mukahlera', '$2y$12$w7JioqHbY.aUUDG3q5mS2ONOD2p..d4Z430g2bvDp7a0his3wXQMO', '2026-09-03 11:33:57', '2026-09-03 11:33:57', NULL, 0.00, NULL, NULL),
+(177, 15, 3, 'EAC260177', 'Munashe', 'Mbaimbai', '2007-12-01', 'Male', '112233445566778899P77', 'Form 1', 'active', '2011 kambuzuma road aspingdel', 'Mr Moyo 0787247792 Parent', 'eac260177@eac.cac.zw', '+263787950406', '2026-09-04', NULL, 'active', NULL, 'Mr Moyo 0787247792 Parent', '$2y$12$ro2535Tv8sJ2zy1KBvrJp.rCq/XIUnEoVoqJTB/gfiySBNo51NVsu', '2026-09-04 06:57:35', '2026-09-04 06:57:35', NULL, 0.00, NULL, NULL),
+(178, 15, 3, 'EAC260178', 'John', 'Doe', '2007-12-01', 'Male', '18621122Q11', 'Form 1', 'active', 'Somewhere in Mars', 'Mr Moyo 0787247792 Parent', 'eac260178@eac.cac.zw', '+263112233445566', '2026-09-04', NULL, 'active', NULL, 'Mr Moyo 0787247792 Parent', '$2y$12$wXrUt0embMCGVbEG26nKfuQvI7qpJn80t5uP/Uo3F7/XLmSNUq2py', '2026-09-04 07:01:00', '2026-09-04 07:01:00', NULL, 0.00, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -717,8 +887,8 @@ CREATE TABLE `terms` (
 --
 
 INSERT INTO `terms` (`id`, `term_name`, `academic_year`, `start_date`, `end_date`, `is_current`, `status`, `created_at`, `updated_at`) VALUES
-(2, 'Term 1', '2026', '2026-01-01', '2026-02-05', 0, 'open', '2026-02-06 09:35:56', '2026-02-25 19:24:42'),
-(3, 'Term 2', '2026', '2026-02-06', '2026-02-09', 1, 'open', '2026-02-06 09:36:13', '2026-02-25 19:24:42');
+(2, 'Term 1', '2026', '2026-01-01', '2026-02-05', 0, 'open', '2026-02-06 09:35:56', '2026-09-03 11:45:33'),
+(3, 'Term 2', '2026', '2026-02-06', '2026-02-09', 1, 'open', '2026-02-06 09:36:13', '2026-09-03 11:45:34');
 
 -- --------------------------------------------------------
 
@@ -773,13 +943,15 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `dob`, `employee_id`, `name`, `email`, `national_id`, `base_salary`, `role`, `phone_number`, `email_verified_at`, `password`, `remember_token`, `created_at`, `updated_at`, `ec_number`, `bank_name`, `bank_account_no`) VALUES
 (5, '2004-09-24', '12', 'Musa Elias Mukahlera', 'musamukahlera@gmail.com', '22042235E22', 0.00, 'admin', '0787247792', NULL, '$2y$12$Y73mf57FNoxkJKNpl3Yoj.4gzMrhdXl3OsfYHM/fdluy0XHbbbmzm', NULL, '2026-01-27 19:44:44', '2026-02-27 11:24:23', 'admin', NULL, NULL),
-(12, '2001-11-11', '222042244E22', 'Wilson Mafuriranwa', 'wilson@eac.co.zw', '202020', 0.00, 'teacher', NULL, NULL, '$2y$12$dj1PRzPN1Kfbg6QqjSZrBuuAm0sOzHHkSkArp5jq7WpmrsyZ8iK9u', NULL, '2026-02-09 11:28:38', '2026-07-07 13:12:23', '1234', NULL, NULL),
+(12, '2001-11-11', '222042244E22', 'Wilson Mafuriranwa', 'wilson@eac.co.zw', '202020', 0.00, 'teacher', NULL, NULL, '$2y$12$dj1PRzPN1Kfbg6QqjSZrBuuAm0sOzHHkSkArp5jq7WpmrsyZ8iK9u', NULL, '2026-02-09 11:28:38', '2026-09-06 16:42:28', '1234', NULL, NULL),
 (13, '2004-09-27', 'eac15', 'Takudzwa Masiwa', 'tmasiwa@eac.ac.zw', '632580686B44', 0.00, 'teacher', '0712070344', NULL, '$2y$12$NDz87.YcOZeu7VJA5qWkde8QaKBG6aYXCvNZjCcQxc5TryNAkym3S', NULL, '2026-02-11 07:02:21', '2026-03-04 18:13:02', '1212', NULL, NULL),
 (16, NULL, NULL, 'Sailas Benza', 'st20266885@school.com', NULL, 0.00, 'student', NULL, NULL, '$2y$12$uzW4ZGUxSwdg2sUMkriSLeYbmHdLo8XB0lZZzF9fhSl310p3QYkpi', NULL, '2026-02-12 16:15:20', '2026-02-12 16:15:20', NULL, NULL, NULL),
 (17, NULL, NULL, 'Neville Mupasa', 'st20261705@school.com', NULL, 0.00, 'student', NULL, NULL, '$2y$12$PQQ04xKZfLr5Z0/ehjsu7eM7Fw/aJ4/YZrxI5D9Ws.bDB4H9RRpju', NULL, '2026-02-12 16:38:35', '2026-02-12 16:38:35', NULL, NULL, NULL),
-(20, NULL, NULL, 'Musa Elias Mukahlera', 'eac260001@eac.cac.zw', '222042235E22', 0.00, 'student', NULL, NULL, '$2y$12$.EdouXxzxkSvcFwTTt8Xx.L9a46u2zbFP70w6Dr6mcSDAJDIYgwFi', NULL, '2026-02-25 11:01:45', '2026-06-20 12:38:07', '222042235E22', NULL, NULL),
-(21, '2005-09-24', NULL, 'Hamamunashe Tirekerwi', 'hamamunashe@gmail.com', '12121212D12', 0.00, 'receptionist', '+263787247792', NULL, '$2y$12$Q/ccXaybfEynPt6SNRZIW.rbTbYiE9fBktpY/edNv.92dTnvpPu2.', NULL, '2026-02-25 16:17:39', '2026-02-25 16:26:09', '1861', NULL, NULL),
-(22, NULL, NULL, 'Nancy Deke', 'eac260167@eac.cac.zw', '152024401N15', 0.00, 'student', NULL, NULL, '$2y$12$WUQdmXc6RHAO/GRHJHBV9uighrNfCxnCZiaaw95tO.1a96b3KY9UC', NULL, '2026-06-20 13:01:25', '2026-06-20 13:01:25', '152024401N15', NULL, NULL);
+(21, '2005-09-24', NULL, 'Hamamunashe Tirekerwi', 'hamamunashe@gmail.com', '222042235P22', 0.00, 'receptionist', '+263787247792', NULL, '$2y$12$F0gMKvMTihliQWQ/0E8kFuUou0R1R.yUi/fIIKg8Pe9ABtcpnp7FO', NULL, '2026-02-25 16:17:39', '2026-09-06 15:31:29', 'clerk', NULL, NULL),
+(30, NULL, NULL, 'Musa Elias Mukahlera', 'mmukahlera1@student.local', '222042235E22', 0.00, 'student', NULL, NULL, '$2y$12$OtC7.NiVdWvzNygxssAcSu6lPFKkKCFNjywx/IYdJTomm.fqZc/DW', NULL, '2026-09-03 11:30:26', '2026-09-03 11:30:26', '222042235E22', NULL, NULL),
+(31, NULL, NULL, 'Hamamunashe Tirekerwi', 'htirekerwi2@student.local', '12121212D12', 0.00, 'student', NULL, NULL, '$2y$12$nN4FRi2VKy467dsw8V0EdOvgApjR0ZvmdZ2zsnWKKWF65XNXjrDN2', NULL, '2026-09-03 11:33:58', '2026-09-03 11:33:58', '12121212D12', NULL, NULL),
+(32, NULL, NULL, 'Munashe Mbaimbai', 'mmbaimbai3@student.local', '112233445566778899P77', 0.00, 'student', NULL, NULL, '$2y$12$Xp8x/nGht8jHrSuCiCSzTeu2SMWeRvqP4B9SB/iKG2evgHcns/Zoy', NULL, '2026-09-04 06:57:36', '2026-09-04 06:57:36', '112233445566778899P77', NULL, NULL),
+(33, NULL, NULL, 'John Doe', 'jdoe4@student.local', '18621122Q11', 0.00, 'student', NULL, NULL, '$2y$12$Y1JznIJGRGrwxNAnxl9sb.ck2r0dMb2RWRBYCgy98d/aLVDGD8wXe', NULL, '2026-09-04 07:01:01', '2026-09-04 07:01:01', '18621122Q11', NULL, NULL);
 
 --
 -- Indexes for dumped tables
@@ -929,6 +1101,20 @@ ALTER TABLE `migrations`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `model_has_permissions`
+--
+ALTER TABLE `model_has_permissions`
+  ADD PRIMARY KEY (`permission_id`,`model_id`,`model_type`),
+  ADD KEY `model_has_permissions_model_id_model_type_index` (`model_id`,`model_type`);
+
+--
+-- Indexes for table `model_has_roles`
+--
+ALTER TABLE `model_has_roles`
+  ADD PRIMARY KEY (`role_id`,`model_id`,`model_type`),
+  ADD KEY `model_has_roles_model_id_model_type_index` (`model_id`,`model_type`);
+
+--
 -- Indexes for table `password_reset_tokens`
 --
 ALTER TABLE `password_reset_tokens`
@@ -949,6 +1135,27 @@ ALTER TABLE `payments`
 ALTER TABLE `payslips`
   ADD PRIMARY KEY (`id`),
   ADD KEY `payslips_user_id_foreign` (`user_id`);
+
+--
+-- Indexes for table `permissions`
+--
+ALTER TABLE `permissions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `permissions_name_guard_name_unique` (`name`,`guard_name`);
+
+--
+-- Indexes for table `roles`
+--
+ALTER TABLE `roles`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `roles_name_guard_name_unique` (`name`,`guard_name`);
+
+--
+-- Indexes for table `role_has_permissions`
+--
+ALTER TABLE `role_has_permissions`
+  ADD PRIMARY KEY (`permission_id`,`role_id`),
+  ADD KEY `role_has_permissions_role_id_foreign` (`role_id`);
 
 --
 -- Indexes for table `school_classes`
@@ -1070,7 +1277,7 @@ ALTER TABLE `exam_attendances`
 -- AUTO_INCREMENT for table `expenses`
 --
 ALTER TABLE `expenses`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `failed_jobs`
@@ -1082,13 +1289,13 @@ ALTER TABLE `failed_jobs`
 -- AUTO_INCREMENT for table `fee_structures`
 --
 ALTER TABLE `fee_structures`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=63;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=79;
 
 --
 -- AUTO_INCREMENT for table `fee_transactions`
 --
 ALTER TABLE `fee_transactions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `inventory_items`
@@ -1118,18 +1325,30 @@ ALTER TABLE `marks`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=62;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=63;
 
 --
 -- AUTO_INCREMENT for table `payments`
 --
 ALTER TABLE `payments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=59;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=103;
 
 --
 -- AUTO_INCREMENT for table `payslips`
 --
 ALTER TABLE `payslips`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+
+--
+-- AUTO_INCREMENT for table `permissions`
+--
+ALTER TABLE `permissions`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+
+--
+-- AUTO_INCREMENT for table `roles`
+--
+ALTER TABLE `roles`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
@@ -1148,7 +1367,7 @@ ALTER TABLE `settings`
 -- AUTO_INCREMENT for table `students`
 --
 ALTER TABLE `students`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=168;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=179;
 
 --
 -- AUTO_INCREMENT for table `subjects`
@@ -1178,7 +1397,7 @@ ALTER TABLE `timetables`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
 
 --
 -- Constraints for dumped tables
@@ -1251,6 +1470,18 @@ ALTER TABLE `marks`
   ADD CONSTRAINT `marks_student_id_foreign` FOREIGN KEY (`student_id`) REFERENCES `students` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `model_has_permissions`
+--
+ALTER TABLE `model_has_permissions`
+  ADD CONSTRAINT `model_has_permissions_permission_id_foreign` FOREIGN KEY (`permission_id`) REFERENCES `permissions` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `model_has_roles`
+--
+ALTER TABLE `model_has_roles`
+  ADD CONSTRAINT `model_has_roles_role_id_foreign` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `payments`
 --
 ALTER TABLE `payments`
@@ -1263,6 +1494,13 @@ ALTER TABLE `payments`
 --
 ALTER TABLE `payslips`
   ADD CONSTRAINT `payslips_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `role_has_permissions`
+--
+ALTER TABLE `role_has_permissions`
+  ADD CONSTRAINT `role_has_permissions_permission_id_foreign` FOREIGN KEY (`permission_id`) REFERENCES `permissions` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `role_has_permissions_role_id_foreign` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `students`
