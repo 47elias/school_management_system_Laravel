@@ -80,6 +80,9 @@
             <h1>
                 <span class="text-bold"><i class="fa fa-line-chart text-blue"></i> Financial Revenue & Balance</span>
                 <div class="pull-right">
+                    <a href="{{ route('expenses.index') }}" class="btn btn-danger btn-sm text-bold" style="border-radius: 6px; margin-right: 5px;">
+                        <i class="fa fa-minus-circle"></i> RECORD EXPENSE
+                    </a>
                     <button onclick="exportToExcel()" class="btn btn-success btn-sm text-bold" style="border-radius: 6px;">
                         <i class="fa fa-file-excel-o"></i> EXPORT EXCEL
                     </button>
@@ -94,24 +97,24 @@
             {{-- Top Info Boxes --}}
             <div class="row no-print">
                 <div class="col-md-3 col-sm-6 col-xs-12">
-                    <div class="info-box bg-navy">
-                        <span class="info-box-icon"><i class="fa fa-university"></i></span>
+                    <div class="info-box bg-aqua">
+                        <span class="info-box-icon"><i class="fa fa-money"></i></span>
                         <div class="info-box-content">
-                            <span class="info-box-text">School Fund Balance</span>
-                            <span class="info-box-number">${{ number_format($schoolBalance, 2) }}</span>
+                            <span class="info-box-text">Gross Collections</span>
+                            <span class="info-box-number">${{ number_format($totalRevenue, 2) }}</span>
                             <div class="progress"><div class="progress-bar" style="width: 100%"></div></div>
-                            <span class="progress-description">Lifetime Net Cash</span>
+                            <span class="progress-description">All Terms (Before Deductions)</span>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-3 col-sm-6 col-xs-12">
-                    <div class="info-box bg-green">
-                        <span class="info-box-icon"><i class="fa fa-money"></i></span>
+                    <div class="info-box bg-navy">
+                        <span class="info-box-icon"><i class="fa fa-university"></i></span>
                         <div class="info-box-content">
-                            <span class="info-box-text">Today's Income</span>
-                            <span class="info-box-number">${{ number_format($dailyIncome, 2) }}</span>
+                            <span class="info-box-text">Net Available Funds</span>
+                            <span class="info-box-number">${{ number_format($schoolBalance, 2) }}</span>
                             <div class="progress"><div class="progress-bar" style="width: 100%"></div></div>
-                            <span class="progress-description">Payments Received Today</span>
+                            <span class="progress-description">Actual Money (After Expenses)</span>
                         </div>
                     </div>
                 </div>
@@ -122,15 +125,19 @@
                             <span class="info-box-text">Term Expenses</span>
                             <span class="info-box-number">${{ number_format($currentTermExpenses, 2) }}</span>
                             <div class="progress"><div class="progress-bar" style="width: 100%"></div></div>
-                            <span class="progress-description">Salaries & General Costs</span>
+                            <span class="progress-description">Salaries & Costs (This Term)</span>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-3 col-sm-6 col-xs-12">
-                    <div class="box box-solid" style="height: 90px; display: flex; align-items: center; justify-content: center; background: transparent; box-shadow: none;">
-                        <a href="{{ route('expenses.index') }}" class="btn btn-danger btn-block text-bold" style="margin: 10px; padding: 15px; border-radius: 8px; font-size: 14px;">
-                            <i class="fa fa-minus-circle"></i> RECORD EXPENSE
-                        </a>
+                    <div class="info-box bg-green">
+                        <span class="info-box-icon"><i class="fa fa-line-chart"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Today's Income</span>
+                            <span class="info-box-number">${{ number_format($dailyIncome, 2) }}</span>
+                            <div class="progress"><div class="progress-bar" style="width: 100%"></div></div>
+                            <span class="progress-description">Payments Received Today</span>
+                        </div>
                     </div>
                 </div>
             </div>

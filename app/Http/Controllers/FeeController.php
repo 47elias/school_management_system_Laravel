@@ -130,6 +130,7 @@ class FeeController extends Controller
             return back()->with('error', 'Please set an active term first.');
         }
 
+        // Calculate overarching totals
         $totalRevenue = Payment::sum('amount_paid');
         $totalGeneralExpenses = Expense::sum('amount');
         $totalSalaries = Payslip::sum('net_salary');
@@ -140,15 +141,18 @@ class FeeController extends Controller
         $startOfWeek = Carbon::now()->startOfWeek();
         $endOfWeek = Carbon::now()->endOfWeek();
 
+        // Daily and Weekly Income
         $dailyIncome = Payment::whereDate('payment_date', $today)->sum('amount_paid');
         $weeklyIncome = Payment::whereBetween('payment_date', [$startOfWeek, $endOfWeek])->sum('amount_paid');
 
+        // Daily and Weekly Expenses
         $dailyExpense = Expense::whereDate('expense_date', $today)->sum('amount') +
                         Payslip::whereDate('payment_date', $today)->sum('net_salary');
 
         $weeklyExpense = Expense::whereBetween('expense_date', [$startOfWeek, $endOfWeek])->sum('amount') +
                          Payslip::whereBetween('payment_date', [$startOfWeek, $endOfWeek])->sum('net_salary');
 
+        // Term Expenses
         $currentTermExpenses = Expense::whereBetween('expense_date', [$currentTerm->start_date, $currentTerm->end_date])->sum('amount') +
                                Payslip::whereBetween('payment_date', [$currentTerm->start_date, $currentTerm->end_date])->sum('net_salary');
 
@@ -222,11 +226,12 @@ class FeeController extends Controller
             $report = $report->where('balance', '<=', 0);
         }
 
+        // EXACT FIX: Added 'totalRevenue' to the compact array here so the view can read it
         return view('fees.balance_report', compact(
             'report', 'currentTerm', 'terms', 'grades',
             'selectedGrade', 'selectedTermId', 'searchName', 'status',
             'dailyIncome', 'dailyExpense', 'weeklyIncome', 'weeklyExpense',
-            'schoolBalance', 'currentTermExpenses'
+            'schoolBalance', 'currentTermExpenses', 'totalRevenue'
         ));
     }
 
