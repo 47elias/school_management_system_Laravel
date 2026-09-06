@@ -144,7 +144,7 @@ Route::middleware(['auth', 'role:admin,teacher'])->group(function () {
 /**
  * ADMIN ONLY ROUTES
  */
-Route::middleware(['auth', 'role:admin'])->group(function () {
+Route::middleware(['auth', 'role:admin,receptionist'])->group(function () {
     // The main admin dashboard
     Route::get('/api/classes/{classId}/subjects', [TimetableController::class, 'getSubjectsByClass']);
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
