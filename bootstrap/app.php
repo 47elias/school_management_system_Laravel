@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -13,9 +14,11 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
 
-        // 1. Register the role middleware alias (only once)
+        // 1. Register Spatie Role and Permission middleware aliases
         $middleware->alias([
-            'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'role'               => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'permission'         => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
         ]);
 
         // 2. Where to send users who are NOT logged in (Guests)
@@ -34,13 +37,17 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             // Check Staff roles using the default web guard
-            $user = auth::user();
+            $user = auth()->user();
             if ($user) {
+                // If you eventually migrate fully to Spatie, you can update these to $user->hasRole('admin')
                 if ($user->role === 'admin') {
                     return route('dashboard');
                 }
                 if ($user->role === 'teacher') {
                     return route('teacher.dashboard');
+                }
+                if ($user->role === 'receptionist') {
+                    return route('receptionist.dashboard');
                 }
             }
 

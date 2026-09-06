@@ -10,11 +10,14 @@ use App\Models\Subject;
 use App\Models\SubjectAssignment;
 use App\Models\Mark;
 use App\Models\Term;
-use App\Models\ExamAttendance; // Ensure this Model is mapped or imported
+use App\Models\ExamAttendance;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
 class TeacherController extends Controller
 {
@@ -192,7 +195,7 @@ class TeacherController extends Controller
             ->where('class_id', $exam->class_id)
             ->exists();
 
-        if (!$isAuthorized && Auth::user()->role !== 'admin') {
+        if (!$isAuthorized && !Auth::user()->hasRole('admin') && Auth::user()->role !== 'admin') {
             abort(403, 'Unauthorized access to this exam.');
         }
 
@@ -225,7 +228,7 @@ class TeacherController extends Controller
             ->where('class_id', $exam->class_id)
             ->exists();
 
-        if (!$isAuthorized && Auth::user()->role !== 'admin') {
+        if (!$isAuthorized && !Auth::user()->hasRole('admin') && Auth::user()->role !== 'admin') {
             abort(403);
         }
 
@@ -259,7 +262,7 @@ class TeacherController extends Controller
             ->where('class_id', $exam->class_id)
             ->exists();
 
-        if (!$isAuthorized && Auth::user()->role !== 'admin') {
+        if (!$isAuthorized && !Auth::user()->hasRole('admin') && Auth::user()->role !== 'admin') {
             abort(403, 'Unauthorized access to this exam verification portal.');
         }
 
@@ -345,9 +348,10 @@ class TeacherController extends Controller
     public function updateProfile(Request $request)
     {
         $user = Auth::user();
+        
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
+            'email' => ['required', 'email', \Illuminate\Validation\Rule::unique('users')->ignore($user->id)],
             'phone_number' => 'nullable|string',
             'password' => 'nullable|min:8|confirmed',
         ]);
@@ -361,6 +365,7 @@ class TeacherController extends Controller
         }
 
         $user->save();
+        
         return back()->with('success', 'Profile updated successfully!');
     }
 
@@ -369,7 +374,8 @@ class TeacherController extends Controller
      */
     public function index()
     {
-        $teachers = User::whereIn('role', ['teacher', 'admin', 'receptionist'])->latest()->get();
+        // Gets all staff members (excluding students if they are in the same table, though usually they are separate)
+        $teachers = User::where('role', '!=', 'student')->latest()->get();
         return view('teachers.index', compact('teachers'));
     }
 
@@ -387,10 +393,10 @@ class TeacherController extends Controller
             'dob' => 'required|date',
             'ec_number' => 'required|unique:users,ec_number',
             'password' => 'required|min:8',
-            'role' => 'required|in:admin,teacher,receptionist',
+            'role' => 'required|in:admin,teacher,receptionist', // Keeping legacy role check for compatibility
         ]);
 
-        User::create([
+        $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'national_id' => $request->national_id,
@@ -398,8 +404,11 @@ class TeacherController extends Controller
             'phone_number' => $request->phone_number,
             'ec_number' => $request->ec_number,
             'password' => Hash::make($request->password),
-            'role' => $request->role,
+            'role' => $request->role, // Fallback legacy column
         ]);
+
+        // Automatically assign the Spatie Role upon creation
+        $user->assignRole($request->role);
 
         return redirect()->route('teachers.index')->with('success', 'Staff account created successfully!');
     }
@@ -407,35 +416,62 @@ class TeacherController extends Controller
     public function edit($id)
     {
         $staff = User::findOrFail($id);
-        return view('teachers.edit', compact('staff'));
+        $roles = Role::all();
+        $permissions = Permission::all();
+        
+        return view('teachers.edit', compact('staff', 'roles', 'permissions'));
     }
 
     public function update(Request $request, $id)
     {
-        $user = User::findOrFail($id);
+        $staff = User::findOrFail($id);
+        
+        // 1. Validate basic input (removed the legacy 'role' rule since we use Spatie arrays now)
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
-            'role' => 'required|in:admin,teacher,receptionist',
-            'national_id' => 'required|unique:users,national_id,' . $user->id,
+            'email' => 'required|email|unique:users,email,' . $staff->id,
+            'national_id' => 'required|string|unique:users,national_id,' . $staff->id,
             'dob' => 'required|date',
-            'ec_number' => 'required|unique:users,ec_number,' . $user->id,
+            'ec_number' => 'required|string|unique:users,ec_number,' . $staff->id,
         ]);
 
-        $user->name = $request->name;
-        $user->email = $request->email;
-        $user->role = $request->role;
-        $user->national_id = $request->national_id;
-        $user->dob = $request->dob;
-        $user->ec_number = $request->ec_number;
-        $user->phone_number = $request->phone_number;
+        // 2. Update basic details
+        $staff->name = $request->name;
+        $staff->email = $request->email;
+        $staff->phone_number = $request->phone_number;
+        $staff->ec_number = $request->ec_number;
+        $staff->national_id = $request->national_id;
+        $staff->dob = $request->dob;
 
-        if ($request->filled('password')) {
-            $user->password = Hash::make($request->password);
+        // Keep legacy role column in sync if a primary role is selected
+        if ($request->has('roles') && count($request->roles) > 0) {
+            $staff->role = $request->roles[0];
         }
-        $user->save();
 
-        return redirect()->route('teachers.index')->with('success', 'Staff updated successfully!');
+        // 3. Update password only if provided
+        if ($request->filled('password')) {
+            $staff->password = Hash::make($request->password);
+        }
+
+        $staff->save();
+
+        // 4. Assign / Sync Roles (Spatie)
+        if ($request->has('roles')) {
+            $staff->syncRoles($request->roles);
+        } else {
+            // If no checkboxes are checked, remove all roles
+            $staff->syncRoles([]);
+        }
+
+        // 5. Assign / Sync Direct Permissions (Spatie)
+        if ($request->has('permissions')) {
+            $staff->syncPermissions($request->permissions);
+        } else {
+            // If no checkboxes are checked, remove all direct permissions
+            $staff->syncPermissions([]);
+        }
+
+        return redirect()->route('teachers.index')->with('success', 'Staff member and roles updated successfully.');
     }
 
     public function destroy($id)
