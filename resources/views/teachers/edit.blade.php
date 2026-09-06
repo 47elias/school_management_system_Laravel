@@ -114,7 +114,7 @@
                                                     @foreach($roles as $role)
                                                         <div class="checkbox" style="margin-bottom: 10px;">
                                                             <label style="font-size: 15px;">
-                                                                <input type="checkbox" name="roles[]" value="{{ $role->name }}" 
+                                                                <input type="checkbox" name="roles[]" value="{{ $role->name }}" class="role-checkbox" data-role="{{ strtolower($role->name) }}"
                                                                     {{ $staff->hasRole($role->name) ? 'checked' : '' }}>
                                                                 {{ ucfirst($role->name) }}
                                                             </label>
@@ -134,7 +134,7 @@
                                                     @foreach($permissions as $permission)
                                                         <div class="checkbox" style="margin-bottom: 10px;">
                                                             <label style="font-size: 14px;">
-                                                                <input type="checkbox" name="permissions[]" value="{{ $permission->name }}"
+                                                                <input type="checkbox" name="permissions[]" value="{{ $permission->name }}" class="permission-checkbox"
                                                                     {{ $staff->hasDirectPermission($permission->name) ? 'checked' : '' }}>
                                                                 {{ ucfirst(str_replace('_', ' ', $permission->name)) }}
                                                             </label>
@@ -169,5 +169,29 @@
         @include('layouts.footer')
     </div>
     @include('components.scripts')
+
+    {{-- Script to auto-check/uncheck Admin and Permissions when Super_Admin is clicked --}}
+    <script>
+        $(document).ready(function() {
+            $('.role-checkbox').on('change', function() {
+                let roleName = $(this).data('role');
+                
+                // Check if the modified role is 'super_admin', 'super admin', or 'superadmin'
+                if (roleName === 'super_admin' || roleName === 'super admin' || roleName === 'superadmin') {
+                    
+                    if ($(this).is(':checked')) {
+                        // 1. Auto-check the 'admin' role
+                        $('.role-checkbox[data-role="admin"]').prop('checked', true);
+
+                        // 2. Auto-check all direct permissions
+                        $('.permission-checkbox').prop('checked', true);
+                    } else {
+                        // Auto-uncheck all direct permissions when super admin is removed
+                        $('.permission-checkbox').prop('checked', false);
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>
