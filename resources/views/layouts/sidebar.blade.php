@@ -12,7 +12,7 @@
 
       @if(auth()->user()->role === 'admin' || (method_exists(auth()->user(), 'hasRole') && auth()->user()->hasRole('admin')))
       {{-- NEW: Administration (On Top of Everything Else) --}}
-      <li class="treeview {{ Request::is('roles*') || Request::is('permissions*') || Request::is('teachers*') ? 'active menu-open' : '' }}">
+      <li class="treeview {{ Request::is('roles*') || Request::is('permissions*') || Request::is('teachers*') || Request::is('audit-logs*') ? 'active menu-open' : '' }}">
         <a href="#">
           <i class="fa fa-shield" style="color: #ef4444;"></i> <span style="font-weight: 600;">Administration</span>
           <span class="pull-right-container">
@@ -33,6 +33,11 @@
           <li class="{{ Request::is('teachers') && !Request::is('teachers/create') ? 'active' : '' }}">
             <a href="{{ route('teachers.index') }}" style="padding-left: 30px;">
               <i class="fa fa-users"></i> View All Staff
+            </a>
+          </li>
+          <li class="{{ Request::is('audit-logs*') ? 'active' : '' }}">
+            <a href="{{ route('audit.logs') }}" style="padding-left: 30px;">
+              <i class="fa fa-history text-yellow"></i> System Audit Logs
             </a>
           </li>
         </ul>
