@@ -24,6 +24,7 @@ use App\Http\Controllers\Auth\StudentForgotPasswordController;
 use App\Http\Controllers\Admin\TimetableController;
 use App\Http\Controllers\ChatbotController;
 use App\Http\Controllers\RolePermissionController;
+use App\Http\Controllers\AuditLogController;
 use App\Models\Exam;
 use App\Models\Term;
 
@@ -207,7 +208,7 @@ Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
 
     Route::get('/terms', [TermController::class, 'index'])->middleware('permission:term_management')->name('terms.index');
     Route::post('/terms', [TermController::class, 'store'])->middleware('permission:term_management')->name('terms.store');
-    Route::get('/terms/activate/{id}', [TermController::class, 'activate'])->middleware('permission:term_management')->name('terms.activate');
+    Route::post('/terms/activate/{id}', [TermController::class, 'activate'])->middleware('permission:term_management')->name('terms.activate');
 
     //Fees and Financials Routes
     Route::get('/fees/payment', [FeeController::class, 'create'])->middleware('permission:manage-fees')->name('fees.create');
@@ -268,6 +269,8 @@ Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
         Route::get('/', [AdmissionController::class, 'manage'])->middleware('permission:admissions')->name('admissions.manage');
         Route::put('/{id}', [AdmissionController::class, 'update'])->middleware('permission:admissions')->name('admissions.update');
     });
+
+    Route::get('/audit-logs', [AuditLogController::class, 'index'])->middleware('permission:audit-logs')->name('audit.logs');
 
     Route::prefix('administration')->name('roles.')->group(function () {
         Route::get('/roles', [RolePermissionController::class, 'index'])->middleware('permission:manage-users')->name('index');

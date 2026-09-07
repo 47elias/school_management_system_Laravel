@@ -609,6 +609,7 @@ class ComposerStaticInitc514d8f7b9fc5970bdd94287905ef584
         'App\\Http\\Controllers\\InventoryController' => __DIR__ . '/../..' . '/app/Http/Controllers/InventoryController.php',
         'App\\Http\\Controllers\\PayrollController' => __DIR__ . '/../..' . '/app/Http/Controllers/PayrollController.php',
         'App\\Http\\Controllers\\ReceptionistController' => __DIR__ . '/../..' . '/app/Http/Controllers/ReceptionistController.php',
+        'App\\Http\\Controllers\\RolePermissionController' => __DIR__ . '/../..' . '/app/Http/Controllers/RolePermissionController.php',
         'App\\Http\\Controllers\\StudentController' => __DIR__ . '/../..' . '/app/Http/Controllers/StudentController.php',
         'App\\Http\\Controllers\\Student\\Auth\\LoginController' => __DIR__ . '/../..' . '/app/Http/Controllers/Student/Auth/LoginController.php',
         'App\\Http\\Controllers\\Student\\PortalController' => __DIR__ . '/../..' . '/app/Http/Controllers/Student/PortalController.php',
