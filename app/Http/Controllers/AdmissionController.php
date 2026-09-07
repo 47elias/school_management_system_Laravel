@@ -6,9 +6,9 @@ use Illuminate\Http\Request;
 use App\Models\Admission;
 use App\Mail\AdmissionStatusUpdated;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\File;
 
 class AdmissionController extends Controller
 {
@@ -67,13 +67,19 @@ class AdmissionController extends Controller
         $recommendationPath = null;
 
         try {
-            // 2. Handle File Uploads
+            // 2. Handle File Uploads Directly to public/admission-documents
             if ($request->hasFile('results_file')) {
-                $resultsPath = $request->file('results_file')->store('admissions/results', 'public');
+                $file = $request->file('results_file');
+                $filename = time() . '_results_' . str_replace(' ', '_', $file->getClientOriginalName());
+                $file->move(public_path('admission-documents'), $filename);
+                $resultsPath = 'admission-documents/' . $filename;
             }
 
             if ($request->hasFile('recommendation_letter')) {
-                $recommendationPath = $request->file('recommendation_letter')->store('admissions/recommendations', 'public');
+                $file = $request->file('recommendation_letter');
+                $filename = time() . '_rec_' . str_replace(' ', '_', $file->getClientOriginalName());
+                $file->move(public_path('admission-documents'), $filename);
+                $recommendationPath = 'admission-documents/' . $filename;
             }
 
             // 3. Database Transaction
@@ -101,9 +107,13 @@ class AdmissionController extends Controller
                 ->with('success', "Application submitted! Tracking ID: {$admission->tracking_id}");
 
         } catch (\Exception $e) {
-            // Cleanup files if the database entry fails
-            if ($resultsPath) Storage::disk('public')->delete($resultsPath);
-            if ($recommendationPath) Storage::disk('public')->delete($recommendationPath);
+            // Cleanup files from the public folder if the database entry fails
+            if ($resultsPath && File::exists(public_path($resultsPath))) {
+                File::delete(public_path($resultsPath));
+            }
+            if ($recommendationPath && File::exists(public_path($recommendationPath))) {
+                File::delete(public_path($recommendationPath));
+            }
 
             Log::error("Admission Save Error: " . $e->getMessage());
             return back()->withInput()->with('error', 'Critical Error: ' . $e->getMessage());

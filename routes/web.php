@@ -163,7 +163,7 @@ Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
     // The main admin dashboard
     Route::get('/api/classes/{classId}/subjects', [TimetableController::class, 'getSubjectsByClass']);
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::resource('teachers', TeacherController::class);
+    Route::resource('teachers', TeacherController::class)->middleware('permission:manage-users');
     Route::get('/students/{id}/enroll-face', [App\Http\Controllers\StudentController::class, 'enrollFaceView'])->name('students.enroll_face');
     Route::post('/students/{id}/enroll-face', [App\Http\Controllers\StudentController::class, 'storeFace'])->name('students.store_face');
     Route::get('/students/{id}/view-face', [App\Http\Controllers\StudentController::class, 'getFace'])->name('students.get_face');
@@ -177,15 +177,10 @@ Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
     Route::get('/students/{id}/edit', [StudentController::class, 'edit'])->middleware('permission:student_management')->name('students.edit');
     Route::put('/students/{id}/update', [StudentController::class, 'update'])->middleware('permission:student_management')->name('students.update');
     Route::delete('/timetable/{id}', [TimetableController::class, 'destroy'])->middleware('permission:student_management')->name('timetable.destroy');
-    // Add this inside your timetable route group
-    Route::delete('/timetable/bulk-delete-special', [App\Http\Controllers\Admin\TimetableController::class, 'bulkDeleteSpecial'])
-        ->name('timetable.bulk_delete_special');
-
+    Route::delete('/timetable/bulk-delete-special', [App\Http\Controllers\Admin\TimetableController::class, 'bulkDeleteSpecial'])->name('timetable.bulk_delete_special');
     // ADDED PROFILE DATA ROUTE FOR ADMIN (Matches the AJAX URL /students/{id}/profile-data)
     Route::get('/students/{id}/profile-data', [StudentController::class, 'showProfile'])->name('students.profile.data');
-
     Route::get('/receptionist/students/{id}/financials', [StudentController::class, 'financials'])->name('students.financials');
-
     Route::get('/classes', [ClassController::class, 'index'])->name('classes.index');
     Route::post('/classes/store', [ClassController::class, 'store'])->name('classes.store');
     Route::get('/classes/assign-subjects', [ClassController::class, 'assignSubjects'])->name('classes.assign');
