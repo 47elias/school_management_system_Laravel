@@ -1,67 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <title>Enrollment Analytics | {{ env('SCHOOL_ACRONYM') }}</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Enrollment Analytics | {{ env('SCHOOL_ACRONYM') }}</title>
-    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     @include('components.adminlte')
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic">
 
+    <!-- Scoped Modern UI Updates (Will not affect AdminLTE Footer/Layout) -->
     <style>
-        :root {
-            --brand-primary: #4f46e5;
-            --brand-success: #10b981;
-            --brand-info: #0ea5e9;
-            --brand-warning: #f59e0b;
-            --bg-light: #f8fafc;
-            --text-main: #1e293b;
-        }
+        /* Modern Gradient Cards */
+        .content .info-box-modern { border-radius: 12px; padding: 25px 20px; color: #fff; position: relative; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.08); transition: transform 0.3s ease; margin-bottom: 20px; }
+        .content .info-box-modern:hover { transform: translateY(-5px); }
+        .bg-gradient-blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+        .bg-gradient-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .bg-gradient-info { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); }
+        .bg-gradient-warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .content .info-box-modern .inner h3 { font-size: 36px; font-weight: 800; margin: 0 0 5px 0; letter-spacing: 1px; }
+        .content .info-box-modern .inner p { font-size: 15px; margin: 0; font-weight: 600; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px; }
+        .content .info-box-modern .icon { position: absolute; right: 20px; top: 20px; font-size: 55px; opacity: 0.2; }
 
-        body { font-family: 'Inter', sans-serif !important; background-color: var(--bg-light) !important; }
+        /* Modern Box Styling */
+        .content .box { border-radius: 12px; border-top: none; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 25px; overflow: hidden; background: #ffffff; }
+        .content .box-header { border-bottom: 1px solid #f1f5f9; padding: 20px; background: #fff; }
+        .content .box-title { font-weight: 800 !important; color: #1e293b; font-size: 18px; }
+        
+        /* Table overrides */
+        .content .table > tbody > tr > td { vertical-align: middle !important; padding: 16px 20px; border-top: 1px solid #f1f5f9; font-size: 15px; color: #334155; }
+        .content .table > thead > tr > th { border-bottom: 2px solid #e2e8f0; color: #64748b; font-weight: 700; padding: 16px 20px; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; background: #f8fafc; }
+        .content .table-hover > tbody > tr:hover { background-color: #f8fafc; }
 
-        /* Fix AdminLTE background conflicts */
-        .content-wrapper { background-color: var(--bg-light) !important; }
-
-        /* Modern Dashboard Cards */
-        .stats-card {
-            background: #fff; border-radius: 16px; padding: 20px;
-            display: flex; align-items: center;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-            margin-bottom: 25px; border: 1px solid #f1f5f9;
-            transition: transform 0.2s ease;
-        }
-        .stats-card:hover { transform: translateY(-3px); }
-
-        .stats-icon {
-            width: 56px; height: 56px; border-radius: 14px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 24px; margin-right: 15px;
-        }
-        .stats-data .number { font-size: 26px; font-weight: 800; color: var(--text-main); display: block; line-height: 1; }
-        .stats-data .label { font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-
-        /* Container Styling */
-        .box-modern {
-            background: #fff; border-radius: 16px; border: none;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.04);
-            margin-bottom: 30px;
-        }
-        .box-modern .box-header { padding: 20px 25px; background: transparent; border-bottom: 1px solid #f1f5f9; }
-        .box-modern .box-title { font-weight: 700; color: var(--text-main); font-size: 17px; }
-
-        /* Table Aesthetics */
-        .table-modern thead th {
-            background: #f8fafc; text-transform: uppercase; font-size: 11px;
-            letter-spacing: 1px; color: #64748b; padding: 12px 25px; border: none;
-        }
-        .table-modern tbody td { padding: 15px 25px; vertical-align: middle; color: #334155; border-top: 1px solid #f1f5f9; }
-
-        .progress-slim { height: 8px; border-radius: 10px; background: #f1f5f9; margin-top: 5px; overflow: hidden; }
-        .progress-bar-indigo { background: linear-gradient(90deg, #4f46e5, #6366f1); }
-        .bg-purple { background-color: #a855f7 !important; }
-        .bg-blue { background-color: #3b82f6 !important; }
+        /* Analytics Specific Styles */
+        .content .progress-slim { height: 8px; border-radius: 10px; background: #f1f5f9; margin-top: 5px; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); }
+        .content .progress-bar-indigo { background: linear-gradient(90deg, #4f46e5, #6366f1); }
+        .content .bg-purple { background-color: #a855f7 !important; }
+        .content .bg-blue { background-color: #3b82f6 !important; }
+        .content .badge-count { background: #eef2ff; color: #4338ca; padding: 6px 12px; font-weight: 700; font-size: 13px; border-radius: 6px; }
     </style>
 </head>
 <body class="hold-transition skin-blue sidebar-mini">
@@ -75,69 +52,57 @@
 
         {{-- 3. MAIN CONTENT --}}
         <div class="content-wrapper">
-            <section class="content-header" style="padding: 35px 25px 20px;">
-                <h1 style="font-weight: 800; color: #0f172a; letter-spacing: -1px;">
+            <section class="content-header" style="padding-bottom: 15px;">
+                <h1 style="font-weight: 800; color: #1e293b; font-size: 28px;">
                     Enrollment Dashboard
-                    <small style="font-weight: 500; color: #64748b; margin-left: 10px;">Academic Analytics Overview</small>
+                    <small style="color: #64748b; font-weight: 600; font-size: 14px;">Academic Analytics Overview</small>
                 </h1>
-                <ol class="breadcrumb">
-                    <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
-                    <li class="active">Enrollment Analytics</li>
-                </ol>
             </section>
 
             <section class="content">
                 {{-- Quick Stats Row --}}
                 <div class="row">
-                    <div class="col-md-3">
-                        <div class="stats-card">
-                            <div class="stats-icon" style="background: rgba(79, 70, 229, 0.1); color: var(--brand-primary);">
-                                <i class="fa fa-graduation-cap"></i>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="info-box-modern bg-gradient-blue">
+                            <div class="inner">
+                                <h3>{{ $classStats->sum('total') }}</h3>
+                                <p>Total Students</p>
                             </div>
-                            <div class="stats-data">
-                                <span class="number">{{ $classStats->sum('total') }}</span>
-                                <span class="label">Total Students</span>
-                            </div>
+                            <div class="icon"><i class="fa fa-graduation-cap"></i></div>
                         </div>
                     </div>
 
-                    <div class="col-md-3">
-                        <div class="stats-card">
-                            <div class="stats-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--brand-success);">
-                                <i class="fa fa-flag-checkered"></i>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="info-box-modern bg-gradient-green">
+                            <div class="inner">
+                                <h3>{{ \App\Models\Term::where('is_current', true)->value('term_name') ?? 'None' }}</h3>
+                                <p>Active Term</p>
                             </div>
-                            <div class="stats-data">
-                                <span class="number">{{ \App\Models\Term::where('is_current', true)->value('term_name') ?? 'None' }}</span>
-                                <span class="label">Active Term</span>
-                            </div>
+                            <div class="icon"><i class="fa fa-flag-checkered"></i></div>
                         </div>
                     </div>
 
-                    <div class="col-md-3">
-                        <div class="stats-card">
-                            <div class="stats-icon" style="background: rgba(14, 165, 233, 0.1); color: var(--brand-info);">
-                                <i class="fa fa-building"></i>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="info-box-modern bg-gradient-info">
+                            <div class="inner">
+                                <h3>{{ $classStats->count() }}</h3>
+                                <p>Class Groups</p>
                             </div>
-                            <div class="stats-data">
-                                <span class="number">{{ $classStats->count() }}</span>
-                                <span class="label">Class Groups</span>
-                            </div>
+                            <div class="icon"><i class="fa fa-building"></i></div>
                         </div>
                     </div>
 
-                    <div class="col-md-3">
-                        <div class="stats-card">
-                            <div class="stats-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--brand-warning);">
-                                <i class="fa fa-venus-mars"></i>
-                            </div>
-                            <div class="stats-data">
+                    <div class="col-md-3 col-sm-6">
+                        <div class="info-box-modern bg-gradient-warning">
+                            <div class="inner">
                                 @php
                                     $f = $genderStats->where('gender', 'Female')->first()->total ?? 0;
                                     $m = $genderStats->where('gender', 'Male')->first()->total ?? 0;
                                 @endphp
-                                <span class="number">{{ $f }} / {{ $m }}</span>
-                                <span class="label">Girls vs Boys</span>
+                                <h3>{{ $f }} / {{ $m }}</h3>
+                                <p>Girls vs Boys</p>
                             </div>
+                            <div class="icon"><i class="fa fa-venus-mars"></i></div>
                         </div>
                     </div>
                 </div>
@@ -145,57 +110,59 @@
                 <div class="row">
                     {{-- Main Table --}}
                     <div class="col-md-8">
-                        <div class="box box-modern">
-                            <div class="box-header">
-                                <h3 class="box-title">Enrollment by Grade</h3>
+                        <div class="box">
+                            <div class="box-header with-border">
+                                <h3 class="box-title"><i class="fa fa-bar-chart text-blue"></i> Enrollment by Grade</h3>
                             </div>
-                            <div class="box-body no-padding">
-                                <div class="table-responsive">
-                                    <table class="table table-modern">
-                                        <thead>
-                                            <tr>
-                                                <th>Grade Level</th>
-                                                <th>Distribution Visual</th>
-                                                <th class="text-right">Count</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @php $maxVal = $classStats->max('total') ?: 1; @endphp
-                                            @foreach($classStats as $stat)
-                                            <tr>
-                                                <td style="font-weight: 700;">{{ $stat->grade }}</td>
-                                                <td width="55%">
-                                                    <div class="progress-slim">
-                                                        <div class="progress-bar progress-bar-indigo"
-                                                             style="width: {{ ($stat->total / $maxVal) * 100 }}%"></div>
-                                                    </div>
-                                                </td>
-                                                <td class="text-right">
-                                                    <span class="badge" style="background: #eef2ff; color: #4338ca; padding: 5px 10px;">{{ $stat->total }}</span>
-                                                </td>
-                                            </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
+                            <div class="box-body table-responsive no-padding">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Grade Level</th>
+                                            <th>Distribution Visual</th>
+                                            <th class="text-right">Count</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @php $maxVal = $classStats->max('total') ?: 1; @endphp
+                                        @foreach($classStats as $stat)
+                                        <tr>
+                                            <td style="font-weight: 700; color: #1e293b;">{{ $stat->grade }}</td>
+                                            <td width="55%">
+                                                <div class="progress-slim">
+                                                    <div class="progress-bar progress-bar-indigo"
+                                                         style="width: {{ ($stat->total / $maxVal) * 100 }}%"></div>
+                                                </div>
+                                            </td>
+                                            <td class="text-right">
+                                                <span class="badge-count">{{ $stat->total }}</span>
+                                            </td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
 
                     {{-- Side Info --}}
                     <div class="col-md-4">
-                        <div class="box box-modern">
-                            <div class="box-header"><h3 class="box-title">Term Growth</h3></div>
-                            <div class="box-body no-padding">
-                                <table class="table table-modern">
+                        <div class="box">
+                            <div class="box-header with-border">
+                                <h3 class="box-title"><i class="fa fa-line-chart text-green"></i> Term Growth</h3>
+                            </div>
+                            <div class="box-body table-responsive no-padding">
+                                <table class="table table-hover">
                                     <tbody>
                                         @foreach($termStats as $t)
                                         <tr>
                                             <td>
-                                                <span style="display:block; font-weight: 700;">{{ $t->term_name }}</span>
-                                                <small class="text-muted">{{ $t->academic_year }}</small>
+                                                <span style="display:block; font-weight: 700; color: #1e293b;">{{ $t->term_name }}</span>
+                                                <span class="label" style="background: #e2e8f0; color: #475569; font-size: 11px; padding: 3px 6px;">{{ $t->academic_year }}</span>
                                             </td>
-                                            <td class="text-right text-success" style="font-weight: 800;">+{{ $t->total }}</td>
+                                            <td class="text-right text-success" style="font-weight: 800; font-size: 16px;">
+                                                <i class="fa fa-arrow-up"></i> {{ $t->total }}
+                                            </td>
                                         </tr>
                                         @endforeach
                                     </tbody>
@@ -203,15 +170,19 @@
                             </div>
                         </div>
 
-                        <div class="box box-modern">
-                            <div class="box-header"><h3 class="box-title">Gender Balance</h3></div>
+                        <div class="box">
+                            <div class="box-header with-border">
+                                <h3 class="box-title"><i class="fa fa-pie-chart text-orange"></i> Gender Balance</h3>
+                            </div>
                             <div class="box-body" style="padding: 20px 25px;">
                                 @php $total = $classStats->sum('total') ?: 1; @endphp
                                 @foreach($genderStats as $g)
                                 <div style="margin-bottom: 20px;">
                                     <div class="clearfix" style="margin-bottom: 5px;">
-                                        <span class="pull-left" style="font-weight: 600;">{{ $g->gender }}</span>
-                                        <span class="pull-right text-muted">{{ $g->total }} Students</span>
+                                        <span class="pull-left" style="font-weight: 700; color: #1e293b;">
+                                            <i class="fa {{ $g->gender == 'Female' ? 'fa-female text-purple' : 'fa-male text-blue' }}" style="margin-right: 5px;"></i> {{ $g->gender }}
+                                        </span>
+                                        <span class="pull-right text-muted" style="font-weight: 600;">{{ $g->total }} Students</span>
                                     </div>
                                     <div class="progress-slim">
                                         <div class="progress-bar {{ $g->gender == 'Female' ? 'bg-purple' : 'bg-blue' }}"

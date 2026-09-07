@@ -1,231 +1,268 @@
 @extends('layouts.student')
 
 @section('content')
-{{-- 1. DATA PREPARATION LOGIC HANDLED BY CONTROLLER --}}
+<!-- Scoped Modern UI Updates -->
+<style>
+    body { font-family: 'Inter', sans-serif !important; background: #f8fafc; }
 
-<section class="content-header no-print">
-    <h1>
-        Academic Performance
-        <small class="text-uppercase">{{ $displayTerm->term_name }} Summary</small>
+    /* Modern Box Styling */
+    .content .box { 
+        border-radius: 12px; 
+        border-top: none; 
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        margin-bottom: 25px; 
+        overflow: hidden; 
+        background: #ffffff;
+    }
+    .content .box-header { 
+        border-bottom: 1px solid #f1f5f9; 
+        padding: 20px 25px; 
+        background: #fff; 
+    }
+    .content .box-title { 
+        font-weight: 800 !important; 
+        color: #0f172a; 
+        font-size: 18px; 
+    }
+
+    /* Filter Bar */
+    .content .filter-bar {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 15px 25px;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    }
+
+    /* Form Inputs */
+    .content .form-control { 
+        border-radius: 8px; 
+        border: 1px solid #cbd5e1; 
+        padding: 8px 15px; 
+        height: auto; 
+        font-size: 14px; 
+        color: #334155;
+    }
+    .content .form-control:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        outline: none;
+    }
+    
+    /* Optimized Table for 10+ Subjects */
+    .content .table > tbody > tr > td { 
+        vertical-align: middle !important; 
+        padding: 16px 20px; 
+        border-top: 1px solid #f1f5f9; 
+    }
+    .content .table > thead > tr > th { 
+        border-bottom: 2px solid #e2e8f0; 
+        color: #64748b; 
+        font-weight: 700; 
+        padding: 14px 20px; 
+        text-transform: uppercase; 
+        font-size: 12px; 
+        letter-spacing: 0.05em; 
+        background: #f8fafc; 
+    }
+    .content .table-hover > tbody > tr:hover { 
+        background-color: #f8fafc; 
+    }
+
+    /* Paper Breakdown UI */
+    .paper-item {
+        font-size: 13px;
+        color: #475569;
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #f1f5f9;
+        padding: 6px 10px;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+    }
+    .paper-item:last-child { margin-bottom: 0; }
+    .paper-item strong { color: #0f172a; font-family: monospace; font-size: 14px;}
+
+    /* Comments UI */
+    .comment-box {
+        font-size: 13px;
+        color: #475569;
+        background: #fdf8f6;
+        border-left: 3px solid #f97316;
+        padding: 8px 12px;
+        margin-bottom: 6px;
+        border-radius: 0 6px 6px 0;
+    }
+    .comment-box:last-child { margin-bottom: 0; }
+    .comment-paper-title { font-weight: 700; color: #c2410c; font-size: 11px; text-transform: uppercase; margin-bottom: 2px; display: block; }
+    .no-comment { color: #94a3b8; font-style: italic; font-size: 13px; }
+
+    /* Typography Utilities */
+    .badge-grade { font-size: 16px; font-weight: 800; padding: 6px 14px; border-radius: 8px; display: inline-block;}
+    .grade-A { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .grade-B { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    .grade-C { background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
+    .grade-D { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
+    .grade-F { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+    .avg-score { font-size: 18px; font-weight: 800; color: #0f172a; font-family: monospace; }
+    
+    /* Stats Widget */
+    .stat-widget { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border-radius: 12px; padding: 25px; color: white; box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2); }
+    .stat-value { font-size: 36px; font-weight: 800; line-height: 1; margin-bottom: 5px; }
+    .stat-label { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; }
+</style>
+
+<section class="content-header" style="padding-bottom: 15px;">
+    <h1 style="font-weight: 800; color: #0f172a; font-size: 28px;">
+        My Exam Results
     </h1>
-    <ol class="breadcrumb">
-        <li><a href="#"><i class="fa fa-dashboard"></i> Student</a></li>
-        <li class="active">Performance</li>
-    </ol>
 </section>
 
 <section class="content">
-
-    {{-- PRINT HEADER (Hidden on Screen) --}}
-    <div class="row visible-print-block">
-        <div class="col-xs-12">
-            <h2 class="page-header">
-                <i class="fa fa-university"></i> {{ env('SCHOOL_NAME', 'Academic Report') }}
-                <small class="pull-right">Date: {{ date('d/m/Y') }}</small>
-            </h2>
-            <div class="row invoice-info">
-                <div class="col-xs-6 invoice-col">
-                    <strong>Student Details:</strong><br>
-                    Name: {{ $student->surname }}, {{ $student->name }}<br>
-                    ID: {{ $student->student_number ?? 'N/A' }}<br>
-                    Grade: {{ $student->grade }}
-                </div>
-                <div class="col-xs-6 invoice-col text-right">
-                    <strong>Report Period:</strong><br>
-                    Term: {{ $displayTerm->term_name }}<br>
-                    Year: {{ $displayTerm->academic_year }}
-                </div>
-            </div>
-            <hr>
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible" style="border-radius: 8px; box-shadow: 0 4px 10px rgba(239,68,68,0.2);">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+            <h4 style="font-weight: 700; margin-bottom: 0;"><i class="icon fa fa-ban"></i> {{ session('error') }}</h4>
         </div>
+    @endif
+
+    {{-- 1. TERM SWITCHER --}}
+    <div class="filter-bar">
+        <form method="GET" action="{{ url()->current() }}" class="form-inline" style="display: flex; align-items: center; width: 100%; gap: 15px;">
+            <div class="form-group" style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                <label style="margin: 0; color: #475569;"><i class="fa fa-filter text-blue"></i> Viewing Term:</label>
+                <select name="term_id" class="form-control" onchange="this.form.submit()" style="min-width: 250px; font-weight: 600;">
+                    @foreach($allTerms as $t)
+                        <option value="{{ $t->id }}" {{ ($activeTerm->id == $t->id) ? 'selected' : '' }}>
+                            {{ $t->term_name }} ({{ $t->academic_year ?? $t->academicYear->year_name }})
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+        </form>
     </div>
 
-    {{-- IDENTITY & TERM SELECTOR --}}
     <div class="row">
-        <div class="col-md-8">
-            <div class="box box-widget widget-user-2 shadow-lg">
-                <div class="widget-user-header bg-navy">
-                    <div class="widget-user-image">
-                        <img class="img-circle" src="https://ui-avatars.com/api/?name={{ urlencode($student->name) }}&background=fff&color=001f3f&size=128" alt="User Avatar">
+        {{-- 2. STUDENT OVERVIEW WIDGET --}}
+        <div class="col-md-3">
+            <div class="stat-widget mb-4">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <div class="stat-label">Term Average</div>
+                        <div class="stat-value">{{ round($average, 1) }}%</div>
                     </div>
-                    <h3 class="widget-user-username" style="font-weight: 700;">{{ $student->surname }}, {{ $student->name }}</h3>
-                    <h5 class="widget-user-desc">
-                        <span class="badge bg-orange">{{ strtoupper($displayTerm->term_name) }}</span>
-                        <span class="badge bg-gray" style="margin-left:5px;">GRADE: {{ $student->grade }}</span>
-                    </h5>
+                    <i class="fa fa-line-chart" style="font-size: 40px; opacity: 0.3;"></i>
+                </div>
+                <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
+                    <div style="font-size: 16px; font-weight: 600;">{{ $student->surname }}, {{ $student->name }}</div>
+                    <div style="font-size: 13px; opacity: 0.9;">Grade: {{ $student->grade }} | ID: {{ $student->student_number ?? $student->student_id }}</div>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-4 no-print">
-            <div class="box box-default shadow-sm">
+        {{-- 3. RESULTS TABLE --}}
+        <div class="col-md-9">
+            <div class="box">
                 <div class="box-header with-border">
-                    <h3 class="box-title text-bold"><i class="fa fa-filter"></i> Switch Term</h3>
+                    <h3 class="box-title"><i class="fa fa-graduation-cap text-blue" style="margin-right: 8px;"></i> Academic Performance: {{ $activeTerm->term_name }}</h3>
                 </div>
-                <div class="box-body">
-                    <form action="{{ request()->url() }}" method="GET" id="termSwitcherForm">
-                        <select name="term_id" onchange="document.getElementById('termSwitcherForm').submit()" class="form-control input-lg shadow-sm">
-                            @foreach($allTerms as $t)
-                                <option value="{{ $t->id }}" {{ $t->id == $displayTerm->id ? 'selected' : '' }}>
-                                    {{ $t->term_name }} ({{ $t->academic_year }})
-                                </option>
-                            @endforeach
-                        </select>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+                <div class="box-body no-padding">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th style="width: 20%;">Subject Name</th>
+                                    <th style="width: 20%;">Papers</th>
+                                    <th style="width: 30%;">Teacher's Comments</th>
+                                    <th style="width: 15%;" class="text-center">Final Mark</th>
+                                    <th style="width: 15%;" class="text-center">Grade</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($current_results as $result)
+                                <tr>
+                                    {{-- Column 1: Subject Name --}}
+                                    <td>
+                                        <strong style="color: #0f172a; font-size: 15px; text-transform: uppercase; display: block;">{{ $result->subject_name }}</strong>
+                                        @if($result->papers_taken > 1)
+                                            <span style="font-size: 11px; font-weight: 600; color: #64748b; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; margin-top: 4px; display: inline-block;">
+                                                {{ $result->papers_taken }} Papers Assessed
+                                            </span>
+                                        @endif
+                                    </td>
+                                    
+                                    {{-- Column 2: Papers Breakdown --}}
+                                    <td>
+                                        @foreach($result->individual as $mark)
+                                            <div class="paper-item">
+                                                <span><i class="fa fa-file-text-o" style="color: #94a3b8; margin-right: 4px;"></i> {{ $mark->exam->exam_name }}</span>
+                                                <span><strong>{{ $mark->score }}%</strong></span>
+                                            </div>
+                                        @endforeach
+                                    </td>
 
-    {{-- PERFORMANCE STATS --}}
-    <div class="row">
-        <div class="col-md-4">
-            <div class="info-box shadow-sm border-left-aqua">
-                <span class="info-box-icon bg-aqua elevation-1"><i class="fa fa-line-chart"></i></span>
-                <div class="info-box-content">
-                    <span class="info-box-text text-uppercase text-muted">Term Average Score</span>
-                    <span class="info-box-number" style="font-size: 28px;">{{ number_format($average, 1) }}%</span>
-                </div>
-            </div>
-        </div>
+                                    {{-- Column 3: Comments --}}
+                                    <td>
+                                        @php $hasComments = false; @endphp
+                                        @foreach($result->individual as $mark)
+                                            @if(!empty($mark->teacher_comment))
+                                                @php $hasComments = true; @endphp
+                                                <div class="comment-box">
+                                                    @if($result->papers_taken > 1)
+                                                        <span class="comment-paper-title">{{ $mark->exam->exam_name }}</span>
+                                                    @endif
+                                                    "{{ $mark->teacher_comment }}"
+                                                </div>
+                                            @endif
+                                        @endforeach
+                                        
+                                        @if(!$hasComments)
+                                            <span class="no-comment">No comments provided.</span>
+                                        @endif
+                                    </td>
+                                    
+                                    {{-- Column 4: Final Mark --}}
+                                    <td class="text-center">
+                                        <span class="avg-score">{{ $result->average_score }}%</span>
+                                    </td>
 
-        <div class="col-md-8">
-            <div class="box box-solid shadow-sm">
-                <div class="box-body">
-                    <div class="pull-left">
-                        <small class="text-bold text-uppercase text-muted" style="display:block; margin-bottom: 5px;">Grading Key</small>
-                        <span class="grade-badge bg-green">A 75+</span>
-                        <span class="grade-badge bg-blue">B 65+</span>
-                        <span class="grade-badge bg-aqua">C 50+</span>
-                        <span class="grade-badge bg-yellow">D 45+</span>
-                        <span class="grade-badge bg-orange">E 40+</span>
-                        <span class="grade-badge bg-red">U < 40</span>
-                    </div>
-                    <button onclick="window.print()" class="btn btn-default btn-sm pull-right no-print" style="margin-top: 10px;">
-                        <i class="fa fa-print"></i> Download Report
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- DETAILED RESULTS TABLE --}}
-    <div class="box box-primary shadow-sm" style="border-radius: 8px; overflow: hidden;">
-        <div class="box-header with-border bg-white" style="padding: 15px;">
-            <h3 class="box-title text-bold">
-                <i class="fa fa-star text-yellow" style="margin-right: 10px;"></i>
-                Detailed Performance: {{ $displayTerm->term_name }}
-            </h3>
-        </div>
-        <div class="box-body no-padding">
-            <div class="table-responsive">
-                <table class="table table-hover table-vcenter mb-0">
-                    <thead>
-                        <tr style="background: #fafafa; color: #777; text-transform: uppercase; font-size: 11px; letter-spacing: 1px;">
-                            <th style="padding-left: 20px; width: 30%;">Subject</th>
-                            <th class="text-center" style="width: 15%;">Score</th>
-                            <th style="width: 20%;">Progress</th>
-                            <th class="text-center" style="width: 10%;">Grade</th>
-                            <th style="width: 25%;">Teacher's Remark</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($termResults as $res)
-                            @php
-                                // Map the Grade letter to your existing UI color classes
-                                $grade = $res->grade_letter; // Uses the accessor we added to Mark.php
-                                $colorMap = [
-                                    'A' => 'green',
-                                    'B' => 'blue',
-                                    'C' => 'aqua',
-                                    'D' => 'yellow',
-                                    'E' => 'orange',
-                                    'U' => 'red'
-                                ];
-                                $c = $colorMap[$grade] ?? 'gray';
-                            @endphp
-                            <tr>
-                                <td style="padding: 15px 20px;">
-                                    <div class="subject-dot bg-{{ $c }}"></div>
-                                    <div class="inline-block" style="display: inline-block; vertical-align: middle;">
-                                        <span class="text-bold" style="font-size: 14px; color: #2c3e50;">{{ $res->exam->subject->subject_name ?? 'Unknown' }}</span><br>
-                                        <small class="text-muted text-uppercase" style="font-size: 10px;">{{ $res->exam->exam_name }}</small>
-                                    </div>
-                                </td>
-                                <td class="text-center">
-                                    <span class="score-pill border-{{ $c }}">{{ (int)$res->score }}%</span>
-                                </td>
-                                <td>
-                                    <div class="progress progress-xs mb-0 shadow-none" style="margin-top: 8px; background: #eee; border-radius: 10px;">
-                                        <div class="progress-bar progress-bar-{{ $c }}" style="width: {{ $res->score }}%"></div>
-                                    </div>
-                                </td>
-                                <td class="text-center">
-                                    <span class="text-{{ $c }} text-bold" style="font-size: 18px;">{{ $grade }}</span>
-                                </td>
-                                <td style="padding-right: 20px;">
-                                    @if($res->teacher_comment)
-                                        <div class="comment-bubble">
-                                            <i class="fa fa-quote-left text-muted" style="font-size: 10px; margin-right: 5px;"></i>
-                                            {{ $res->teacher_comment }}
+                                    {{-- Column 5: Grade --}}
+                                    <td class="text-center">
+                                        @php
+                                            $gradeClass = 'grade-F';
+                                            if($result->grade == 'A') $gradeClass = 'grade-A';
+                                            elseif($result->grade == 'B') $gradeClass = 'grade-B';
+                                            elseif($result->grade == 'C') $gradeClass = 'grade-C';
+                                            elseif($result->grade == 'D') $gradeClass = 'grade-D';
+                                        @endphp
+                                        <span class="badge-grade {{ $gradeClass }}">
+                                            {{ $result->grade }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="5" class="text-center" style="padding: 60px 20px;">
+                                        <div style="width: 80px; height: 80px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
+                                            <i class="fa fa-inbox" style="font-size: 35px; color: #94a3b8;"></i>
                                         </div>
-                                    @else
-                                        <span class="text-muted small italic">No comment recorded</span>
-                                    @endif
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="text-center" style="padding: 80px 0;">
-                                    <i class="fa fa-folder-open-o text-muted" style="font-size: 40px; display: block; margin-bottom: 10px;"></i>
-                                    <p class="text-muted" style="font-size: 16px;">No entries found for {{ $displayTerm->term_name }}.</p>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="box-footer bg-gray-light visible-print-block text-center" style="margin-top: 30px; border-top: 1px solid #ddd;">
-            <div class="row">
-                <div class="col-xs-6">
-                    <br><br>
-                    <p style="border-top: 1px solid #999; width: 200px; margin: 0 auto;">Class Teacher Signature</p>
-                </div>
-                <div class="col-xs-6">
-                    <br><br>
-                    <p style="border-top: 1px solid #999; width: 200px; margin: 0 auto;">School Stamp & Date</p>
+                                        <h4 style="font-weight: 700; color: #475569;">No Results Published</h4>
+                                        <p style="color: #94a3b8;">You currently have no exam marks recorded for this term.</p>
+                                    </td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
-
-<style>
-    /* UI Enhancements - Preserved exactly as requested */
-    .bg-navy { background-color: #001f3f !important; color: white; }
-    .shadow-lg { box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important; }
-    .shadow-sm { box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important; }
-    .border-left-aqua { border-left: 4px solid #00c0ef !important; }
-    .grade-badge { padding: 3px 10px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-right: 3px; display: inline-block; }
-    .table-vcenter td { vertical-align: middle !important; }
-    .subject-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 12px; vertical-align: middle; }
-    .score-pill { padding: 5px 12px; border: 2px solid; border-radius: 50px; font-weight: 800; background: #fff; display: inline-block; min-width: 60px; font-size: 12px; }
-    .comment-bubble { background: #f9f9f9; border: 1px solid #eee; padding: 8px 12px; border-radius: 6px; font-size: 12px; color: #555; line-height: 1.4; }
-
-    /* Grade-specific colors */
-    .border-green { border-color: #00a65a; color: #00a65a; }
-    .border-blue { border-color: #0073b7; color: #0073b7; }
-    .border-aqua { border-color: #00c0ef; color: #00c0ef; }
-    .border-yellow { border-color: #f39c12; color: #f39c12; }
-    .border-orange { border-color: #ff851b; color: #ff851b; }
-    .border-red { border-color: #dd4b39; color: #dd4b39; }
-
-    @media print {
-        .no-print { display: none !important; }
-        .content { padding: 0 !important; }
-        .box { border: none !important; box-shadow: none !important; }
-        .table { width: 100% !important; border-collapse: collapse !important; }
-    }
-</style>
 @endsection

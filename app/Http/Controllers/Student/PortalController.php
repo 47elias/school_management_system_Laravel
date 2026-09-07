@@ -44,9 +44,11 @@ class PortalController extends Controller
         $recentResults = Mark::where('student_id', $student->id)
             ->whereHas('exam', function($q) use ($currentTerm) {
                 $q->where('term_id', $currentTerm->id);
-            })->get();
+            })->with('exam.subject')->get();
 
-        $currentAverage = $recentResults->avg('score') ?? 0;
+        // Use the new aggregator so the dashboard average matches the results page average
+        $aggregatedResults = $this->aggregateMarksBySubject($recentResults);
+        $currentAverage = $aggregatedResults->count() > 0 ? $aggregatedResults->avg('average_score') : 0;
 
         $avatar = ($student->gender == 'Female')
                 ? asset('adminlte/dist/img/avatar3.png')
@@ -104,41 +106,44 @@ class PortalController extends Controller
         // 1. Identify which term to display
         $selectedTermId = $request->get('term_id');
         if ($selectedTermId) {
-            $displayTerm = Term::find($selectedTermId);
+            $activeTerm = Term::find($selectedTermId);
         } else {
-            $displayTerm = Term::where('is_current', true)->first() ?? $allTerms->first();
+            $activeTerm = Term::where('is_current', 1)->first() ?? $allTerms->first();
         }
 
-        if (!$displayTerm) {
-            return back()->with('error', 'No academic terms found.');
+        if (!$activeTerm) {
+            return back()->with('error', 'No academic terms found in the system.');
         }
 
-        // 2. Fetch results for the selected term
-        // Added deeper Eager Loading (exam.subject, exam.term) to ensure Blade has everything
-        $termResults = Mark::where('student_id', $student->id)
-            ->whereHas('exam', function($q) use ($displayTerm) {
-                $q->where('term_id', $displayTerm->id);
+        // 2. Fetch raw marks for the current active/selected term
+        $raw_current_results = Mark::where('student_id', $student->id)
+            ->whereHas('exam', function($query) use ($activeTerm) {
+                $query->where('term_id', $activeTerm->id);
             })
             ->with(['exam.subject', 'exam.term'])
             ->get();
 
-        // 3. Historical Data: Grouped results for all other terms
+        // 3. Aggregate current term results (Averages Paper 1 + Paper 2 automatically)
+        $current_results = $this->aggregateMarksBySubject($raw_current_results);
+
+        // 4. Calculate overall average based on the final aggregated subject scores
+        $average = $current_results->count() > 0 ? (float) $current_results->avg('average_score') : 0;
+
+        // 5. Historical Data: Grouped results for all other terms
         $history = Mark::where('student_id', $student->id)
-            ->whereHas('exam', function($q) use ($displayTerm) {
-                $q->where('term_id', '!=', $displayTerm->id);
+            ->whereHas('exam', function($query) use ($activeTerm) {
+                $query->where('term_id', '!=', $activeTerm->id);
             })
-            ->with(['exam.subject', 'exam.term'])
+            ->with(['exam.term', 'exam.subject'])
             ->get()
-            ->groupBy(function($mark) {
-                $term = $mark->exam?->term;
-                return $term ? $term->term_name . ' (' . $term->academic_year . ')' : 'Archived Data';
+            ->groupBy(fn($item) => $item->exam->term->term_name ?? 'Archive')
+            ->map(function ($termMarks) {
+                return $this->aggregateMarksBySubject($termMarks);
             });
 
-        // 4. Calculate Average Score (ensure it handles decimals correctly)
-        $average = $termResults->count() > 0 ? (float) $termResults->avg('score') : 0;
-
+        // Pass exact variable names the Blade view expects
         return view('student.results', compact(
-            'student', 'termResults', 'history', 'average', 'allTerms', 'displayTerm'
+            'student', 'current_results', 'history', 'average', 'activeTerm', 'allTerms'
         ));
     }
 
@@ -169,5 +174,52 @@ class PortalController extends Controller
         ]);
 
         return back()->with('success', 'Password updated successfully!');
+    }
+
+    /* 
+    |--------------------------------------------------------------------------
+    | HELPER METHODS FOR AGGREGATING MULTIPLE PAPERS
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Groups raw marks by subject and calculates the final average.
+     * Automatically handles Paper 1, Paper 2, etc.
+     */
+    private function aggregateMarksBySubject($marksCollection)
+    {
+        return $marksCollection->groupBy('exam.subject_id')->map(function ($subjectMarks) {
+            // Calculate the average score across all papers for this subject
+            $averageScore = $subjectMarks->avg('score');
+            
+            // Calculate percentage based on max marks 
+            $totalMaxMarks = $subjectMarks->sum('exam.max_marks');
+            $totalObtained = $subjectMarks->sum('score');
+            $percentage = ($totalMaxMarks > 0) ? (($totalObtained / $totalMaxMarks) * 100) : 0;
+
+            return (object) [
+                'subject_id'    => $subjectMarks->first()->exam->subject_id,
+                'subject_name'  => $subjectMarks->first()->exam->subject->subject_name,
+                'papers_taken'  => $subjectMarks->count(),
+                'total_score'   => $totalObtained,
+                'average_score' => round($averageScore, 2),
+                'percentage'    => round($percentage, 2),
+                'grade'         => $this->calculateGrade(round($averageScore)),
+                'individual'    => $subjectMarks // Raw paper data included so the view can list them
+            ];
+        })->values(); // Reset keys for easy iteration in blade
+    }
+
+    /**
+     * Resolves the letter grade based on the average score.
+     */
+    private function calculateGrade($score)
+    {
+        if ($score >= 75) return 'A';
+        if ($score >= 65) return 'B';
+        if ($score >= 50) return 'C';
+        if ($score >= 40) return 'E';
+        if ($score >= 39) return 'U';
+        return 'F';
     }
 }

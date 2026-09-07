@@ -129,21 +129,21 @@ Route::middleware(['auth', 'role:admin|teacher|receptionist'])->group(function (
 
 Route::middleware(['auth', 'role:admin|teacher'])->group(function () {
     // Shared Exam Views
-    Route::get('/exams', [ExamController::class, 'index'])->name('exams.index');
+    Route::get('/exams', [ExamController::class, 'index'])->middleware('permission:exams_management')->name('exams.index');
     // ... rest of shared exam routes ...
-    Route::post('/exams', [ExamController::class, 'store'])->name('exams.store');
-    Route::get('/exams/{exam_id}/marks/{grade}', [ExamController::class, 'createMarks'])->name('marks.create');
+    Route::post('/exams', [ExamController::class, 'store'])->middleware('permission:exams_management')->name('exams.store');
+    Route::get('/exams/{exam_id}/marks/{grade}', [ExamController::class, 'createMarks'])->middleware('permission:exams_management')->name('marks.create');
     Route::post('/marks/bulk-store', [ExamController::class, 'bulkStore'])->name('marks.bulk_store');
-    Route::get('/exams/{exam_id}/report/{grade}', [ExamController::class, 'examReport'])->name('exams.report');
-    Route::delete('/exams/{id}', [ExamController::class, 'destroy'])->name('exams.destroy');
-    Route::get('/exams/{exam_id}/{grade}/marks', [ExamController::class, 'createMarks'])->name('exams.create_marks');
-    Route::get('/exams/{exam_id}/{grade}/report', [ExamController::class, 'examReport'])->name('exams.report');
+    Route::get('/exams/{exam_id}/report/{grade}', [ExamController::class, 'examReport'])->middleware('permission:exams_management')->name('exams.report');
+    Route::delete('/exams/{id}', [ExamController::class, 'destroy'])->middleware('permission:exams_management')->name('exams.destroy');
+    Route::get('/exams/{exam_id}/{grade}/marks', [ExamController::class, 'createMarks'])->middleware('permission:exams_management')->name('exams.create_marks');
+    Route::get('/exams/{exam_id}/{grade}/report', [ExamController::class, 'examReport'])->middleware('permission:exams_management')->name('exams.report');
 
     /**
      * CONTINUOUS ASSESSMENT (shared: admin can view teacher-recorded activities too)
      * Fully independent of the Exams routes above - no fixed schedule required.
      */
-    Route::get('/activities', [ActivityController::class, 'adminIndex'])->name('activities.index');
+    Route::get('/activities', [ActivityController::class, 'adminIndex'])->middleware('permission:activities_management')->name('activities.index');
 
     /**
      * CA STATISTICAL ANALYSIS DASHBOARD
@@ -152,8 +152,8 @@ Route::middleware(['auth', 'role:admin|teacher'])->group(function () {
      * written analysis of the same aggregates (best/worst class, trend, risks,
      * recommendations). Read-only, aggregate-only - no individual privacy exposure.
      */
-    Route::get('/activities/analytics', [ActivityAnalyticsController::class, 'dashboard'])->name('activities.analytics');
-    Route::post('/activities/analytics/ai-insights', [ActivityAnalyticsController::class, 'aiInsights'])->name('activities.analytics.ai_insights');
+    Route::get('/activities/analytics', [ActivityAnalyticsController::class, 'dashboard'])->middleware('permission:activities_management')->name('activities.analytics');
+    Route::post('/activities/analytics/ai-insights', [ActivityAnalyticsController::class, 'aiInsights'])->middleware('permission:activities_management')->name('activities.analytics.ai_insights');
 });
 
 /**
