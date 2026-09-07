@@ -16,6 +16,7 @@ class ExamController extends Controller
 {
     /**
      * STUDENT VIEW: Display personal exam results
+     * UPDATED: Now groups by Subject and calculates the average for multiple papers
      */
     public function studentResults(Request $request)
     {
@@ -34,22 +35,31 @@ class ExamController extends Controller
             return back()->with('error', 'No academic terms found in the system.');
         }
 
-        $current_results = Mark::where('student_id', $student->id)
+        // 1. Fetch raw marks for the current term
+        $raw_current_results = Mark::where('student_id', $student->id)
             ->whereHas('exam', function($query) use ($activeTerm) {
                 $query->where('term_id', $activeTerm->id);
             })
             ->with(['exam.subject', 'exam.term'])
             ->get();
 
+        // 2. Aggregate current term results (Averages Paper 1 + Paper 2 automatically)
+        $current_results = $this->aggregateMarksBySubject($raw_current_results);
+
+        // 3. Calculate overall average based on the final aggregated subject scores
+        $average = $current_results->count() > 0 ? $current_results->avg('average_score') : 0;
+
+        // 4. Fetch and aggregate historical terms
         $history = Mark::where('student_id', $student->id)
             ->whereHas('exam', function($query) use ($activeTerm) {
                 $query->where('term_id', '!=', $activeTerm->id);
             })
             ->with(['exam.term', 'exam.subject'])
             ->get()
-            ->groupBy(fn($item) => $item->exam->term->term_name ?? 'Archive');
-
-        $average = $current_results->count() > 0 ? $current_results->avg('score') : 0;
+            ->groupBy(fn($item) => $item->exam->term->term_name ?? 'Archive')
+            ->map(function ($termMarks) {
+                return $this->aggregateMarksBySubject($termMarks);
+            });
 
         return view('exams.student_index', compact(
             'student', 'current_results', 'history', 'average', 'activeTerm', 'allTerms'
@@ -57,15 +67,35 @@ class ExamController extends Controller
     }
 
     /**
+     * ADMIN/TEACHER VIEW: Generate a final averaged report card for a student
+     * (You can link to this method from your Admin or Teacher views)
+     */
+    public function generateTermReport($student_id, $term_id)
+    {
+        $student = Student::findOrFail($student_id);
+        $term = Term::findOrFail($term_id);
+
+        $raw_marks = Mark::where('student_id', $student->id)
+            ->whereHas('exam', function($query) use ($term) {
+                $query->where('term_id', $term->id);
+            })
+            ->with(['exam.subject'])
+            ->get();
+
+        $finalGrades = $this->aggregateMarksBySubject($raw_marks);
+        $overallAverage = $finalGrades->count() > 0 ? round($finalGrades->avg('average_score'), 2) : 0;
+
+        return view('exams.student_report', compact('student', 'term', 'finalGrades', 'overallAverage'));
+    }
+
+    /**
      * ADMIN VIEW: Exam Index
-     * UPDATED: Integrated Global Term Switcher logic
      */
     public function index(Request $request)
     {
         $terms = Term::orderBy('id', 'desc')->get();
         $activeTerm = Term::where('is_current', 1)->first();
 
-        // Determine which term we are viewing based on the switcher
         $selectedTermId = $request->get('term_id');
         if ($selectedTermId) {
             $selectedTerm = Term::find($selectedTermId);
@@ -73,7 +103,6 @@ class ExamController extends Controller
             $selectedTerm = $activeTerm ?? $terms->first();
         }
 
-        // Filter exams based on the selected term context
         $exams = Exam::with(['subject', 'term'])
             ->where('term_id', $selectedTerm->id)
             ->latest()
@@ -131,7 +160,6 @@ class ExamController extends Controller
         $exam = Exam::with(['subject', 'term'])->findOrFail($exam_id);
         $students = Student::where('grade', $grade)->orderBy('surname')->get();
 
-        // Key marks by student_id so Blade can use $marks->get($student->id)
         $marks = Mark::where('exam_id', $exam_id)->get()->keyBy('student_id');
 
         return view('exams.enter_marks', compact('exam', 'students', 'grade', 'marks'));
@@ -173,7 +201,7 @@ class ExamController extends Controller
     }
 
     /**
-     * ADMIN REPORT
+     * ADMIN REPORT (Individual Exam Paper)
      */
     public function examReport($exam_id, $grade)
     {
@@ -190,21 +218,16 @@ class ExamController extends Controller
 
     /**
      * TEACHER PORTAL: Manage Marks
-     * FIXED: Resolves 403 by finding class_id via relationship bridge
      */
     public function teacherManageMarks($id)
     {
-        // Load exam with the schoolClass bridge
         $exam = Exam::with(['subject', 'term', 'schoolClass'])->findOrFail($id);
-
-        // Resolve Class ID from bridge relationship because exams table lacks class_id
         $resolvedClassId = $exam->schoolClass->id ?? null;
 
         if (!$resolvedClassId) {
             return back()->with('error', 'Critical Error: Exam class link not found.');
         }
 
-        // Security check using resolved Class ID
         $isAssigned = SubjectAssignment::where('teacher_id', Auth::id())
             ->where('subject_id', $exam->subject_id)
             ->where('class_id', $resolvedClassId)
@@ -214,12 +237,7 @@ class ExamController extends Controller
             abort(403, 'Unauthorized access to this exam.');
         }
 
-        // Fetch students in that specific class
-        $students = Student::where('class_id', $resolvedClassId)
-            ->orderBy('surname')
-            ->get();
-
-        // Key marks by student_id for the Blade logic: $marks->get($student->id)
+        $students = Student::where('class_id', $resolvedClassId)->orderBy('surname')->get();
         $marks = Mark::where('exam_id', $id)->get()->keyBy('student_id');
 
         return view('teachers.exams.record_marks', compact('exam', 'students', 'marks'));
@@ -261,13 +279,12 @@ class ExamController extends Controller
     }
 
     /**
-     * TEACHER DESTROY: Delete exam and marks (Teacher context)
+     * TEACHER DESTROY
      */
     public function teacherDestroy($id)
     {
         $exam = Exam::findOrFail($id);
 
-        // Security check: Ensure teacher owns this exam via SubjectAssignment
         $isOwner = SubjectAssignment::where('teacher_id', Auth::id())
             ->where('subject_id', $exam->subject_id)
             ->exists();
@@ -286,5 +303,51 @@ class ExamController extends Controller
             DB::rollback();
             return back()->with('error', 'Error: ' . $e->getMessage());
         }
+    }
+
+    /* 
+    |--------------------------------------------------------------------------
+    | HELPER METHODS FOR AGGREGATING MULTIPLE PAPERS
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Groups raw marks by subject and calculates the final average.
+     * Automatically handles Paper 1, Paper 2, etc.
+     */
+    private function aggregateMarksBySubject($marksCollection)
+    {
+        return $marksCollection->groupBy('exam.subject_id')->map(function ($subjectMarks) {
+            // Calculate the average score across all papers for this subject
+            $averageScore = $subjectMarks->avg('score');
+            
+            // Calculate percentage based on max marks 
+            $totalMaxMarks = $subjectMarks->sum('exam.max_marks');
+            $totalObtained = $subjectMarks->sum('score');
+            $percentage = ($totalMaxMarks > 0) ? (($totalObtained / $totalMaxMarks) * 100) : 0;
+
+            return (object) [
+                'subject_id'    => $subjectMarks->first()->exam->subject_id,
+                'subject_name'  => $subjectMarks->first()->exam->subject->subject_name,
+                'papers_taken'  => $subjectMarks->count(),
+                'total_score'   => $totalObtained,
+                'average_score' => round($averageScore, 2),
+                'percentage'    => round($percentage, 2),
+                'grade'         => $this->calculateGrade(round($averageScore)),
+                'individual'    => $subjectMarks // Raw paper data included in case the view needs to list them
+            ];
+        })->values(); // Reset keys for easy iteration in blade
+    }
+
+    /**
+     * Resolves the letter grade based on the average score.
+     */
+    private function calculateGrade($score)
+    {
+        if ($score >= 80) return 'A';
+        if ($score >= 70) return 'B';
+        if ($score >= 60) return 'C';
+        if ($score >= 50) return 'D';
+        return 'F';
     }
 }

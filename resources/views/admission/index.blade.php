@@ -11,31 +11,28 @@
 
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic">
 
-    <!-- FINAL VERSION: Modernized Admin Styles -->
+    <!-- Scoped Modern UI Updates (Will not affect AdminLTE Footer/Layout) -->
     <style>
-        body { background: #f0f4f8 !important; font-family: 'Source Sans Pro', sans-serif; }
-        .content-wrapper { background-color: transparent !important; }
-        
         /* Modern Gradient Cards */
-        .info-box-modern { border-radius: 12px; padding: 25px 20px; color: #fff; position: relative; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.08); transition: transform 0.3s ease; margin-bottom: 20px; }
-        .info-box-modern:hover { transform: translateY(-5px); }
+        .content .info-box-modern { border-radius: 12px; padding: 25px 20px; color: #fff; position: relative; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.08); transition: transform 0.3s ease; margin-bottom: 20px; }
+        .content .info-box-modern:hover { transform: translateY(-5px); }
         .bg-gradient-blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
         .bg-gradient-orange { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
         .bg-gradient-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
         .bg-gradient-red { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
-        .info-box-modern .inner h3 { font-size: 36px; font-weight: 800; margin: 0 0 5px 0; letter-spacing: 1px; }
-        .info-box-modern .inner p { font-size: 15px; margin: 0; font-weight: 600; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px; }
-        .info-box-modern .icon { position: absolute; right: 20px; top: 20px; font-size: 55px; opacity: 0.2; }
+        .content .info-box-modern .inner h3 { font-size: 36px; font-weight: 800; margin: 0 0 5px 0; letter-spacing: 1px; }
+        .content .info-box-modern .inner p { font-size: 15px; margin: 0; font-weight: 600; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px; }
+        .content .info-box-modern .icon { position: absolute; right: 20px; top: 20px; font-size: 55px; opacity: 0.2; }
 
         /* Box & Table Overrides */
-        .box { border-radius: 12px; border-top: none; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-        .box-header { border-bottom: 1px solid #f1f5f9; padding: 20px; background: #fff; border-radius: 12px 12px 0 0; }
-        .box-title { font-weight: 700 !important; color: #1e293b; font-size: 18px; }
+        .content .box { border-radius: 12px; border-top: none; box-shadow: 0 4px 20px rgba(0,0,0,0.05); background: #ffffff; }
+        .content .box-header { border-bottom: 1px solid #f1f5f9; padding: 20px; background: #fff; border-radius: 12px 12px 0 0; }
+        .content .box-title { font-weight: 700 !important; color: #1e293b; font-size: 18px; }
         
-        .table > tbody > tr > td { vertical-align: middle !important; padding: 15px; border-top: 1px solid #f1f5f9; }
-        .table > thead > tr > th { border-bottom: 2px solid #e2e8f0; color: #64748b; font-weight: 700; padding: 15px; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; background: #f8fafc; }
+        .content .table > tbody > tr > td { vertical-align: middle !important; padding: 15px; border-top: 1px solid #f1f5f9; }
+        .content .table > thead > tr > th { border-bottom: 2px solid #e2e8f0; color: #64748b; font-weight: 700; padding: 15px; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; background: #f8fafc; }
         
-        .status-badge { padding: 6px 12px; border-radius: 30px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+        .content .status-badge { padding: 6px 12px; border-radius: 30px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
         
         /* Modal Modernization */
         .modal-content { border-radius: 12px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
@@ -51,8 +48,8 @@
         .data-value.block-text { background: #f8fafc; border-left: 4px solid #cbd5e1; padding: 12px 15px; border-radius: 0 6px 6px 0; font-size: 14px; font-weight: 400; }
         
         /* Forms inside modal */
-        .form-control { border-radius: 6px; border: 1px solid #cbd5e1; box-shadow: none; padding: 10px 15px; height: auto; }
-        .form-control:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        .content .form-control { border-radius: 6px; border: 1px solid #cbd5e1; box-shadow: none; padding: 10px 15px; height: auto; }
+        .content .form-control:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
         
         /* Document Buttons */
         .doc-btn { border-radius: 6px; padding: 10px 15px; font-weight: 600; transition: all 0.2s; margin-bottom: 10px; display: block; text-align: left; background: #f8fafc; border: 1px solid #e2e8f0; color: #334155; }
@@ -110,7 +107,7 @@
                             <div class="input-group input-group-lg" style="box-shadow: 0 2px 10px rgba(0,0,0,0.02); border-radius: 8px;">
                                 <input type="text" name="search" class="form-control" style="border-radius: 8px 0 0 8px; border-right: none;" placeholder="Search by Student Name, ID Number, or Tracking ID..." value="{{ request('search') }}">
                                 <span class="input-group-btn">
-                                    <button type="submit" class="btn btn-primary" style="border-radius: 0 8px 8px 0; padding: 10px 25px;"><i class="fa fa-search"></i> SEARCH</button>
+                                    <button type="submit" class="btn btn-primary" style="border-radius: 0 8px 8px 0; padding: 10px 25px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border: none; font-weight: 700;"><i class="fa fa-search"></i> SEARCH</button>
                                 </span>
                             </div>
                         </form>
@@ -292,7 +289,7 @@
                                                                 <textarea name="admin_remarks" class="form-control" rows="6" placeholder="Enter reason for decision or instructions for enrollment...">{{ $app->admin_remarks }}</textarea>
                                                             </div>
                                                             
-                                                            <button type="submit" class="btn btn-primary btn-block btn-lg" style="border-radius: 8px; font-weight: 800; box-shadow: 0 4px 15px rgba(59,130,246,0.3); padding: 15px;">
+                                                            <button type="submit" class="btn btn-primary btn-block btn-lg" style="border-radius: 8px; font-weight: 800; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #fff; border: none; box-shadow: 0 4px 15px rgba(59,130,246,0.3); padding: 15px;">
                                                                 <i class="fa fa-save"></i> SAVE DECISION
                                                             </button>
                                                         </div>
