@@ -9,6 +9,7 @@ use Spatie\Activitylog\LogOptions;
 
 class ActivityMark extends Model
 {
+    use LogsActivity;
     protected $fillable = [
         'class_activity_id',
         'student_id',
@@ -19,6 +20,14 @@ class ActivityMark extends Model
     protected $casts = [
         'score' => 'float',
     ];
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()          // Logs all attributes listed in $fillable
+            ->logOnlyDirty()         // Only records a log if fields actually changed during an update
+            ->dontSubmitEmptyLogs()  // Prevents saving empty log entries
+            ->setDescriptionForEvent(fn(string $eventName) => "Activity Mark record has been {$eventName}");
+    }
 
     public function classActivity(): BelongsTo
     {

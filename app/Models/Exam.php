@@ -11,6 +11,7 @@ use Spatie\Activitylog\LogOptions;
 
 class Exam extends Model
 {
+    use LogsActivity;
     /**
      * The attributes that are mass assignable.
      * Updated to match your SQL dump columns exactly.
@@ -22,6 +23,15 @@ class Exam extends Model
         'exam_date',
         'status' // Added status as per your SQL dump
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()          // Logs all attributes listed in $fillable
+            ->logOnlyDirty()         // Only records a log if fields actually changed during an update
+            ->dontSubmitEmptyLogs()  // Prevents saving empty log entries
+            ->setDescriptionForEvent(fn(string $eventName) => "ExamS record has been {$eventName}");
+    }
 
     /**
      * The attributes that should be cast.

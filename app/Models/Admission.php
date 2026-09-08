@@ -12,6 +12,7 @@ use Spatie\Activitylog\LogOptions;
 class Admission extends Model
 {
     use HasFactory;
+    use LogsActivity;
 
     /**
      * FULLY SYNCHRONIZED WITH SQL DUMP (sit (10).sql)
@@ -35,6 +36,15 @@ class Admission extends Model
         'status',
         'admin_remarks'
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()          // Logs all attributes listed in $fillable
+            ->logOnlyDirty()         // Only records a log if fields actually changed during an update
+            ->dontSubmitEmptyLogs()  // Prevents saving empty log entries
+            ->setDescriptionForEvent(fn(string $eventName) => "Admission record has been {$eventName}");
+    }
 
     /**
      * Attributes that should be cast to native types.

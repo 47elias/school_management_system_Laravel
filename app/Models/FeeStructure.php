@@ -11,6 +11,7 @@ use Spatie\Activitylog\LogOptions;
 class FeeStructure extends Model
 {
     use HasFactory;
+    use LogsActivity;
 
     /**
      * The attributes that are mass assignable.
@@ -24,6 +25,14 @@ class FeeStructure extends Model
         'student_id',
     ];
 
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()          // Logs all attributes listed in $fillable
+            ->logOnlyDirty()         // Only records a log if fields actually changed during an update
+            ->dontSubmitEmptyLogs()  // Prevents saving empty log entries
+            ->setDescriptionForEvent(fn(string $eventName) => "Fee Structure record has been {$eventName}");
+    }
     /**
      * Relationship: The term this fee structure belongs to.
      */
