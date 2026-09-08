@@ -8,9 +8,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
+
 class InventoryStock extends Model
 {
     use HasFactory;
+    use LogsActivity;
+
 
     protected $fillable = [
         'inventory_item_id',
@@ -19,6 +22,15 @@ class InventoryStock extends Model
         'remarks',
         'person_involved'
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()          // Logs all attributes listed in $fillable
+            ->logOnlyDirty()         // Only records a log if fields actually changed during an update
+            ->dontSubmitEmptyLogs()  // Prevents saving empty log entries
+            ->setDescriptionForEvent(fn(string $eventName) => "InventoryStock record has been {$eventName}");
+    }
 
     /**
      * Get the item associated with this stock movement.

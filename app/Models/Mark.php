@@ -13,6 +13,8 @@ class Mark extends Model
     /**
      * The attributes that are mass assignable.
      */
+    use LogsActivity;
+
     protected $fillable = [
         'exam_id',
         'student_id',
@@ -21,6 +23,15 @@ class Mark extends Model
         'max_score',
         'teacher_comment'
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()          // Logs all attributes listed in $fillable
+            ->logOnlyDirty()         // Only records a log if fields actually changed during an update
+            ->dontSubmitEmptyLogs()  // Prevents saving empty log entries
+            ->setDescriptionForEvent(fn(string $eventName) => "Mark record has been {$eventName}");
+    }
 
     /**
      * Relationship: The student this mark belongs to.

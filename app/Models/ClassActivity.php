@@ -16,6 +16,7 @@ use Spatie\Activitylog\LogOptions;
  */
 class ClassActivity extends Model
 {
+    use LogsActivity;
     protected $fillable = [
         'subject_assignment_id',
         'term_id',
@@ -28,6 +29,14 @@ class ClassActivity extends Model
         'created_by',
     ];
 
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()          // Logs all attributes listed in $fillable
+            ->logOnlyDirty()         // Only records a log if fields actually changed during an update
+            ->dontSubmitEmptyLogs()  // Prevents saving empty log entries
+            ->setDescriptionForEvent(fn(string $eventName) => "Class activity record has been {$eventName}");
+    }
     protected $casts = [
         'activity_date' => 'date',
         'max_score'     => 'integer',
