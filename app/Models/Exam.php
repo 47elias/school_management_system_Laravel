@@ -12,6 +12,7 @@ use Spatie\Activitylog\LogOptions;
 class Exam extends Model
 {
     use LogsActivity;
+
     /**
      * The attributes that are mass assignable.
      * Updated to match your SQL dump columns exactly.
@@ -27,10 +28,10 @@ class Exam extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logFillable()          // Logs all attributes listed in $fillable
-            ->logOnlyDirty()         // Only records a log if fields actually changed during an update
-            ->dontSubmitEmptyLogs()  // Prevents saving empty log entries
-            ->setDescriptionForEvent(fn(string $eventName) => "ExamS record has been {$eventName}");
+            ->logFillable()         // Logs all attributes listed in $fillable
+            ->logOnlyDirty()        // Only records a log if fields actually changed during an update
+            ->dontSubmitEmptyLogs() // Prevents saving empty log entries
+            ->setDescriptionForEvent(fn(string $eventName) => "Exam record has been {$eventName}");
     }
 
     /**

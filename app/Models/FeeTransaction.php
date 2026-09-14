@@ -9,8 +9,7 @@ use Spatie\Activitylog\LogOptions;
 
 class FeeTransaction extends Model
 {
-    use HasFactory;
-    use LogsActivity;
+    use HasFactory, LogsActivity;
 
     protected $fillable = [
         'student_id',
@@ -29,9 +28,9 @@ class FeeTransaction extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logFillable()          // Logs all attributes listed in $fillable
-            ->logOnlyDirty()         // Only records a log if fields actually changed during an update
-            ->dontSubmitEmptyLogs()  // Prevents saving empty log entries
+            ->logFillable()         // Logs all attributes listed in $fillable
+            ->logOnlyDirty()        // Only records a log if fields actually changed during an update
+            ->dontSubmitEmptyLogs() // Prevents saving empty log entries
             ->setDescriptionForEvent(fn(string $eventName) => "Fee Transaction record has been {$eventName}");
     }
 

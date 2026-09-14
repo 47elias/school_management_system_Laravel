@@ -6,9 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class SchoolClass extends Model
 {
+    use LogsActivity;
+
     // Fix the table name mismatch
     protected $table = 'school_classes';
 
@@ -20,6 +24,17 @@ class SchoolClass extends Model
         'status',
         'teacher_id' // <--- CRITICAL: Add this to allow assigning teachers
     ];
+
+    /**
+     * Spatie Activity Log Options configuration.
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()          // Logs changes to all fillable attributes
+            ->logOnlyDirty()         // Only log attributes that actually changed
+            ->dontSubmitEmptyLogs(); // Skip log entries if no data was modified
+    }
 
     /**
      * Get the teacher that manages this class.
