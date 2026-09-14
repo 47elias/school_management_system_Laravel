@@ -5,16 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
 class Mark extends Model
 {
+    use HasFactory, LogsActivity;
+
     /**
      * The attributes that are mass assignable.
      */
-    use LogsActivity;
-
     protected $fillable = [
         'exam_id',
         'student_id',
@@ -27,9 +28,9 @@ class Mark extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logFillable()          // Logs all attributes listed in $fillable
-            ->logOnlyDirty()         // Only records a log if fields actually changed during an update
-            ->dontSubmitEmptyLogs()  // Prevents saving empty log entries
+            ->logFillable()         // Logs all attributes listed in $fillable
+            ->logOnlyDirty()        // Only records a log if fields actually changed during an update
+            ->dontSubmitEmptyLogs() // Prevents saving empty log entries
             ->setDescriptionForEvent(fn(string $eventName) => "Mark record has been {$eventName}");
     }
 
@@ -100,8 +101,8 @@ class Mark extends Model
         $score = (int)$this->score;
 
         if ($score >= 75) return 'text-green-600 font-bold'; // A
-        if ($score >= 50) return 'text-blue-600';           // B, C
-        if ($score >= 40) return 'text-orange-500';         // D, E
+        if ($score >= 50) return 'text-blue-600';          // B, C
+        if ($score >= 40) return 'text-orange-500';        // D, E
         return 'text-red-600 font-bold';                    // U
     }
 }

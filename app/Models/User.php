@@ -7,12 +7,12 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Traits\HasRoles;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class User extends Authenticatable
 {
-    use HasFactory;
-    use Notifiable;
-    use HasRoles;
+    use HasFactory, Notifiable, HasRoles, LogsActivity;
 
     /**
      * The attributes that are mass assignable.
@@ -52,6 +52,18 @@ class User extends Authenticatable
     ];
 
     /**
+     * Spatie Activity Log Options configuration.
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()         // Logs all attributes listed in $fillable
+            ->logOnlyDirty()        // Only records a log if fields actually changed during an update
+            ->dontSubmitEmptyLogs() // Prevents saving empty log entries
+            ->setDescriptionForEvent(fn(string $eventName) => "User record has been {$eventName}");
+    }
+
+    /**
      * BOOT LOGIC
      * This solves the "Not Saving" issue. Since ec_number is NOT NULL in your DB,
      * we automatically use the national_id as the ec_number for student roles.
@@ -80,7 +92,7 @@ class User extends Authenticatable
     }
 
     /* =========================================================================
-       ROLE HELPERS
+        ROLE HELPERS
        ========================================================================= */
 
     public function isAdmin(): bool
@@ -104,7 +116,7 @@ class User extends Authenticatable
     }
 
     /* =========================================================================
-       RELATIONSHIPS
+        RELATIONSHIPS
        ========================================================================= */
 
     public function payslips()

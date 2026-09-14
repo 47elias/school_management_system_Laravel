@@ -4,10 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 use Carbon\Carbon;
 
 class Term extends Model
 {
+    use LogsActivity;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -32,6 +36,18 @@ class Term extends Model
         'start_date' => 'date',
         'end_date'   => 'date',
     ];
+
+    /**
+     * Spatie Activity Log Options configuration.
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()         // Logs all attributes listed in $fillable
+            ->logOnlyDirty()        // Only records a log if fields actually changed during an update
+            ->dontSubmitEmptyLogs() // Prevents saving empty log entries
+            ->setDescriptionForEvent(fn(string $eventName) => "Term record has been {$eventName}");
+    }
 
     /**
      * Boot logic for the model.
@@ -89,7 +105,7 @@ class Term extends Model
     /**
      * Force the billing duration to exactly 3 months.
      * Preserved Logic: Fixed 3 month cycle.
-     * * @return int
+     * @return int
      */
     public function getBillingDuration(): int
     {
@@ -99,7 +115,7 @@ class Term extends Model
     /**
      * Generates the 3 specific Carbon dates for the billing cycle.
      * Preserved Logic: Picks the first day of the first three months of the term.
-     * * @return array<Carbon>
+     * @return array<Carbon>
      */
     public function getBillingMonthDates(): array
     {
@@ -122,7 +138,7 @@ class Term extends Model
 
     /**
      * Helper to check if the term is currently open for payments.
-     * * @return bool
+     * @return bool
      */
     public function isOpen(): bool
     {
@@ -131,7 +147,7 @@ class Term extends Model
 
     /**
      * Formats the term name for display (e.g., "Term 1 - 2026")
-     * * @return string
+     * @return string
      */
     public function getDisplayNameAttribute(): string
     {

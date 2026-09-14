@@ -7,24 +7,25 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 use Carbon\Carbon;
 
 class Student extends Authenticatable
 {
-    use Notifiable;
+    use Notifiable, LogsActivity;
 
     protected $guard = 'student';
 
     /**
      * The attributes that are mass assignable.
-     * UPDATED: Replaced 'age' with 'date_of_birth'
      */
     protected $fillable = [
         'student_number',
         'name',
         'surname',
         'balance',
-        'date_of_birth', // Updated
+        'date_of_birth',
         'gender',
         'national_id',
         'grade',
@@ -53,11 +54,10 @@ class Student extends Authenticatable
 
     /**
      * Attribute casting for data integrity.
-     * UPDATED: Added date_of_birth cast, removed age
      */
     protected $casts = [
         'enrollment_date' => 'date',
-        'date_of_birth' => 'date', // Added
+        'date_of_birth' => 'date',
         'balance' => 'float',
         'term_id' => 'integer',
         'class_id' => 'integer',
@@ -69,6 +69,17 @@ class Student extends Authenticatable
         'monthly_arrears',
         'payment_status'
     ];
+
+    /**
+     * Spatie Activity Log Options configuration.
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()          // Logs changes to all fillable attributes
+            ->logOnlyDirty()         // Only log attributes that actually changed
+            ->dontSubmitEmptyLogs(); // Skip log entries if no data was modified
+    }
 
     /* =========================================================================
         DYNAMIC FINANCIAL LOGIC (PRESERVED)
@@ -170,9 +181,6 @@ class Student extends Authenticatable
         return $this->hasMany(FeeStructure::class, 'student_id');
     }
 
-    /**
-     * Helper to get grade-based fees if no individual record exists
-     */
     public function gradeFees(): HasMany
     {
         return $this->hasMany(FeeStructure::class, 'grade', 'grade')->whereNull('student_id');
@@ -183,21 +191,11 @@ class Student extends Authenticatable
         return $this->hasMany(Mark::class, 'student_id');
     }
 
-    /**
-     * CONTINUOUS ASSESSMENT: All daily classwork/homework/quiz/etc. scores,
-     * independent of exam marks above.
-     */
     public function activityMarks(): HasMany
     {
         return $this->hasMany(ActivityMark::class, 'student_id');
     }
 
-    /**
-     * Compute this student's Continuous Assessment average (%) for a given
-     * subject + term, weighted by each activity's `weight`. Runs as a
-     * single aggregate query (no N+1) so it stays cheap even with a large
-     * number of daily activity records.
-     */
     public function continuousAssessmentAverage(int $subjectId, int $termId): float
     {
         $row = ActivityMark::query()
@@ -240,7 +238,7 @@ class Student extends Authenticatable
     public function username() { return 'student_number'; }
 
     /* =========================================================================
-        BOOT LOGIC (UPDATED)
+        BOOT LOGIC
        ========================================================================= */
 
     protected static function boot()
@@ -266,7 +264,7 @@ class Student extends Authenticatable
             $student->enrollment_date = now();
             $student->status = 'active';
 
-            // 4. Default Password (UPDATED: Set to surname123)
+            // 4. Default Password (surname123)
             if (!$student->password && $student->surname) {
                 $student->password = Hash::make(strtolower($student->surname) . '123');
             }
