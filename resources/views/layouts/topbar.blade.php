@@ -1,10 +1,4 @@
 <header class="main-header">
-    {{-- Original Logo Colors Kept --}}
-    <a href="{{ url('/dashboard') }}" class="logo">
-        <span class="logo-mini"><b>{{ substr(env('SCHOOL_ACRONYM', 'S'), 0, 1) }}</b></span>
-        <span class="logo-lg"><b>{{ env('SCHOOL_ACRONYM', 'SMS') }}</b></span>
-    </a>
-
     <nav class="navbar navbar-static-top">
         {{-- Sidebar Toggle --}}
         <a href="#" class="sidebar-toggle" data-toggle="push-menu" role="button">
@@ -45,9 +39,9 @@
                         <li class="user-header">
                             <img src="{{ asset('adminlte/dist/img/avatar5.png') }}" class="img-circle" alt="User Image" style="border: 3px solid rgba(255,255,255,0.2);">
                             <p>
-                                {{ Auth::user()->name }}
+                                {{ Auth::user()?->name }}
                                 <small style="display: block; margin-top: 5px; opacity: 0.8;">Administrator</small>
-                                <small>Member since {{ Auth::user()->created_at->format('M. Y') }}</small>
+                                <small>Member since {{ Auth::user()?->created_at?->format('M. Y') ?? 'N/A' }}</small>
                             </p>
                         </li>
 
