@@ -16,7 +16,6 @@ use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use Exception;
 
-
 class StudentController extends Controller
 {
     /**
@@ -61,7 +60,7 @@ class StudentController extends Controller
     }
 
     /**
-     * Process Bulk Student Promotion
+     * Process Bulk Student Promotion (Legacy single route method)
      * POST: /students/promote
      */
     public function promote(Request $request)
@@ -195,7 +194,6 @@ class StudentController extends Controller
                     'email'       => $generatedEmail,
                     'national_id' => $validatedData['national_id'],
                     'ec_number'   => $validatedData['national_id'],
-                    // Password matches UI description: lowercase surname + 123
                     'password'    => Hash::make(strtolower($validatedData['surname']) . '123'),
                     'role'        => 'student',
                     'base_salary' => 0,
@@ -343,45 +341,91 @@ class StudentController extends Controller
         }
     }
 
-    public function processMassPromotion(Request $request)
-{
-    $request->validate([
-        'target_term_id' => 'required|exists:terms,id',
-        'promote' => 'required|array',
-    ]);
-
-    $promotions = $request->input('promote');
-    $targetTermId = $request->input('target_term_id');
-    $count = 0;
-
-    DB::transaction(function () use ($promotions, $targetTermId, &$count) {
-        foreach ($promotions as $item) {
-            // Check if row is selected and destination class_id is set
-            if (isset($item['active']) && !empty($item['to_class_id'])) {
-
-                $fromClassId = $item['from_class_id'];
-                $toClassId = $item['to_class_id']; // This could be an ID or a string "graduated"
-
-                $updated = Student::where('class_id', $fromClassId)
-                    ->where('status', 'active')
-                    ->update([
-                        'class_id' => ($toClassId === 'graduated') ? null : $toClassId,
-                        'enrollment_term_id' => $targetTermId,
-                        'status' => ($toClassId === 'graduated') ? 'alumni' : 'active'
-                    ]);
-
-                $count += $updated;
-            }
-        }
-    });
-
-    return redirect()->route('students.promote')
-        ->with('success', "Success! $count students have been transitioned to the new classes.");
-}
     /**
-     * Show student profile data for Modal Popup (AJAX)
+     * Process Mass Promotion Matrix Form Post safely without cascading loops
+     * POST: /students/promote/mass
      */
-   /**
+    public function processMassPromotion(Request $request)
+    {
+        $request->validate([
+            'target_term_id' => 'required|exists:terms,id',
+            'promote'        => 'required|array',
+        ]);
+
+        $promotions = $request->input('promote');
+        $targetTermId = $request->input('target_term_id');
+        $totalTransitioned = 0;
+
+        try {
+            DB::transaction(function () use ($promotions, $targetTermId, &$totalTransitioned) {
+                // Step 1: Filter out blank or unchecked rows
+                $validMappings = [];
+                foreach ($promotions as $item) {
+                    if (isset($item['active']) && !empty($item['to_grade']) && $item['to_grade'] !== '') {
+                        $fromGrade = $item['from_grade'];
+                        $toGrade = $item['to_grade'];
+
+                        if ($fromGrade === $toGrade && $toGrade !== 'Graduated') {
+                            continue;
+                        }
+
+                        $validMappings[$fromGrade] = $toGrade;
+                    }
+                }
+
+                if (empty($validMappings)) {
+                    throw new Exception("No valid class transitions were selected.");
+                }
+
+                // Keep track of IDs processed in this batch to prevent any cascading re-processing
+                $processedStudentIds = [];
+
+                // Step 2: Process each mapping rule independently
+                foreach ($validMappings as $fromGrade => $toGrade) {
+                    $isGraduated = ($toGrade === 'Graduated');
+
+                    // Fetch active students in this grade, strictly excluding anyone already moved in this batch
+                    $studentIds = Student::where('grade', $fromGrade)
+                        ->where('status', 'active')
+                        ->whereNotIn('id', $processedStudentIds)
+                        ->pluck('id');
+
+                    if ($studentIds->isEmpty()) {
+                        continue;
+                    }
+
+                    // Mark these specific student IDs as processed so they are never touched by subsequent rules
+                    $processedStudentIds = array_merge($processedStudentIds, $studentIds->toArray());
+
+                    // Define destination updates
+                    $updateData = [
+                        'term_id' => $targetTermId,
+                        'status'  => $isGraduated ? 'Alumni' : 'active',
+                    ];
+
+                    if ($isGraduated) {
+                        $updateData['class_id'] = null;
+                        $updateData['grade'] = 'Alumni';
+                    } else {
+                        $updateData['grade'] = $toGrade;
+                        
+                        $destinationClass = SchoolClass::where('class_name', $toGrade)->first();
+                        $updateData['class_id'] = $destinationClass ? $destinationClass->id : null;
+                    }
+
+                    // Execute batch update for this specific group using primary keys
+                    $affected = Student::whereIn('id', $studentIds)->update($updateData);
+                    $totalTransitioned += $affected;
+                }
+            });
+
+            return redirect()->route('students.promote')
+                ->with('success', "Success! {$totalTransitioned} student records have been successfully transitioned.");
+        } catch (Exception $e) {
+            return back()->with('error', 'Mass promotion failed: ' . $e->getMessage());
+        }
+    }
+    /**
      * Show student profile data for Modal Popup (AJAX)
      * Includes Gender-specific avatars and improved UI
      */
@@ -391,15 +435,11 @@ class StudentController extends Controller
             $student = Student::findOrFail($id);
             $fullName = $student->name . " " . $student->surname;
 
-            // Logic for Gender-specific Avatar
-            // If you have local AdminLTE assets, use: asset('dist/img/avatar5.png')
-            // Using dynamic UI-Avatars with gender colors: Blue for Male, Pink for Female
             $avatarColor = ($student->gender == 'Male') ? '3c8dbc' : 'e83e8c';
             $avatarUrl = "https://ui-avatars.com/api/?name=" . urlencode($fullName) . "&background={$avatarColor}&color=fff&size=128";
 
-            // Format Date of Birth
             $dob = $student->date_of_birth
-                ? \Carbon\Carbon::parse($student->date_of_birth)->format('d M, Y')
+                ? Carbon::parse($student->date_of_birth)->format('d M, Y')
                 : 'Not Set';
 
             return "
@@ -465,6 +505,7 @@ class StudentController extends Controller
                     </div>";
         }
     }
+
     /**
      * View the biometric enrollment interface for a student.
      */
@@ -479,48 +520,31 @@ class StudentController extends Controller
      */
     public function storeFace(Request $request, $id)
     {
-        // 1. Validate the input
         $request->validate(['face_image' => 'required|string']);
 
         $student = Student::findOrFail($id);
         $imageData = $request->face_image;
 
-        // 2. Clean the Base64 string
         $imageData = str_replace(['data:image/jpeg;base64,', 'data:image/png;base64,'], '', $imageData);
         $imageData = str_replace(' ', '+', $imageData);
 
-        // 3. Define path: 'biometrics/face_ID_TIMESTAMP.jpg'
         $fileName = 'face_' . $student->id . '_' . time() . '.jpg';
         $path = 'biometrics/' . $fileName;
 
-        // 4. Save file to storage/app/public/biometrics/
-        // Using the 'public' disk means it will be stored in storage/app/public
-        \Illuminate\Support\Facades\Storage::disk('public')->put($path, base64_decode($imageData));
-
-        // 5. CRITICAL STEP: Update the database
-        // We update the student model with the new path
+        Storage::disk('public')->put($path, base64_decode($imageData));
         $student->update(['face_path' => $path]);
 
         return response()->json(['success' => true, 'path' => $path]);
-        $student = Student::findOrFail($id);
-
-        // Store the JSON array of 128 numbers
-        $student->update([
-            'face_descriptor' => $request->face_descriptor
-        ]);
-
-        return response()->json(['success' => true]);
     }
+
     public function getFace($id)
     {
         $student = Student::findOrFail($id);
 
-        // Check if face_path exists and file is on disk
         if ($student->face_path && Storage::disk('public')->exists($student->face_path)) {
             return response()->file(storage_path('app/public/' . $student->face_path));
         }
 
-        // If null or file missing, return a default image
         return response()->file(public_path('img/default-avatar.png'));
     }
 }
