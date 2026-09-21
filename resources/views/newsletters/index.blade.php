@@ -15,6 +15,7 @@
         .box { border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-top: 3px solid var(--brand-primary); background: #fff; margin-bottom: 20px; }
         .box-header { padding: 15px 20px; border-bottom: 1px solid #f4f4f4; }
         .box-body { padding: 20px; }
+        .btn-action { margin: 0 2px; }
     </style>
 </head>
 <body class="hold-transition skin-blue sidebar-mini fixed">
@@ -73,9 +74,17 @@
                                         <td><span class="label label-primary" style="text-transform: uppercase;">{{ $item->target_audience }}</span></td>
                                         <td>{{ $item->created_at->format('d M Y, H:i') }}</td>
                                         <td class="text-center">
+                                            <!-- View Button -->
+                                            <a href="{{ route('newsletters.show', $item->id) }}" class="btn btn-default btn-xs btn-action" title="View Newsletter">
+                                                <i class="fa fa-eye text-blue"></i>
+                                            </a>
+                                            
+                                            <!-- Delete Button -->
                                             <form action="{{ route('newsletters.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Delete this newsletter?');" style="display:inline-block;">
                                                 @csrf @method('DELETE')
-                                                <button type="submit" class="btn btn-default btn-xs" title="Delete"><i class="fa fa-trash text-red"></i></button>
+                                                <button type="submit" class="btn btn-default btn-xs btn-action" title="Delete">
+                                                    <i class="fa fa-trash text-red"></i>
+                                                </button>
                                             </form>
                                         </td>
                                     </tr>

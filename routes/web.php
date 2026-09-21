@@ -190,6 +190,7 @@ Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
         Route::get('/create', [NewsletterController::class, 'create'])->name('create');
         Route::post('/store', [NewsletterController::class, 'store'])->name('store');
         Route::delete('/{id}', [NewsletterController::class, 'destroy'])->name('destroy');
+        Route::get('/{id}', [NewsletterController::class, 'show'])->name('show');
     });
 
     // Assignment Actions
@@ -305,19 +306,20 @@ Route::middleware(['auth', 'role:teacher'])->prefix('teacher')->name('teacher.')
 /**
  * STUDENT PORTAL ROUTES
  */
-Route::prefix('student')->group(function () {
-    Route::get('/login', [StudentLoginController::class, 'showLoginForm'])->name('student.login');
-    Route::post('/login', [StudentLoginController::class, 'login'])->name('student.login.submit');
-    Route::post('/logout', [StudentLoginController::class, 'logout'])->name('student.logout');
+Route::prefix('student')->name('student.')->group(function () {
+    Route::get('/login', [StudentLoginController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [StudentLoginController::class, 'login'])->name('login.submit');
+    Route::post('/logout', [StudentLoginController::class, 'logout'])->name('logout');
 
     Route::middleware(['auth:student'])->group(function () {
-        Route::get('/dashboard', [PortalController::class, 'dashboard'])->name('student.dashboard');
-        Route::get('/results', [PortalController::class, 'results'])->name('student.results');
-        Route::get('/fees', [PortalController::class, 'fees'])->name('student.fees');
-        Route::get('/change-password', [PortalController::class, 'changePassword'])->name('student.change_password');
-        Route::post('/update-password', [PortalController::class, 'updatePassword'])->name('student.update_password');
+        Route::get('/dashboard', [PortalController::class, 'dashboard'])->name('dashboard');
+        Route::get('/updates', [PortalController::class, 'updates'])->name('updates');
+        Route::get('/results', [PortalController::class, 'results'])->name('results');
+        Route::get('/fees', [PortalController::class, 'fees'])->name('fees');
+        Route::get('/change-password', [PortalController::class, 'changePassword'])->name('change_password');
+        Route::post('/update-password', [PortalController::class, 'updatePassword'])->name('update_password');
+        
+        Route::get('/ai-chat', [ChatbotController::class, 'index'])->name('ai_chat');
+        Route::post('/ai-chat/message', [ChatbotController::class, 'handle'])->name('ai_chat.message');
     });
-    
-    Route::get('/student/ai-chat', [ChatbotController::class, 'index'])->name('student.ai_chat');
-    Route::post('/student/ai-chat/message', [ChatbotController::class, 'handle'])->name('student.ai_chat.message');
 });

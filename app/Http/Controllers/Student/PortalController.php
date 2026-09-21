@@ -60,6 +60,22 @@ class PortalController extends Controller
         ));
     }
 
+    public function updates()
+    {
+        // Fetch active announcements, ordering high priority first, then by newest
+        $announcements = \App\Models\Announcement::where('is_active', true)
+            ->orderByRaw("FIELD(priority, 'high', 'normal', 'low')")
+            ->latest()
+            ->get();
+
+        // Fetch newsletters meant for 'all' or specifically 'students'
+        $newsletters = \App\Models\Newsletter::whereIn('target_audience', ['all', 'students'])
+            ->latest()
+            ->get();
+
+        return view('student.updates', compact('announcements', 'newsletters'));
+    }
+
     /**
      * FEES: Detailed statement with Term Switcher functionality
      */

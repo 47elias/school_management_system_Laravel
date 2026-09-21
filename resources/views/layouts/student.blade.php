@@ -120,6 +120,12 @@
                 <li class="{{ Request::is('student/dashboard') ? 'active' : '' }}">
                     <a href="{{ route('student.dashboard') }}"><i class="fa fa-th-large"></i> <span>Dashboard</span></a>
                 </li>
+                
+                {{-- Added Noticeboard & Updates --}}
+                <li class="{{ Request::is('student/updates*') ? 'active' : '' }}">
+                    <a href="{{ route('student.updates') }}"><i class="fa fa-bell text-yellow"></i> <span>Noticeboard & Updates</span></a>
+                </li>
+                
                 <li class="{{ Request::is('student/results') ? 'active' : '' }}">
                     <a href="{{ route('student.results') }}"><i class="fa fa-graduation-cap"></i> <span>My Results</span></a>
                 </li>
@@ -170,5 +176,3 @@
 
 </body>
 </html>
-
-

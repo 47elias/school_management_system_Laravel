@@ -14,6 +14,12 @@ class NewsletterController extends Controller
         return view('newsletters.index', compact('newsletters'));
     }
 
+    public function show($id)
+    {
+        $newsletter = Newsletter::findOrFail($id);
+        return view('newsletters.show', compact('newsletter'));
+    }
+
     public function create()
     {
         return view('newsletters.create');
