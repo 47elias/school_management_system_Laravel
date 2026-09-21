@@ -136,6 +136,38 @@
           <li class="{{ Request::is('terms') ? 'active' : '' }}"><a href="{{ route('terms.index') }}" style="padding-left: 30px;"><i class="fa fa-circle-o"></i> Manage Terms</a></li>
         </ul>
       </li>
+
+      {{-- Announcements Section --}}
+      <li class="treeview {{ Request::is('announcements*') ? 'active' : '' }}">
+        <a href="#">
+          <i class="fa fa-bullhorn" style="color: #38bdf8;"></i> <span style="font-weight: 600;">Announcements</span>
+          <span class="pull-right-container"><i class="fa fa-angle-left pull-right"></i></span>
+        </a>
+        <ul class="treeview-menu" style="background: #0f172a;">
+          <li class="{{ Request::is('announcements/create') ? 'active' : '' }}">
+            <a href="{{ route('announcements.create') }}" style="padding-left: 30px;"><i class="fa fa-plus-circle"></i> Create Announcement</a>
+          </li>
+          <li class="{{ Request::is('announcements') && !Request::is('announcements/create') ? 'active' : '' }}">
+            <a href="{{ route('announcements.index') }}" style="padding-left: 30px;"><i class="fa fa-list"></i> Manage Announcements</a>
+          </li>
+        </ul>
+      </li>
+
+      {{-- Newsletter Section --}}
+      <li class="treeview {{ Request::is('newsletters*') ? 'active' : '' }}">
+        <a href="#">
+          <i class="fa fa-newspaper-o" style="color: #a855f7;"></i> <span style="font-weight: 600;">Newsletter</span>
+          <span class="pull-right-container"><i class="fa fa-angle-left pull-right"></i></span>
+        </a>
+        <ul class="treeview-menu" style="background: #0f172a;">
+          <li class="{{ Request::is('newsletters/create') ? 'active' : '' }}">
+            <a href="{{ route('newsletters.create') }}" style="padding-left: 30px;"><i class="fa fa-paper-plane"></i> Compose Newsletter</a>
+          </li>
+          <li class="{{ Request::is('newsletters') && !Request::is('newsletters/create') ? 'active' : '' }}">
+            <a href="{{ route('newsletters.index') }}" style="padding-left: 30px;"><i class="fa fa-envelope-o"></i> View Newsletters</a>
+          </li>
+        </ul>
+      </li>
       @endif
 
       {{-- Shared: Attendance --}}

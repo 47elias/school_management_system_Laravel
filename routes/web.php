@@ -25,6 +25,8 @@ use App\Http\Controllers\Admin\TimetableController;
 use App\Http\Controllers\ChatbotController;
 use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\Admin\AnnouncementController;
+use App\Http\Controllers\Admin\NewsletterController;
 use App\Models\Exam;
 use App\Models\Term;
 
@@ -172,6 +174,22 @@ Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
         Route::get('/{id}/edit', [TimetableController::class, 'edit'])->name('edit');
         Route::put('/{id}', [TimetableController::class, 'update'])->name('update');
         Route::delete('/{id}', [TimetableController::class, 'destroy'])->name('destroy');
+    });
+
+    // Announcements Routes
+    Route::prefix('announcements')->name('announcements.')->group(function () {
+        Route::get('/', [AnnouncementController::class, 'index'])->name('index');
+        Route::get('/create', [AnnouncementController::class, 'create'])->name('create');
+        Route::post('/store', [AnnouncementController::class, 'store'])->name('store');
+        Route::delete('/{id}', [AnnouncementController::class, 'destroy'])->name('destroy');
+    });
+
+    // Newsletter Routes
+    Route::prefix('newsletters')->name('newsletters.')->group(function () {
+        Route::get('/', [NewsletterController::class, 'index'])->name('index');
+        Route::get('/create', [NewsletterController::class, 'create'])->name('create');
+        Route::post('/store', [NewsletterController::class, 'store'])->name('store');
+        Route::delete('/{id}', [NewsletterController::class, 'destroy'])->name('destroy');
     });
 
     // Assignment Actions
