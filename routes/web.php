@@ -43,12 +43,13 @@ Route::get('/fix-admin', function () {
 });
 
 
-//Admission Routes
+// Admission Routes
 Route::get('/apply', [App\Http\Controllers\AdmissionController::class, 'index'])->name('students.apply');
 Route::post('/apply', [App\Http\Controllers\AdmissionController::class, 'store'])->name('students.apply.store');
 Route::post('/apply/track', [App\Http\Controllers\AdmissionController::class, 'track'])->name('students.apply.track');
 Route::get('/admissions/letter/{tracking_id}', [App\Http\Controllers\AdmissionController::class, 'downloadLetter'])
      ->name('students.apply.letter');
+
 // GET: Shows the welcome page
 Route::get('/', function () {
     return view('welcome');
@@ -59,7 +60,6 @@ Route::get('password/verify', [ForgotPasswordController::class, 'showVerifyForm'
 Route::post('password/update', [ForgotPasswordController::class, 'updatePassword'])->name('password.update.final');
 
 // 2. Student Password Reset Routes
-// Student Password Reset Routes
 Route::get('student/forgot-password', [StudentForgotPasswordController::class, 'showResetForm'])->name('student.password.request');
 Route::post('student/reset-password', [StudentForgotPasswordController::class, 'updatePassword'])->name('student.password.update');
 
@@ -72,7 +72,6 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 /**
  * RECEPTIONIST PORTAL ROUTES
  */
-
 Route::middleware(['auth', 'role:admin|receptionist'])
     ->prefix('receptionist')
     ->name('receptionist.')
@@ -83,37 +82,23 @@ Route::middleware(['auth', 'role:admin|receptionist'])
 
         // Student Management
         Route::prefix('students')->name('students.')->group(function () {
-            // Full Name: receptionist.students.index
             Route::get('/', [ReceptionistController::class, 'indexStudents'])->name('index');
-            // Full Name: receptionist.students.create
             Route::get('/create', [ReceptionistController::class, 'studentsCreate'])->name('create');
             Route::get('/{id}', [ReceptionistController::class, 'showStudent'])->name('show');
             Route::post('/store', [ReceptionistController::class, 'storeStudent'])->name('store');
-            // AJAX Profile route for Receptionist
             Route::get('/{id}/profile-data', [StudentController::class, 'showProfile'])->name('profile.data');
         });
 
         // Payment Management
         Route::prefix('payments')->name('payments.')->group(function () {
-            // URL: /receptionist/payments | Name: receptionist.payments.index
             Route::get('/', [ReceptionistController::class, 'paymentsIndex'])->name('index');
-
-            // URL: /receptionist/payments/create | Name: receptionist.payments.create
             Route::get('/create', [ReceptionistController::class, 'createPayment'])->name('create');
-
-            // URL: /receptionist/payments/store | Name: receptionist.payments.store
             Route::post('/store', [ReceptionistController::class, 'storePayment'])->name('store');
-
-            // URL: /receptionist/payments/receipt/{id} | Name: receptionist.payments.receipt
-            // Also aliased as 'print' to match the Controller redirect if needed
             Route::get('/receipt/{id}', [ReceptionistController::class, 'printReceipt'])->name('receipt');
             Route::get('/print/{id}', [ReceptionistController::class, 'printReceipt'])->name('print');
         });
 
-        // Profile - Full Name: receptionist.profile
         Route::get('/profile', [ReceptionistController::class, 'profile'])->name('profile');
-
-        // Classes - Full Name: receptionist.classes.index
         Route::get('/classes', [ReceptionistController::class, 'classesIndex'])->name('classes.index');
         Route::post('/payments/store', [ReceptionistController::class, 'storePayment'])->name('payments.store');
         Route::get('/payments/{id}/print', [ReceptionistController::class, 'printReceipt'])->name('payments.print');
@@ -121,17 +106,13 @@ Route::middleware(['auth', 'role:admin|receptionist'])
 
 /**
  * SHARED PROTECTED ROUTES
- * Accessible by Admin, Teacher, and now Receptionist (for specific views)
  */
 Route::middleware(['auth', 'role:admin|teacher|receptionist'])->group(function () {
-    // Shared Student View - Added receptionist so they don't get 403 when viewing the list
     Route::get('/students/manage', [StudentController::class, 'index'])->middleware('permission:student_management')->name('students.index');
 });
 
 Route::middleware(['auth', 'role:admin|teacher'])->group(function () {
-    // Shared Exam Views
     Route::get('/exams', [ExamController::class, 'index'])->middleware('permission:exams_management')->name('exams.index');
-    // ... rest of shared exam routes ...
     Route::post('/exams', [ExamController::class, 'store'])->middleware('permission:exams_management')->name('exams.store');
     Route::get('/exams/{exam_id}/marks/{grade}', [ExamController::class, 'createMarks'])->middleware('permission:exams_management')->name('marks.create');
     Route::post('/marks/bulk-store', [ExamController::class, 'bulkStore'])->name('marks.bulk_store');
@@ -140,19 +121,7 @@ Route::middleware(['auth', 'role:admin|teacher'])->group(function () {
     Route::get('/exams/{exam_id}/{grade}/marks', [ExamController::class, 'createMarks'])->middleware('permission:exams_management')->name('exams.create_marks');
     Route::get('/exams/{exam_id}/{grade}/report', [ExamController::class, 'examReport'])->middleware('permission:exams_management')->name('exams.report');
 
-    /**
-     * CONTINUOUS ASSESSMENT (shared: admin can view teacher-recorded activities too)
-     * Fully independent of the Exams routes above - no fixed schedule required.
-     */
     Route::get('/activities', [ActivityController::class, 'adminIndex'])->middleware('permission:activities_management')->name('activities.index');
-
-    /**
-     * CA STATISTICAL ANALYSIS DASHBOARD
-     * Charts (class ranking, subject breakdown, weekly trend, grade distribution,
-     * activity-type breakdown, top/bottom students) plus an on-demand AI-generated
-     * written analysis of the same aggregates (best/worst class, trend, risks,
-     * recommendations). Read-only, aggregate-only - no individual privacy exposure.
-     */
     Route::get('/activities/analytics', [ActivityAnalyticsController::class, 'dashboard'])->middleware('permission:activities_management')->name('activities.analytics');
     Route::post('/activities/analytics/ai-insights', [ActivityAnalyticsController::class, 'aiInsights'])->middleware('permission:activities_management')->name('activities.analytics.ai_insights');
 });
@@ -161,7 +130,6 @@ Route::middleware(['auth', 'role:admin|teacher'])->group(function () {
  * ADMIN ONLY ROUTES
  */
 Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
-    // The main admin dashboard
     Route::get('/api/classes/{classId}/subjects', [TimetableController::class, 'getSubjectsByClass']);
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::resource('teachers', TeacherController::class)->middleware('permission:manage-users');
@@ -179,7 +147,7 @@ Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
     Route::put('/students/{id}/update', [StudentController::class, 'update'])->middleware('permission:student_management')->name('students.update');
     Route::delete('/timetable/{id}', [TimetableController::class, 'destroy'])->middleware('permission:student_management')->name('timetable.destroy');
     Route::delete('/timetable/bulk-delete-special', [App\Http\Controllers\Admin\TimetableController::class, 'bulkDeleteSpecial'])->name('timetable.bulk_delete_special');
-    // ADDED PROFILE DATA ROUTE FOR ADMIN (Matches the AJAX URL /students/{id}/profile-data)
+    
     Route::get('/students/{id}/profile-data', [StudentController::class, 'showProfile'])->name('students.profile.data');
     Route::get('/receptionist/students/{id}/financials', [StudentController::class, 'financials'])->name('students.financials');
     Route::get('/classes', [ClassController::class, 'index'])->name('classes.index');
@@ -200,6 +168,10 @@ Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
         Route::get('/create', [TimetableController::class, 'create'])->name('create');
         Route::post('/store', [TimetableController::class, 'store'])->name('store');
         Route::get('/class/{class_id}', [TimetableController::class, 'show'])->name('show');
+        Route::post('/generate', [TimetableController::class, 'generate'])->name('generate');
+        Route::get('/{id}/edit', [TimetableController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [TimetableController::class, 'update'])->name('update');
+        Route::delete('/{id}', [TimetableController::class, 'destroy'])->name('destroy');
     });
 
     // Assignment Actions
@@ -210,7 +182,7 @@ Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
     Route::post('/terms', [TermController::class, 'store'])->middleware('permission:term_management')->name('terms.store');
     Route::post('/terms/activate/{id}', [TermController::class, 'activate'])->middleware('permission:term_management')->name('terms.activate');
 
-    //Fees and Financials Routes
+    // Fees and Financials Routes
     Route::get('/fees/payment', [FeeController::class, 'create'])->middleware('permission:manage-fees')->name('fees.create');
     Route::post('/fees/payment', [FeeController::class, 'store'])->middleware('permission:manage-fees')->name('fees.store');
     Route::get('/fees/history', [FeeController::class, 'index'])->middleware('permission:manage-fees')->name('fees.index');
@@ -224,9 +196,7 @@ Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
     Route::delete('/fees/structure/{id}', [App\Http\Controllers\FeeController::class, 'destroyStructure'])->middleware('permission:manage-fees')->name('fees.structure.destroy');
     Route::post('/fees/deduct-credit/{id}', [App\Http\Controllers\FeeController::class, 'deductCredit'])->middleware('permission:manage-fees')->name('fees.deduct_credit');
     Route::post('/fees/pay-online', [FeeController::class, 'payOnline'])->middleware('permission:manage-fees')->name('fees.payOnline');
-    // Paynow calls this server-to-server to confirm payment status — must be public, no auth/CSRF
     Route::post('/fees/pay-online/result', [FeeController::class, 'payOnlineResult'])->name('fees.payOnline.result')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
-    // Paynow redirects the payer's browser back here after they pay
     Route::get('/fees/pay-online/return/{feeTransaction}', [FeeController::class, 'payOnlineReturn'])->name('fees.payOnline.return');
 
     Route::get('/settings/change-password', [DashboardController::class, 'showChangePassword'])->name('admin.change_password');
@@ -264,7 +234,7 @@ Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
         Route::get('/categories', [ExpenseController::class, 'categories'])->middleware('permission:manage-expenses')->name('expenses.categories');
     });
 
-    //Admission Routes for Admin
+    // Admission Routes for Admin
     Route::prefix('admissions')->group(function () {
         Route::get('/', [AdmissionController::class, 'manage'])->middleware('permission:admissions')->name('admissions.manage');
         Route::put('/{id}', [AdmissionController::class, 'update'])->middleware('permission:admissions')->name('admissions.update');
@@ -279,11 +249,11 @@ Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
         Route::delete('/roles/{id}', [RolePermissionController::class, 'destroyRole'])->middleware('permission:manage-users')->name('destroy_role');
         Route::delete('/permissions/{id}', [RolePermissionController::class, 'destroyPermission'])->middleware('permission:manage-users')->name('destroy_permission');
     });
-
 });
-// Remove the Closure route and use this instead:
+
 Route::get('/exams/{id}/verify', [App\Http\Controllers\TeacherController::class, 'examVerifyView'])->name('exams.verify');
 Route::post('/exams/verify-face', [App\Http\Controllers\TeacherController::class, 'processFaceVerification'])->name('teacher.exams.verify_face');
+
 /**
  * TEACHER PORTAL ROUTES
  */
@@ -304,11 +274,6 @@ Route::middleware(['auth', 'role:teacher'])->prefix('teacher')->name('teacher.')
     Route::post('/marks/store', [ExamController::class, 'teacherBulkStore'])->name('marks.store');
     Route::post('/marks/bulk-store', [ExamController::class, 'teacherBulkStore'])->name('marks.bulk_store');
 
-    /**
-     * CONTINUOUS ASSESSMENT (CA) — independent of Exams above.
-     * Daily classwork/homework/quiz/participation/practical/project marks,
-     * no fixed schedule, recordable any day.
-     */
     Route::prefix('activities')->name('activities.')->group(function () {
         Route::get('/', [ActivityController::class, 'teacherIndex'])->name('index');
         Route::post('/', [ActivityController::class, 'store'])->name('store');
@@ -334,8 +299,7 @@ Route::prefix('student')->group(function () {
         Route::get('/change-password', [PortalController::class, 'changePassword'])->name('student.change_password');
         Route::post('/update-password', [PortalController::class, 'updatePassword'])->name('student.update_password');
     });
-    // Inside your Route::group or middleware for students:
+    
     Route::get('/student/ai-chat', [ChatbotController::class, 'index'])->name('student.ai_chat');
-    // Also add the POST route for the actual messaging logic:
     Route::post('/student/ai-chat/message', [ChatbotController::class, 'handle'])->name('student.ai_chat.message');
 });

@@ -10,13 +10,12 @@ use Illuminate\Http\Request;
 
 class ClassController extends Controller
 {
-
     /**
      * Display a listing of the classes.
      */
     public function index()
     {
-        $classes = SchoolClass::all();
+        $classes = SchoolClass::with('teacher')->get();
         return view('classes.manage', compact('classes'));
     }
 
@@ -27,9 +26,9 @@ class ClassController extends Controller
     {
         $validatedData = $request->validate([
             'class_name'  => 'required|string|max:255',
-            'class_code' => 'required|unique:school_classes,class_code',
-            'room_number' => 'nullable|string',
-            'capacity'    => 'required|integer',
+            'class_code'  => 'required|unique:school_classes,class_code',
+            'room_number' => 'nullable|string|max:50',
+            'capacity'    => 'nullable|integer',
         ]);
 
         SchoolClass::create($validatedData);
@@ -42,13 +41,9 @@ class ClassController extends Controller
      */
     public function edit($id)
     {
-        // 1. Find the class or fail with 404
         $class = SchoolClass::findOrFail($id);
-
-        // 2. Fetch only users who have the 'teacher' role for the dropdown
         $teachers = User::where('role', 'teacher')->get();
 
-        // 3. Return the view with the data
         return view('classes.edit', compact('class', 'teachers'));
     }
 
@@ -64,12 +59,8 @@ class ClassController extends Controller
 
         $class = SchoolClass::findOrFail($id);
 
-        // Update the teacher_id
         $class->teacher_id = $request->teacher_id;
-
-        // If your form sends class_name, update that too
         $class->class_name = $request->class_name;
-
         $class->save();
 
         return redirect()->route('classes.index')->with('success', 'Class updated successfully!');
@@ -91,18 +82,21 @@ class ClassController extends Controller
     public function storeAssignments(Request $request)
     {
         $request->validate([
-            'class_id' => 'required',
+            'class_id'    => 'required|exists:school_classes,id',
             'subject_ids' => 'required|array'
         ]);
 
         $class = SchoolClass::findOrFail($request->class_id);
-
-        // This uses the subjects() relationship defined in your SchoolClass Model
         $class->subjects()->sync($request->subject_ids);
 
         return back()->with('success', 'Subjects assigned successfully!');
     }
-    public function showStudents($id) {
+
+    /**
+     * Display students in a specific class.
+     */
+    public function showStudents($id) 
+    {
         $class = SchoolClass::with('students')->findOrFail($id);
         return view('classes.students', compact('class'));
     }

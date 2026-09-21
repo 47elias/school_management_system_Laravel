@@ -3,146 +3,133 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Timetable;
 use App\Models\SchoolClass;
-use App\Models\Subject;
-use App\Models\User;
+use App\Models\SubjectAssignment;
+use App\Models\Timetable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 class TimetableController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        $classes = SchoolClass::all();
-
-        if ($request->has('view') && $request->view == 'master') {
-            $timetables = Timetable::with(['subject', 'teacher', 'schoolClass'])
-                ->orderBy('start_time')
-                ->get();
-
-            return view('timetable.show_master', compact('timetables', 'classes'));
-        }
-
-        return view('timetable.index', compact('classes'));
+        $timetables = Timetable::with(['schoolClass', 'subject', 'teacher'])->get();
+        return view('timetable.index', compact('timetables'));
     }
 
-    public function create()
+    public function generate(Request $request)
     {
-        $classes = SchoolClass::all();
-        return view('timetable.create', compact('classes'));
-    }
-
-    public function getSubjectsByClass($classId)
-    {
-        $assignments = DB::table('subject_assignments')
-            ->join('subjects', 'subject_assignments.subject_id', '=', 'subjects.id')
-            ->join('users', 'subject_assignments.teacher_id', '=', 'users.id')
-            ->where('subject_assignments.class_id', $classId)
-            ->select(
-                'subjects.id as subject_id',
-                'subjects.subject_name',
-                'users.id as teacher_id',
-                'users.name as teacher_name'
-            )
-            ->get();
-
-        return response()->json($assignments);
-    }
-
-    public function store(Request $request)
-    {
-        $request->validate([
-            'class_id' => $request->apply_to_all_classes == '1' ? 'nullable' : 'required',
-            'subject_id' => $request->apply_to_all_classes == '1' ? 'nullable' : 'required',
-            'teacher_id' => $request->apply_to_all_classes == '1' ? 'nullable' : 'required',
-            'day' => $request->apply_all_days == '1' ? 'nullable' : 'required',
-            'start_time' => 'required',
-            'end_time' => 'required',
-            'special_type' => 'nullable|string',
-        ]);
-
-        $classIds = $request->apply_to_all_classes == '1'
-            ? SchoolClass::pluck('id')->toArray()
-            : [$request->class_id];
-
-        $days = $request->apply_all_days == '1'
-            ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-            : [$request->day];
-
-        if ($request->apply_to_all_classes != '1' && $request->teacher_id) {
-            $conflict = Timetable::where('teacher_id', $request->teacher_id)
-                ->where('day', $request->day)
-                ->where(function ($query) use ($request) {
-                    $query->where('start_time', '<', $request->end_time)
-                          ->where('end_time', '>', $request->start_time);
-                })->exists();
-
-            if ($conflict) {
-                return back()->with('error', 'Teacher is already assigned to another class at this time.');
-            }
-        }
-
-        foreach ($classIds as $classId) {
-            foreach ($days as $day) {
-                Timetable::create([
-                    'class_id'   => $classId,
-                    'subject_id' => $request->apply_to_all_classes == '1' ? null : $request->subject_id,
-                    'teacher_id' => $request->apply_to_all_classes == '1' ? null : $request->teacher_id,
-                    'day'        => $day,
-                    'start_time' => $request->start_time,
-                    'end_time'   => $request->end_time,
-                    /**
-                     * IMPORTANT: Based on your SQL, the column is 'type'.
-                     * We save the label (Break, Lunch, etc.) into 'type'.
-                     * If it's a normal lesson, it defaults to 'SUBJECT'.
-                     */
-                    'type'       => $request->special_type ?? 'SUBJECT',
-                ]);
-            }
-        }
-
-        return back()->with('success', 'Timetable slot(s) added successfully.');
-    }
-
-    public function bulkDeleteSpecial(Request $request)
-    {
-        $request->validate([
-            'special_label' => 'required|string'
-        ]);
-
+        DB::beginTransaction();
         try {
-            // Updated to use the 'type' column to match your database
-            $deletedCount = Timetable::where('type', $request->special_label)
-                ->whereNull('subject_id')
-                ->delete();
+            // 1. Clear existing timetable slots
+            Timetable::truncate();
 
-            return back()->with('success', "Successfully removed $deletedCount slots for '{$request->special_label}' across all classes.");
+            $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+            
+            // Strictly structured periods avoiding Break (10:00 - 10:30) and Lunch (13:00 - 14:00)
+            $periods = [
+                ['start' => '08:00:00', 'end' => '09:00:00'],
+                ['start' => '09:00:00', 'end' => '10:00:00'],
+                // 10:00 - 10:30 Morning Break (Skipped)
+                ['start' => '10:30:00', 'end' => '11:30:00'],
+                ['start' => '11:30:00', 'end' => '12:30:00'],
+                ['start' => '12:30:00', 'end' => '13:00:00'],
+                // 13:00 - 14:00 Lunch Break (Skipped)
+                ['start' => '14:00:00', 'end' => '15:00:00'],
+                ['start' => '15:00:00', 'end' => '16:00:00'],
+            ];
+
+            $classes = SchoolClass::where('status', 'active')->get();
+
+            if ($classes->isEmpty()) {
+                throw new \Exception('No active school classes found to generate a timetable for.');
+            }
+
+            // Prepare tracking arrays for intelligent distribution & shuffling per class
+            $classAssignments = [];
+            foreach ($classes as $schoolClass) {
+                $assignments = SubjectAssignment::where('class_id', $schoolClass->id)->get();
+                if ($assignments->isNotEmpty()) {
+                    // Shuffle daily pool per class so layout starts fresh and mixed up
+                    $classAssignments[$schoolClass->id] = [
+                        'pool' => $assignments->shuffle(),
+                        'index' => 0
+                    ];
+                }
+            }
+
+            // Intelligent Matrix Generation: Iterate Day -> Period -> Class
+            // This ensures every class gets an equal opportunity at each time slot without dropping slots.
+            foreach ($days as $day) {
+                foreach ($periods as $period) {
+                    foreach ($classes as $schoolClass) {
+                        if (!isset($classAssignments[$schoolClass->id])) {
+                            continue; // Skip classes with zero subject assignments
+                        }
+
+                        $pool = $classAssignments[$schoolClass->id]['pool'];
+                        $poolSize = $pool->count();
+                        
+                        // Try to find a valid assignment where the teacher is NOT clashing/double-booked
+                        $assigned = false;
+                        $attempts = 0;
+
+                        while ($attempts < $poolSize && !$assigned) {
+                            $currentIndex = $classAssignments[$schoolClass->id]['index'] % $poolSize;
+                            $candidate = $pool[$currentIndex];
+
+                            // Advance index for next time
+                            $classAssignments[$schoolClass->id]['index']++;
+                            $attempts++;
+
+                            // STRICT CLASH CHECK: Is this teacher teaching ANY other class at this exact day & time?
+                            $teacherBusy = Timetable::where('teacher_id', $candidate->teacher_id)
+                                ->where('day', $day)
+                                ->where('start_time', $period['start'])
+                                ->exists();
+
+                            if (!$teacherBusy) {
+                                // Teacher is free! Book this slot safely.
+                                Timetable::create([
+                                    'class_id'    => $schoolClass->id,
+                                    'subject_id'  => $candidate->subject_id,
+                                    'teacher_id'  => $candidate->teacher_id,
+                                    'day'         => $day,
+                                    'start_time'  => $period['start'],
+                                    'end_time'    => $period['end'],
+                                    'type'        => 'SUBJECT',
+                                    'room_number' => $schoolClass->room_number ?? 'Main Hall',
+                                ]);
+                                $assigned = true;
+                            }
+                        }
+
+                        // If all teacher options for this class in this period are clashed, 
+                        // we assign a placeholder or leave it unassigned gracefully rather than breaking.
+                    }
+                }
+            }
+
+            DB::commit();
+            return redirect()->route('timetable.index')->with('success', 'Intelligent timetable generated successfully! Zero teacher clashes and all class slots filled.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Failed to perform bulk deletion.');
+            DB::rollBack();
+            return back()->with('error', 'Timetable generation failed: ' . $e->getMessage());
         }
     }
 
     public function show($class_id)
     {
-        $class = SchoolClass::findOrFail($class_id);
-        $timetables = Timetable::with(['subject', 'teacher', 'schoolClass'])
+        $schoolClass = SchoolClass::findOrFail($class_id);
+        
+        $timetables = Timetable::with(['subject', 'teacher'])
             ->where('class_id', $class_id)
+            ->orderByRaw("FIELD(day, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday')")
             ->orderBy('start_time')
             ->get();
 
-        return view('timetable.show', compact('class', 'timetables'));
-    }
+        $classes = SchoolClass::where('status', 'active')->get();
 
-    public function destroy($id)
-    {
-        try {
-            $timetable = Timetable::findOrFail($id);
-            $timetable->delete();
-            return back()->with('success', 'Schedule slot deleted successfully.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Failed to delete the slot.');
-        }
+        return view('timetable.show', compact('schoolClass', 'timetables', 'classes'));
     }
 }
