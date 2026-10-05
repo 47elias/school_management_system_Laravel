@@ -24,7 +24,7 @@ interface JsonSchema
     /**
      * Create a new string property instance.
      *
-     * @return \Illuminate\JsonSchema\Types\String
+     * @return \Illuminate\JsonSchema\Types\StringType
      */
     public function string();
 
@@ -48,4 +48,12 @@ interface JsonSchema
      * @return \Illuminate\JsonSchema\Types\BooleanType
      */
     public function boolean();
+
+    /**
+     * Create a new multi-type union instance.
+     *
+     * @param  array<int, string>  $types
+     * @return \Illuminate\JsonSchema\Types\UnionType
+     */
+    public function union(array $types);
 }

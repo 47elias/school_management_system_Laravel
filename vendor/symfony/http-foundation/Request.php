@@ -181,6 +181,16 @@ class Request
 
     private static int $trustedHeaderSet = -1;
 
+    /**
+     * @var array<string, true>
+     */
+    private static array $trustedHostsLiterals = [];
+
+    /**
+     * @var string[]
+     */
+    private static array $trustedHostsRegexps = [];
+
     private const FORWARDED_PARAMS = [
         self::HEADER_X_FORWARDED_FOR => 'for',
         self::HEADER_X_FORWARDED_HOST => 'host',
@@ -285,26 +295,30 @@ class Request
      */
     public static function createFromGlobals(): static
     {
-        $request = self::createRequestFromFactory($_GET, $_POST, [], $_COOKIE, $_FILES, $_SERVER);
-
-        if (!\in_array($request->server->get('REQUEST_METHOD', 'GET'), ['PUT', 'DELETE', 'PATCH', 'QUERY'], true)) {
-            return $request;
+        if (!\in_array($_SERVER['REQUEST_METHOD'] ?? null, ['PUT', 'DELETE', 'PATCH', 'QUERY'], true)) {
+            return self::createRequestFromFactory($_GET, $_POST, [], $_COOKIE, $_FILES, $_SERVER);
         }
 
-        if (\PHP_VERSION_ID >= 80400) {
-            try {
-                [$post, $files] = request_parse_body();
-
-                $request->request->add($post);
-                $request->files->add($files);
-            } catch (\RequestParseBodyException) {
+        if (\PHP_VERSION_ID < 80400) {
+            if (!isset($_SERVER['CONTENT_TYPE']) || str_starts_with($_SERVER['CONTENT_TYPE'], 'application/x-www-form-urlencoded')) {
+                $content = file_get_contents('php://input');
+                parse_str($content, $post);
+            } else {
+                $content = null;
+                $post = $_POST;
             }
-        } elseif (str_starts_with($request->headers->get('CONTENT_TYPE', ''), 'application/x-www-form-urlencoded')) {
-            parse_str($request->getContent(), $data);
-            $request->request = new InputBag($data);
+
+            return self::createRequestFromFactory($_GET, $post, [], $_COOKIE, $_FILES, $_SERVER, $content);
         }
 
-        return $request;
+        try {
+            [$post, $files] = request_parse_body();
+        } catch (\RequestParseBodyException) {
+            $post = $_POST;
+            $files = $_FILES;
+        }
+
+        return self::createRequestFromFactory($_GET, $post, [], $_COOKIE, $files, $_SERVER);
     }
 
     /**
@@ -397,8 +411,16 @@ class Request
             $server['PHP_AUTH_PW'] = $components['pass'];
         }
 
-        if (!isset($components['path'])) {
+        if ('' === $path = $components['path'] ?? '') {
             $components['path'] = '/';
+        } elseif (!isset($components['scheme']) && !isset($components['host']) && '/' !== $path[0]) {
+            if (false !== $pos = strpos($path, '/')) {
+                $path = substr($path, 0, $pos);
+            }
+
+            if (str_contains($path, ':')) {
+                throw new BadRequestException('Invalid URI: Path is malformed.');
+            }
         }
 
         switch (strtoupper($method)) {
@@ -641,9 +663,20 @@ class Request
      */
     public static function setTrustedHosts(array $hostPatterns): void
     {
-        self::$trustedHostPatterns = array_map(fn ($hostPattern) => \sprintf('{%s}i', $hostPattern), $hostPatterns);
-        // we need to reset trusted hosts on trusted host patterns change
-        self::$trustedHosts = [];
+        self::$trustedHostPatterns = array_map(static fn ($hostPattern) => \sprintf('{%s}i', $hostPattern), $hostPatterns);
+        self::$trustedHostsLiterals = [];
+        $regexpPatterns = [];
+
+        foreach ($hostPatterns as $hostPattern) {
+            // constant patterns are matched by a hash lookup in getHost(), where the host is lowercase and free of newlines
+            if (preg_match('{^\^((?:[a-z0-9_:-]|\\\\[^a-z0-9])++)\$$}Di', $hostPattern, $m)) {
+                self::$trustedHostsLiterals[strtolower(preg_replace('{\\\\(.)}s', '$1', $m[1]))] = true;
+            } else {
+                $regexpPatterns[] = $hostPattern;
+            }
+        }
+
+        self::$trustedHostsRegexps = self::compileHostPatterns($regexpPatterns);
     }
 
     /**
@@ -845,10 +878,6 @@ class Request
      * being the original client, and each successive proxy that passed the request
      * adding the IP address where it received the request from.
      *
-     * If your reverse proxy uses a different header name than "X-Forwarded-For",
-     * ("Client-Ip" for instance), configure it via the $trustedHeaderSet
-     * argument of the Request::setTrustedProxies() method instead.
-     *
      * @see getClientIps()
      * @see https://wikipedia.org/wiki/X-Forwarded-For
      */
@@ -872,7 +901,7 @@ class Request
      *
      * Suppose this request is instantiated from /mysite on localhost:
      *
-     *  * http://localhost/mysite              returns an empty string
+     *  * http://localhost/mysite              returns '/'
      *  * http://localhost/mysite/about        returns '/about'
      *  * http://localhost/mysite/enco%20ded   returns '/enco%20ded'
      *  * http://localhost/mysite/about?var=1  returns '/about'
@@ -1185,17 +1214,15 @@ class Request
             throw new SuspiciousOperationException(\sprintf('Invalid Host "%s".', $host));
         }
 
-        if (\count(self::$trustedHostPatterns) > 0) {
+        if (self::$trustedHostsLiterals || self::$trustedHostsRegexps) {
             // to avoid host header injection attacks, you should provide a list of trusted host patterns
 
-            if (\in_array($host, self::$trustedHosts, true)) {
+            if (isset(self::$trustedHostsLiterals[$host])) {
                 return $host;
             }
 
-            foreach (self::$trustedHostPatterns as $pattern) {
-                if (preg_match($pattern, $host)) {
-                    self::$trustedHosts[] = $host;
-
+            foreach (self::$trustedHostsRegexps as $regexp) {
+                if (preg_match($regexp, $host)) {
                     return $host;
                 }
             }
@@ -1538,10 +1565,8 @@ class Request
      */
     public function getContent(bool $asResource = false)
     {
-        $currentContentIsResource = \is_resource($this->content);
-
-        if (true === $asResource) {
-            if ($currentContentIsResource) {
+        if ($asResource) {
+            if (\is_resource($this->content)) {
                 rewind($this->content);
 
                 return $this->content;
@@ -1561,7 +1586,7 @@ class Request
             return fopen('php://input', 'r');
         }
 
-        if ($currentContentIsResource) {
+        if (\is_resource($this->content)) {
             rewind($this->content);
 
             return stream_get_contents($this->content);
@@ -2195,17 +2220,15 @@ class Request
         $firstTrustedIp = null;
 
         foreach ($clientIps as $key => $clientIp) {
-            if (strpos($clientIp, '.')) {
-                // Strip :port from IPv4 addresses. This is allowed in Forwarded
-                // and may occur in X-Forwarded-For.
-                $i = strpos($clientIp, ':');
-                if ($i) {
-                    $clientIps[$key] = $clientIp = substr($clientIp, 0, $i);
-                }
-            } elseif (str_starts_with($clientIp, '[')) {
+            if (str_starts_with($clientIp, '[')) {
                 // Strip brackets and :port from IPv6 addresses.
                 $i = strpos($clientIp, ']', 1);
                 $clientIps[$key] = $clientIp = substr($clientIp, 1, $i - 1);
+            } elseif (strpos($clientIp, '.') && 1 === substr_count($clientIp, ':')) {
+                // Strip :port from IPv4 addresses. This is allowed in Forwarded
+                // and may occur in X-Forwarded-For. An IPv6 address with an
+                // embedded IPv4 address has at least two colons and is kept.
+                $clientIps[$key] = $clientIp = strstr($clientIp, ':', true);
             }
 
             if (!filter_var($clientIp, \FILTER_VALIDATE_IP)) {
@@ -2257,5 +2280,32 @@ class Request
 
         // use preg_replace() instead of preg_match() to prevent DoS attacks with long host names
         return '' === preg_replace('/[-a-zA-Z0-9_]++\.?/', '', $host);
+    }
+
+    /**
+     * Combines host patterns into as few regexps as PCRE can compile.
+     *
+     * @return string[]
+     */
+    private static function compileHostPatterns(array $hostPatterns): array
+    {
+        if (!$hostPatterns) {
+            return [];
+        }
+
+        // the branch reset group keeps capturing groups, back references and inline modifiers local to each pattern
+        $regexp = \sprintf('{(?|(?:%s))}i', implode(')|(?:', $hostPatterns));
+
+        if (1 === \count($hostPatterns) || false !== @preg_match($regexp, '')) {
+            return [$regexp];
+        }
+
+        // the combined pattern exceeds the maximum size PCRE accepts, split it in half
+        $half = intdiv(\count($hostPatterns), 2);
+
+        return array_merge(
+            self::compileHostPatterns(\array_slice($hostPatterns, 0, $half)),
+            self::compileHostPatterns(\array_slice($hostPatterns, $half))
+        );
     }
 }

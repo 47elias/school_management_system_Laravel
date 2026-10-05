@@ -1,7 +1,7 @@
 <?php
 
 namespace Illuminate\Database;
-use Illuminate\Support\Facades\Schema;
+
 use Illuminate\Database\Connectors\ConnectionFactory;
 use Illuminate\Database\Events\ConnectionEstablished;
 use Illuminate\Support\Arr;
@@ -330,7 +330,9 @@ class DatabaseManager implements ConnectionResolverInterface
             return $this->connection($name);
         }
 
-        return $this->refreshPdoConnections($name);
+        return tap($this->refreshPdoConnections($name), function ($connection) {
+            $this->dispatchConnectionEstablishedEvent($connection);
+        });
     }
 
     /**

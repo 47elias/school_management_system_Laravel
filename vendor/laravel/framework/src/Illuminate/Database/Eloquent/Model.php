@@ -1765,9 +1765,13 @@ abstract class Model implements Arrayable, ArrayAccess, CanBeEscapedWhenCastToSt
      */
     protected static function isScopeMethodWithAttribute(string $method)
     {
-        return method_exists(static::class, $method) &&
-            (new ReflectionMethod(static::class, $method))
-                ->getAttributes(LocalScope::class) !== [];
+        if (method_exists(static::class, $method)) {
+            $reflectionClass = new ReflectionMethod(static::class, $method);
+
+            return ! $reflectionClass->isPrivate() && $reflectionClass->getAttributes(LocalScope::class) !== [];
+        }
+
+        return false;
     }
 
     /**
@@ -2447,11 +2451,11 @@ abstract class Model implements Arrayable, ArrayAccess, CanBeEscapedWhenCastToSt
 
         static::$modelsShouldPreventAccessingMissingAttributes = false;
 
-        $result = ! is_null($this->getAttribute($offset));
-
-        static::$modelsShouldPreventAccessingMissingAttributes = $shouldPrevent;
-
-        return $result;
+        try {
+            return ! is_null($this->getAttribute($offset));
+        } finally {
+            static::$modelsShouldPreventAccessingMissingAttributes = $shouldPrevent;
+        }
     }
 
     /**
