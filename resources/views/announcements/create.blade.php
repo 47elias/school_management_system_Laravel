@@ -1,85 +1,101 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>Post Announcement</title>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    @include('components.adminlte')
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root { --brand-primary: #38bdf8; --bg-light: #f4f6f9; }
-        html, body { font-family: 'Inter', sans-serif !important; background-color: var(--bg-light) !important; height: 100vh; overflow: hidden; margin: 0; }
-        .wrapper { height: 100vh; display: flex; flex-direction: column; }
-        .content-wrapper { flex: 1; overflow-y: auto; padding-bottom: 30px; }
-        .box { border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-top: 3px solid var(--brand-primary); background: #fff; margin-bottom: 20px; }
-        .box-header { padding: 15px 20px; border-bottom: 1px solid #f4f4f4; }
-        .box-body { padding: 20px; }
-        .form-group label { font-weight: 600; color: #444; font-size: 13px; }
-        .form-control { border-radius: 4px; border: 1px solid #ccc; box-shadow: none; }
-    </style>
-</head>
-<body class="hold-transition skin-blue sidebar-mini fixed">
-    <div class="wrapper">
-        @include('layouts.topbar')
-        @include('layouts.sidebar')
+{{-- resources/views/announcements/create.blade.php --}}
+@extends('layouts.admin.app')
 
-        <div class="content-wrapper">
-            <section class="content-header" style="padding: 15px 20px;">
-                <h1>
-                    <i class="fa fa-bullhorn" style="color: #38bdf8;"></i> Post Announcement
-                    <small>Publish a new notice to the portal</small>
-                </h1>
-                <ol class="breadcrumb">
-                    <li><a href="{{ route('dashboard') }}"><i class="fa fa-dashboard"></i> Home</a></li>
-                    <li><a href="{{ route('announcements.index') }}">Announcements</a></li>
-                    <li class="active">Post</li>
-                </ol>
-            </section>
+@section('title', 'Post Announcement | ' . env('SCHOOL_ACRONYM', 'SMS'))
 
-            <section class="content" style="padding: 0 20px;">
-                <div class="box">
-                    <div class="box-header with-border">
-                        <h3 class="box-title" style="font-weight: 600;">Announcement Details</h3>
-                    </div>
-                    <form action="{{ route('announcements.store') }}" method="POST">
-                        @csrf
-                        <div class="box-body">
-                            <div class="row">
-                                <div class="col-md-8">
-                                    <div class="form-group">
-                                        <label>Announcement Title</label>
-                                        <input type="text" name="title" class="form-control" placeholder="e.g. Early Dismissal on Friday" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>Priority Level</label>
-                                        <select name="priority" class="form-control">
-                                            <option value="normal">Normal</option>
-                                            <option value="high">High (Red Alert)</option>
-                                            <option value="low">Low (Info)</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Notice Content</label>
-                                <textarea name="content" rows="6" class="form-control" placeholder="Write the details of the announcement here..." required></textarea>
-                            </div>
-                        </div>
-                        <div class="box-footer" style="background: #f9f9f9; padding: 15px 20px;">
-                            <button type="submit" class="btn btn-flat" style="background: #38bdf8; color: white; font-weight: 600; padding: 8px 20px;">
-                                <i class="fa fa-check" style="margin-right: 5px;"></i> PUBLISH ANNOUNCEMENT
-                            </button>
-                            <a href="{{ route('announcements.index') }}" class="btn btn-default btn-flat" style="font-weight: 600;">Cancel</a>
-                        </div>
-                    </form>
-                </div>
-            </section>
+@section('header')
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Post Announcement</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Publish a new notice to the institutional portal</p>
         </div>
-        @include('layouts.footer')
+        <div class="mt-4 sm:mt-0">
+            <a href="{{ Route::has('announcements.index') ? route('announcements.index') : url('/announcements') }}" 
+               class="inline-flex items-center px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all border border-slate-200 dark:border-slate-700">
+                <i class="fa-solid fa-arrow-left mr-2"></i> Back to Directory
+            </a>
+        </div>
     </div>
-    @include('components.scripts')
-</body>
-</html>
+@endsection
+
+@section('content')
+    <div class="space-y-6">
+
+        @if(session('success'))
+            <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-200 flex items-center justify-between shadow-sm">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-circle-check text-emerald-600 dark:text-emerald-400 text-lg"></i>
+                    <p class="text-xs font-medium">{{ session('success') }}</p>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-200">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 text-rose-800 dark:text-rose-200 flex items-center justify-between shadow-sm">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-circle-exclamation text-rose-600 dark:text-rose-400 text-lg"></i>
+                    <p class="text-xs font-medium">{{ session('error') }}</p>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-200">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+        @endif
+
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
+            <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/80">
+                <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                    <i class="fa-solid fa-bullhorn text-sky-500 mr-2.5"></i> Announcement Details
+                </h3>
+            </div>
+
+            <form action="{{ Route::has('announcements.store') ? route('announcements.store') : url('/announcements') }}" method="POST" class="p-6 space-y-5">
+                @csrf
+
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                    <div class="md:col-span-8">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+                            Announcement Title <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="text" name="title" placeholder="e.g. Early Dismissal on Friday" required
+                               class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                    </div>
+
+                    <div class="md:col-span-4">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+                            Priority Level <span class="text-rose-500">*</span>
+                        </label>
+                        <select name="priority" class="w-full px-3.5 py-2.5 text-xs font-medium rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                            <option value="normal">Normal</option>
+                            <option value="high">High (Red Alert)</option>
+                            <option value="low">Low (Info)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+                        Notice Content <span class="text-rose-500">*</span>
+                    </label>
+                    <textarea name="content" rows="8" placeholder="Write the full details of the announcement here..." required
+                              class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500 leading-relaxed"></textarea>
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 dark:border-slate-700/60 flex items-center space-x-3">
+                    <button type="submit" 
+                            class="inline-flex items-center px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold transition-all shadow-sm">
+                        <i class="fa-solid fa-check mr-2"></i> PUBLISH ANNOUNCEMENT
+                    </button>
+                    <a href="{{ Route::has('announcements.index') ? route('announcements.index') : url('/announcements') }}" 
+                       class="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+
+    </div>
+@endsection

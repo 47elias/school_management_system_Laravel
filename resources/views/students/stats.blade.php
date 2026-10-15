@@ -1,208 +1,166 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>Enrollment Analytics | {{ env('SCHOOL_ACRONYM') }}</title>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{{-- resources/views/students/stats.blade.php --}}
+@extends('layouts.admin.app')
 
-    @include('components.adminlte')
-    
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic">
+@section('title', 'Enrollment Analytics | ' . env('SCHOOL_ACRONYM', 'SIT'))
 
-    <!-- Scoped Modern UI Updates (Will not affect AdminLTE Footer/Layout) -->
-    <style>
-        /* Modern Gradient Cards */
-        .content .info-box-modern { border-radius: 12px; padding: 25px 20px; color: #fff; position: relative; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.08); transition: transform 0.3s ease; margin-bottom: 20px; }
-        .content .info-box-modern:hover { transform: translateY(-5px); }
-        .bg-gradient-blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
-        .bg-gradient-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
-        .bg-gradient-info { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); }
-        .bg-gradient-warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
-        .content .info-box-modern .inner h3 { font-size: 36px; font-weight: 800; margin: 0 0 5px 0; letter-spacing: 1px; }
-        .content .info-box-modern .inner p { font-size: 15px; margin: 0; font-weight: 600; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px; }
-        .content .info-box-modern .icon { position: absolute; right: 20px; top: 20px; font-size: 55px; opacity: 0.2; }
+@section('header')
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Enrollment Analytics</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Academic demographics and enrollment distribution metrics</p>
+        </div>
+        <div class="mt-4 sm:mt-0">
+            <a href="{{ route('students.index') }}" 
+               class="inline-flex items-center px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold transition-all border border-slate-200 dark:border-slate-700">
+                <i class="fa-solid fa-users mr-2"></i> Manage Students
+            </a>
+        </div>
+    </div>
+@endsection
 
-        /* Modern Box Styling */
-        .content .box { border-radius: 12px; border-top: none; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 25px; overflow: hidden; background: #ffffff; }
-        .content .box-header { border-bottom: 1px solid #f1f5f9; padding: 20px; background: #fff; }
-        .content .box-title { font-weight: 800 !important; color: #1e293b; font-size: 18px; }
-        
-        /* Table overrides */
-        .content .table > tbody > tr > td { vertical-align: middle !important; padding: 16px 20px; border-top: 1px solid #f1f5f9; font-size: 15px; color: #334155; }
-        .content .table > thead > tr > th { border-bottom: 2px solid #e2e8f0; color: #64748b; font-weight: 700; padding: 16px 20px; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; background: #f8fafc; }
-        .content .table-hover > tbody > tr:hover { background-color: #f8fafc; }
+@section('content')
+    <div class="space-y-6">
 
-        /* Analytics Specific Styles */
-        .content .progress-slim { height: 8px; border-radius: 10px; background: #f1f5f9; margin-top: 5px; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); }
-        .content .progress-bar-indigo { background: linear-gradient(90deg, #4f46e5, #6366f1); }
-        .content .bg-purple { background-color: #a855f7 !important; }
-        .content .bg-blue { background-color: #3b82f6 !important; }
-        .content .badge-count { background: #eef2ff; color: #4338ca; padding: 6px 12px; font-weight: 700; font-size: 13px; border-radius: 6px; }
-    </style>
-</head>
-<body class="hold-transition skin-blue sidebar-mini">
-    <div class="wrapper">
-
-        {{-- 1. TOP NAVIGATION --}}
-        @include('layouts.topbar')
-
-        {{-- 2. LEFT SIDEBAR --}}
-        @include('layouts.sidebar')
-
-        {{-- 3. MAIN CONTENT --}}
-        <div class="content-wrapper">
-            <section class="content-header" style="padding-bottom: 15px;">
-                <h1 style="font-weight: 800; color: #1e293b; font-size: 28px;">
-                    Enrollment Dashboard
-                    <small style="color: #64748b; font-weight: 600; font-size: 14px;">Academic Analytics Overview</small>
-                </h1>
-            </section>
-
-            <section class="content">
-                {{-- Quick Stats Row --}}
-                <div class="row">
-                    <div class="col-md-3 col-sm-6">
-                        <div class="info-box-modern bg-gradient-blue">
-                            <div class="inner">
-                                <h3>{{ $classStats->sum('total') }}</h3>
-                                <p>Total Students</p>
-                            </div>
-                            <div class="icon"><i class="fa fa-graduation-cap"></i></div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-3 col-sm-6">
-                        <div class="info-box-modern bg-gradient-green">
-                            <div class="inner">
-                                <h3>{{ \App\Models\Term::where('is_current', true)->value('term_name') ?? 'None' }}</h3>
-                                <p>Active Term</p>
-                            </div>
-                            <div class="icon"><i class="fa fa-flag-checkered"></i></div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-3 col-sm-6">
-                        <div class="info-box-modern bg-gradient-info">
-                            <div class="inner">
-                                <h3>{{ $classStats->count() }}</h3>
-                                <p>Class Groups</p>
-                            </div>
-                            <div class="icon"><i class="fa fa-building"></i></div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-3 col-sm-6">
-                        <div class="info-box-modern bg-gradient-warning">
-                            <div class="inner">
-                                @php
-                                    $f = $genderStats->where('gender', 'Female')->first()->total ?? 0;
-                                    $m = $genderStats->where('gender', 'Male')->first()->total ?? 0;
-                                @endphp
-                                <h3>{{ $f }} / {{ $m }}</h3>
-                                <p>Girls vs Boys</p>
-                            </div>
-                            <div class="icon"><i class="fa fa-venus-mars"></i></div>
-                        </div>
-                    </div>
+        {{-- Stat Cards --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            
+            {{-- Total Students --}}
+            <div class="p-6 rounded-2xl bg-indigo-600 text-white shadow-sm flex items-center justify-between relative overflow-hidden">
+                <div class="space-y-1">
+                    <p class="text-xs font-bold uppercase tracking-wider opacity-80">Total Students</p>
+                    <h3 class="text-3xl font-extrabold">{{ $classStats->sum('total') }}</h3>
                 </div>
+                <i class="fa-solid fa-graduation-cap text-5xl opacity-20 absolute right-4 bottom-3"></i>
+            </div>
 
-                <div class="row">
-                    {{-- Main Table --}}
-                    <div class="col-md-8">
-                        <div class="box">
-                            <div class="box-header with-border">
-                                <h3 class="box-title"><i class="fa fa-bar-chart text-blue"></i> Enrollment by Grade</h3>
-                            </div>
-                            <div class="box-body table-responsive no-padding">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Grade Level</th>
-                                            <th>Distribution Visual</th>
-                                            <th class="text-right">Count</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @php $maxVal = $classStats->max('total') ?: 1; @endphp
-                                        @foreach($classStats as $stat)
-                                        <tr>
-                                            <td style="font-weight: 700; color: #1e293b;">{{ $stat->grade }}</td>
-                                            <td width="55%">
-                                                <div class="progress-slim">
-                                                    <div class="progress-bar progress-bar-indigo"
-                                                         style="width: {{ ($stat->total / $maxVal) * 100 }}%"></div>
-                                                </div>
-                                            </td>
-                                            <td class="text-right">
-                                                <span class="badge-count">{{ $stat->total }}</span>
-                                            </td>
-                                        </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- Side Info --}}
-                    <div class="col-md-4">
-                        <div class="box">
-                            <div class="box-header with-border">
-                                <h3 class="box-title"><i class="fa fa-line-chart text-green"></i> Term Growth</h3>
-                            </div>
-                            <div class="box-body table-responsive no-padding">
-                                <table class="table table-hover">
-                                    <tbody>
-                                        @foreach($termStats as $t)
-                                        <tr>
-                                            <td>
-                                                <span style="display:block; font-weight: 700; color: #1e293b;">{{ $t->term_name }}</span>
-                                                <span class="label" style="background: #e2e8f0; color: #475569; font-size: 11px; padding: 3px 6px;">{{ $t->academic_year }}</span>
-                                            </td>
-                                            <td class="text-right text-success" style="font-weight: 800; font-size: 16px;">
-                                                <i class="fa fa-arrow-up"></i> {{ $t->total }}
-                                            </td>
-                                        </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <div class="box">
-                            <div class="box-header with-border">
-                                <h3 class="box-title"><i class="fa fa-pie-chart text-orange"></i> Gender Balance</h3>
-                            </div>
-                            <div class="box-body" style="padding: 20px 25px;">
-                                @php $total = $classStats->sum('total') ?: 1; @endphp
-                                @foreach($genderStats as $g)
-                                <div style="margin-bottom: 20px;">
-                                    <div class="clearfix" style="margin-bottom: 5px;">
-                                        <span class="pull-left" style="font-weight: 700; color: #1e293b;">
-                                            <i class="fa {{ $g->gender == 'Female' ? 'fa-female text-purple' : 'fa-male text-blue' }}" style="margin-right: 5px;"></i> {{ $g->gender }}
-                                        </span>
-                                        <span class="pull-right text-muted" style="font-weight: 600;">{{ $g->total }} Students</span>
-                                    </div>
-                                    <div class="progress-slim">
-                                        <div class="progress-bar {{ $g->gender == 'Female' ? 'bg-purple' : 'bg-blue' }}"
-                                             style="width: {{ ($g->total / $total) * 100 }}%"></div>
-                                    </div>
-                                </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
+            {{-- Active Term --}}
+            <div class="p-6 rounded-2xl bg-emerald-600 text-white shadow-sm flex items-center justify-between relative overflow-hidden">
+                <div class="space-y-1">
+                    <p class="text-xs font-bold uppercase tracking-wider opacity-80">Active Term</p>
+                    <h3 class="text-2xl font-extrabold truncate max-w-[180px]">{{ \App\Models\Term::where('is_current', true)->value('term_name') ?? 'None' }}</h3>
                 </div>
-            </section>
+                <i class="fa-solid fa-flag-checkered text-5xl opacity-20 absolute right-4 bottom-3"></i>
+            </div>
+
+            {{-- Class Groups --}}
+            <div class="p-6 rounded-2xl bg-sky-600 text-white shadow-sm flex items-center justify-between relative overflow-hidden">
+                <div class="space-y-1">
+                    <p class="text-xs font-bold uppercase tracking-wider opacity-80">Class Streams</p>
+                    <h3 class="text-3xl font-extrabold">{{ $classStats->count() }}</h3>
+                </div>
+                <i class="fa-solid fa-school text-5xl opacity-20 absolute right-4 bottom-3"></i>
+            </div>
+
+            {{-- Gender Balance --}}
+            <div class="p-6 rounded-2xl bg-amber-500 text-white shadow-sm flex items-center justify-between relative overflow-hidden">
+                @php
+                    $f = $genderStats->where('gender', 'Female')->first()->total ?? 0;
+                    $m = $genderStats->where('gender', 'Male')->first()->total ?? 0;
+                @endphp
+                <div class="space-y-1">
+                    <p class="text-xs font-bold uppercase tracking-wider opacity-80">Girls / Boys</p>
+                    <h3 class="text-3xl font-extrabold">{{ $f }} / {{ $m }}</h3>
+                </div>
+                <i class="fa-solid fa-venus-mars text-5xl opacity-20 absolute right-4 bottom-3"></i>
+            </div>
+
         </div>
 
-        {{-- 4. FOOTER --}}
-        @include('layouts.footer')
+        {{-- Detailed Analytics --}}
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {{-- Main Grade Distribution --}}
+            <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
+                <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/90">
+                    <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                        <i class="fa-solid fa-chart-column text-indigo-500 mr-2.5"></i> Enrollment by Grade Level
+                    </h3>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-100 dark:divide-slate-700/60">
+                        <thead class="bg-slate-50/50 dark:bg-slate-800/50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Grade Level</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Distribution</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-700/60 bg-white dark:bg-slate-800">
+                            @php $maxVal = $classStats->max('total') ?: 1; @endphp
+                            @foreach($classStats as $stat)
+                            <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors">
+                                <td class="px-6 py-3.5 text-xs font-bold text-slate-800 dark:text-slate-100">{{ $stat->grade }}</td>
+                                <td class="px-6 py-3.5 w-1/2">
+                                    <div class="w-full bg-slate-100 dark:bg-slate-700/60 h-2 rounded-full overflow-hidden">
+                                        <div class="bg-indigo-600 dark:bg-indigo-500 h-full rounded-full transition-all duration-300"
+                                             style="width: {{ ($stat->total / $maxVal) * 100 }}%"></div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-3.5 text-right">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/50">
+                                        {{ $stat->total }}
+                                    </span>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {{-- Side Breakdown Widgets --}}
+            <div class="space-y-6">
+                
+                {{-- Term Progression --}}
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
+                    <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/90">
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                            <i class="fa-solid fa-chart-line text-emerald-500 mr-2.5"></i> Term Growth Metrics
+                        </h3>
+                    </div>
+                    <div class="p-4 space-y-3">
+                        @foreach($termStats as $t)
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/60">
+                            <div>
+                                <p class="text-xs font-bold text-slate-800 dark:text-slate-100">{{ $t->term_name }}</p>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{{ $t->academic_year }}</p>
+                            </div>
+                            <span class="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center">
+                                <i class="fa-solid fa-arrow-trend-up mr-1 text-xs"></i> {{ $t->total }}
+                            </span>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Gender Ratio --}}
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors p-6 space-y-4">
+                    <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center border-b border-slate-100 dark:border-slate-700 pb-3">
+                        <i class="fa-solid fa-pie-chart text-amber-500 mr-2.5"></i> Gender Ratio Balance
+                    </h3>
+
+                    @php $total = $classStats->sum('total') ?: 1; @endphp
+                    @foreach($genderStats as $g)
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between text-xs font-bold">
+                            <span class="text-slate-700 dark:text-slate-200 flex items-center">
+                                <i class="fa-solid {{ $g->gender == 'Female' ? 'fa-venus text-purple-500' : 'fa-mars text-sky-500' }} mr-2"></i>
+                                {{ $g->gender }}
+                            </span>
+                            <span class="text-slate-500 dark:text-slate-400">{{ $g->total }} Students</span>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-slate-700/60 h-2 rounded-full overflow-hidden">
+                            <div class="{{ $g->gender == 'Female' ? 'bg-purple-500' : 'bg-sky-500' }} h-full rounded-full"
+                                 style="width: {{ ($g->total / $total) * 100 }}%"></div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+
+            </div>
+
+        </div>
 
     </div>
-
-    {{-- 5. SCRIPTS --}}
-    @include('components.scripts')
-</body>
-</html>
+@endsection

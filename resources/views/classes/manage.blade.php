@@ -1,273 +1,153 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Manage Classes | School Portal</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{{-- resources/views/classes/index.blade.php --}}
+@extends('layouts.admin.app')
 
-    @include('components.adminlte')
-    
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic">
+@section('title', 'Manage Classes | ' . env('SCHOOL_ACRONYM', 'SIT'))
 
-    <!-- Scoped Modern UI Updates (Will not affect AdminLTE Footer/Layout) -->
-    <style>
-        /* Modern Box Styling */
-        .content .box { 
-            border-radius: 12px; 
-            border-top: none; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05); 
-            margin-bottom: 25px; 
-            overflow: hidden; 
-            background: #ffffff;
-        }
-        .content .box-header { 
-            border-bottom: 1px solid #f1f5f9; 
-            padding: 20px 25px; 
-            background: #fff; 
-        }
-        .content .box-title { 
-            font-weight: 800 !important; 
-            color: #1e293b; 
-            font-size: 18px; 
-        }
-        
-        /* Form Inputs */
-        .content .form-group label { 
-            font-weight: 700; 
-            color: #475569; 
-            font-size: 13px; 
-            text-transform: uppercase; 
-            letter-spacing: 0.5px; 
-            margin-bottom: 8px; 
-        }
-        .content .form-control { 
-            border-radius: 8px; 
-            border: 1px solid #cbd5e1; 
-            box-shadow: none; 
-            padding: 10px 15px; 
-            height: auto; 
-            font-size: 15px; 
-            transition: all 0.3s ease; 
-        }
-        .content .form-control:focus { 
-            border-color: #3b82f6; 
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); 
-        }
-        
-        /* Primary Button */
-        .content .btn-primary { 
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); 
-            border: none; 
-            border-radius: 8px; 
-            font-weight: 700; 
-            padding: 12px 20px; 
-            transition: transform 0.2s, box-shadow 0.2s; 
-            box-shadow: 0 4px 15px rgba(59,130,246,0.3); 
-        }
-        .content .btn-primary:hover { 
-            transform: translateY(-2px); 
-            box-shadow: 0 6px 20px rgba(59,130,246,0.4); 
-        }
-        
-        /* Table overrides */
-        .content .table > tbody > tr > td { 
-            vertical-align: middle !important; 
-            padding: 16px 20px; 
-            border-top: 1px solid #f1f5f9; 
-            font-size: 15px; 
-            color: #334155; 
-        }
-        .content .table > thead > tr > th { 
-            border-bottom: 2px solid #e2e8f0; 
-            color: #64748b; 
-            font-weight: 700; 
-            padding: 16px 20px; 
-            text-transform: uppercase; 
-            font-size: 12px; 
-            letter-spacing: 0.5px; 
-            background: #f8fafc; 
-        }
-        .content .table-hover > tbody > tr:hover { 
-            background-color: #f8fafc; 
-        }
+@section('header')
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">School Classes</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage academic class structure and teacher allocations</p>
+        </div>
+        <div class="mt-4 sm:mt-0 flex items-center space-x-3">
+            <a href="{{ Route::has('classes.assign') ? route('classes.assign') : url('/classes/assign-subjects') }}" 
+               class="inline-flex items-center px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm hover:shadow">
+                <i class="fa-solid fa-link mr-2 text-xs"></i> Assign Subjects
+            </a>
+        </div>
+    </div>
+@endsection
 
-        /* Badges & Action Buttons */
-        .content .badge-code { 
-            background: #e2e8f0; 
-            color: #475569; 
-            font-family: monospace; 
-            font-size: 13px; 
-            padding: 6px 10px; 
-            border-radius: 6px; 
-            font-weight: 600; 
-        }
-        .content .btn-action { 
-            border-radius: 6px; 
-            font-weight: 600; 
-            font-size: 13px; 
-            padding: 6px 12px; 
-            background: #f8fafc; 
-            border: 1px solid #cbd5e1; 
-            color: #475569; 
-            transition: all 0.2s; 
-        }
-        .content .btn-action:hover { 
-            background: #f1f5f9; 
-            color: #1e293b; 
-        }
-        .content .dropdown-menu { 
-            border-radius: 8px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
-            border: 1px solid #e2e8f0; 
-            padding: 8px 0; 
-        }
-        .content .dropdown-menu > li > a { 
-            padding: 8px 20px; 
-            color: #475569; 
-            font-weight: 500; 
-        }
-        .content .dropdown-menu > li > a:hover { 
-            background-color: #f1f5f9; 
-            color: #3b82f6; 
-        }
-        .content .dropdown-menu .divider {
-            background-color: #f1f5f9;
-        }
-    </style>
-</head>
-<body class="hold-transition skin-blue sidebar-mini">
-    <div class="wrapper">
-        @include('layouts.topbar')
-        @include('layouts.sidebar')
-
-        <div class="content-wrapper">
-            <section class="content-header" style="padding-bottom: 15px;">
-                <h1 style="font-weight: 800; color: #1e293b; font-size: 28px;">
-                    School Classes
-                    <small style="color: #64748b; font-weight: 600; font-size: 14px;">Manage academic class structure</small>
-                </h1>
-            </section>
-
-            <section class="content">
-                @if(session('success'))
-                    <div class="alert alert-success alert-dismissible" style="border-radius: 8px; box-shadow: 0 4px 10px rgba(16,185,129,0.2);">
-                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-                        <h4 style="font-weight: 700; margin-bottom: 0;"><i class="icon fa fa-check-circle"></i> {{ session('success') }}</h4>
-                    </div>
-                @endif
-
-                <div class="row">
-                    <!-- Left Column: Add Class Form -->
-                    <div class="col-md-4">
-                        <div class="box">
-                            <div class="box-header with-border">
-                                <h3 class="box-title"><i class="fa fa-plus-circle text-blue"></i> Add New Class</h3>
-                            </div>
-                            <form role="form" method="POST" action="{{ route('classes.store') }}">
-                                @csrf
-                                <div class="box-body" style="padding: 25px;">
-                                    <div class="form-group">
-                                        <label>Class Name</label>
-                                        <input type="text" name="class_name" class="form-control" placeholder="e.g. Grade 7" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Class Code</label>
-                                        <input type="text" name="class_code" class="form-control" placeholder="e.g. G7A" required>
-                                    </div>
-                                    <div class="form-group" style="margin-bottom: 0;">
-                                        <label>Room Number</label>
-                                        <input type="text" name="room_number" class="form-control" placeholder="e.g. Room 10">
-                                    </div>
-                                </div>
-                                <div class="box-footer" style="padding: 20px 25px; background: #f8fafc; border-top: 1px solid #f1f5f9;">
-                                    <button type="submit" class="btn btn-primary btn-block">
-                                        <i class="fa fa-save" style="margin-right: 5px;"></i> CREATE CLASS
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-
-                    <!-- Right Column: Existing Classes Table -->
-                    <div class="col-md-8">
-                        <div class="box">
-                            <div class="box-header with-border">
-                                <h3 class="box-title"><i class="fa fa-list text-green"></i> Existing Classes</h3>
-                            </div>
-                            <div class="box-body table-responsive no-padding">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 15%;">Code</th>
-                                            <th style="width: 25%;">Name</th>
-                                            <th style="width: 30%;">Teacher</th>
-                                            <th style="width: 15%;">Room</th>
-                                            <th class="text-center" style="width: 15%;">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($classes as $class)
-                                        <tr>
-                                            <td>
-                                                <span class="badge-code">{{ $class->class_code }}</span>
-                                            </td>
-                                            <td>
-                                                <strong style="color: #1e293b; font-size: 15px;">{{ $class->class_name }}</strong>
-                                            </td>
-                                            <td>
-                                                @if($class->teacher)
-                                                    <span class="label" style="background: #eff6ff; color: #3b82f6; font-size: 13px; padding: 6px 10px; border: 1px solid #bfdbfe;">
-                                                        <i class="fa fa-user" style="margin-right: 4px;"></i> {{ $class->teacher->name }}
-                                                    </span>
-                                                @else
-                                                    <span style="color: #94a3b8; font-style: italic; font-size: 13px;">
-                                                        <i class="fa fa-exclamation-circle"></i> Not Assigned
-                                                    </span>
-                                                @endif
-                                            </td>
-                                            <td>
-                                                <span style="color: #475569; font-weight: 500;">{{ $class->room_number ?? '-' }}</span>
-                                            </td>
-                                            <td class="text-center">
-                                                <div class="btn-group">
-                                                    <button type="button" class="btn btn-action dropdown-toggle" data-toggle="dropdown">
-                                                        Options <span class="caret" style="margin-left: 4px;"></span>
-                                                    </button>
-                                                    <ul class="dropdown-menu dropdown-menu-right">
-                                                        <li>
-                                                            <a href="{{ route('classes.edit', $class->id) }}">
-                                                                <i class="fa fa-user-plus text-blue" style="width: 20px;"></i> Assign Teacher
-                                                            </a>
-                                                        </li>
-                                                        <li>
-                                                            <a href="{{ route('classes.students', $class->id) }}">
-                                                                <i class="fa fa-users text-green" style="width: 20px;"></i> View Students
-                                                            </a>
-                                                        </li>
-                                                        <li class="divider"></li>
-                                                        <li>
-                                                            <a href="#" class="text-danger" style="color: #ef4444;">
-                                                                <i class="fa fa-trash" style="width: 20px;"></i> Delete Class
-                                                            </a>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+@section('content')
+    <div class="space-y-6">
+        @if(session('success'))
+            <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-200 flex items-center justify-between shadow-sm">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-circle-check text-emerald-600 dark:text-emerald-400 text-lg"></i>
+                    <div>
+                        <h4 class="text-xs font-bold uppercase tracking-wider">Success</h4>
+                        <p class="text-xs font-medium mt-0.5">{{ session('success') }}</p>
                     </div>
                 </div>
-            </section>
+                <button type="button" onclick="this.parentElement.remove()" class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-200">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+        @endif
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {{-- Left Column: Add Class Form --}}
+            <div class="lg:col-span-4">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
+                    <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/80">
+                        <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                            <i class="fa-solid fa-square-plus text-indigo-500 mr-2.5"></i> Add New Class
+                        </h3>
+                    </div>
+
+                    <form method="POST" action="{{ Route::has('classes.store') ? route('classes.store') : url('/classes/store') }}" class="p-6 space-y-4">
+                        @csrf
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">Class Name</label>
+                            <input type="text" name="class_name" placeholder="e.g. Grade 7" required
+                                   class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">Class Code</label>
+                            <input type="text" name="class_code" placeholder="e.g. G7A" required
+                                   class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">Room Number</label>
+                            <input type="text" name="room_number" placeholder="e.g. Room 10"
+                                   class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+
+                        <div class="pt-2">
+                            <button type="submit" 
+                                    class="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm hover:shadow">
+                                <i class="fa-solid fa-floppy-disk mr-2"></i> Create Class
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {{-- Right Column: Existing Classes Table --}}
+            <div class="lg:col-span-8">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
+                    <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/80">
+                        <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                            <i class="fa-solid fa-list text-emerald-500 mr-2.5"></i> Existing Classes
+                        </h3>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700/60">
+                            <thead class="bg-slate-50 dark:bg-slate-800/80">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3.5 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Code</th>
+                                    <th scope="col" class="px-6 py-3.5 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Name</th>
+                                    <th scope="col" class="px-6 py-3.5 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Form Teacher</th>
+                                    <th scope="col" class="px-6 py-3.5 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Room</th>
+                                    <th scope="col" class="px-6 py-3.5 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700/60">
+                                @forelse($classes as $class)
+                                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="font-mono text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700/60 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-600">
+                                            {{ $class->class_code }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <strong class="text-xs font-bold text-slate-800 dark:text-slate-100">{{ $class->class_name }}</strong>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        @if($class->teacher)
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800/50">
+                                                <i class="fa-solid fa-user-tie mr-1.5"></i> {{ $class->teacher->name }}
+                                            </span>
+                                        @else
+                                            <span class="text-xs italic text-slate-400 dark:text-slate-500 inline-flex items-center">
+                                                <i class="fa-solid fa-circle-exclamation mr-1.5"></i> Not Assigned
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-600 dark:text-slate-300 font-medium">
+                                        {{ $class->room_number ?? '-' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-xs">
+                                        <div class="flex items-center justify-end space-x-1">
+                                            <a href="{{ Route::has('classes.edit') ? route('classes.edit', $class->id) : url('/classes/' . $class->id . '/edit') }}" 
+                                               class="p-2 rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors"
+                                               title="Assign Form Teacher">
+                                                <i class="fa-solid fa-user-plus text-sm"></i>
+                                            </a>
+                                            <a href="{{ Route::has('classes.students') ? route('classes.students', $class->id) : url('/classes/' . $class->id . '/students') }}" 
+                                               class="p-2 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors"
+                                               title="View Class Students">
+                                                <i class="fa-solid fa-users text-sm"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="5" class="px-6 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                                        No classes created yet.
+                                    </td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
-        
-        @include('layouts.footer')
     </div>
-    
-    @include('components.scripts')
-</body>
-</html>
+@endsection

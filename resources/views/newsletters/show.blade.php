@@ -1,84 +1,61 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>View Newsletter | {{ $newsletter->title }}</title>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    @include('components.adminlte')
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root { --brand-primary: #a855f7; --bg-light: #f4f6f9; }
-        html, body { font-family: 'Inter', sans-serif !important; background-color: var(--bg-light) !important; height: 100vh; overflow: hidden; margin: 0; }
-        .wrapper { height: 100vh; display: flex; flex-direction: column; }
-        .content-wrapper { flex: 1; overflow-y: auto; padding-bottom: 30px; }
-        .box { border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-top: 3px solid var(--brand-primary); background: #fff; margin-bottom: 20px; }
-        .box-header { padding: 15px 20px; border-bottom: 1px solid #f4f4f4; }
-        .box-body { padding: 25px 20px; }
-        .newsletter-meta { background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 25px; }
-        .meta-label { font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; display: block; }
-        .meta-value { font-size: 14px; color: #1e293b; font-weight: 600; }
-        .newsletter-content { font-size: 15px; color: #334155; line-height: 1.6; white-space: pre-wrap; }
-    </style>
-</head>
-<body class="hold-transition skin-blue sidebar-mini fixed">
-    <div class="wrapper">
-        @include('layouts.topbar')
-        @include('layouts.sidebar')
+{{-- resources/views/newsletters/show.blade.php --}}
+@extends('layouts.admin.app')
 
-        <div class="content-wrapper">
-            <section class="content-header" style="padding: 15px 20px;">
-                <h1>
-                    <i class="fa fa-newspaper-o" style="color: #a855f7;"></i> View Newsletter
-                    <small>Review broadcast details</small>
-                </h1>
-                <ol class="breadcrumb">
-                    <li><a href="{{ route('dashboard') }}"><i class="fa fa-dashboard"></i> Home</a></li>
-                    <li><a href="{{ route('newsletters.index') }}">Newsletters</a></li>
-                    <li class="active">View</li>
-                </ol>
-            </section>
+@section('title', 'View Newsletter | ' . ($newsletter->title ?? 'Details'))
 
-            <section class="content" style="padding: 0 20px;">
-                <div class="box">
-                    <div class="box-header with-border">
-                        <h3 class="box-title" style="font-weight: 600;">{{ $newsletter->title }}</h3>
-                        <div class="box-tools pull-right" style="top: 10px;">
-                            <a href="{{ route('newsletters.index') }}" class="btn btn-default btn-sm btn-flat" style="font-weight: 600;">
-                                <i class="fa fa-arrow-left" style="margin-right: 4px;"></i> BACK TO DIRECTORY
-                            </a>
-                        </div>
-                    </div>
-
-                    <div class="box-body">
-                        <div class="newsletter-meta">
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <span class="meta-label">Subject Line</span>
-                                    <span class="meta-value">{{ $newsletter->subject }}</span>
-                                </div>
-                                <div class="col-md-4">
-                                    <span class="meta-label">Target Audience</span>
-                                    <span class="meta-value label label-primary" style="text-transform: uppercase;">{{ $newsletter->target_audience }}</span>
-                                </div>
-                                <div class="col-md-4">
-                                    <span class="meta-label">Broadcast Date</span>
-                                    <span class="meta-value">{{ $newsletter->created_at->format('F d, Y \a\t h:i A') }}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <h4 style="font-weight: 700; color: #1e293b; margin-bottom: 15px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">Message Content</h4>
-                        
-                        <div class="newsletter-content">{!! nl2br(e($newsletter->content)) !!}</div>
-                    </div>
-                </div>
-            </section>
+@section('header')
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">View Newsletter</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Review broadcast details & content</p>
         </div>
-        
-        @include('layouts.footer')
+        <div class="mt-4 sm:mt-0">
+            <a href="{{ Route::has('newsletters.index') ? route('newsletters.index') : url('/newsletters') }}" 
+               class="inline-flex items-center px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all border border-slate-200 dark:border-slate-700">
+                <i class="fa-solid fa-arrow-left mr-2"></i> BACK TO DIRECTORY
+            </a>
+        </div>
     </div>
-    
-    @include('components.scripts')
-</body>
-</html>
+@endsection
+
+@section('content')
+    <div class="space-y-6">
+
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 p-6 space-y-6 transition-colors">
+            <div class="border-b border-slate-200/80 dark:border-slate-700/60 pb-4">
+                <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                    <i class="fa-solid fa-newspaper text-purple-500 mr-3"></i> {{ $newsletter->title }}
+                </h3>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/60 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                    <span class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Subject Line</span>
+                    <span class="text-xs font-semibold text-slate-800 dark:text-slate-100">{{ $newsletter->subject }}</span>
+                </div>
+                <div>
+                    <span class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Target Audience</span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-[11px] font-bold uppercase bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800/50">
+                        {{ $newsletter->target_audience }}
+                    </span>
+                </div>
+                <div>
+                    <span class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Broadcast Date</span>
+                    <span class="text-xs font-semibold text-slate-800 dark:text-slate-100 font-mono">
+                        {{ $newsletter->created_at ? $newsletter->created_at->format('F d, Y \a\t h:i A') : 'N/A' }}
+                    </span>
+                </div>
+            </div>
+
+            <div>
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3 flex items-center">
+                    <i class="fa-solid fa-envelope-open-text text-indigo-500 mr-2"></i> Message Content
+                </h4>
+                <div class="p-5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/60 text-slate-800 dark:text-slate-200 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
+                    {!! nl2br(e($newsletter->content)) !!}
+                </div>
+            </div>
+        </div>
+
+    </div>
+@endsection

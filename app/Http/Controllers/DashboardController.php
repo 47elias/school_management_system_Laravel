@@ -65,7 +65,7 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        return view('dashboard', compact(
+        return view('dashboard.index', compact(
             'studentCount', 'examCount', 'subjectCount', 'userCount',
             'totalRevenue', 'totalExpenses', 'netBalance',
             'recentExams', 'gradesData', 'passCount', 'failCount',

@@ -1,318 +1,165 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Enter Marks | {{ $exam->subject?->subject_name ?? 'Subject' }}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    @include('components.adminlte')
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+{{-- resources/views/marks/create.blade.php --}}
+@extends('layouts.admin.app')
 
-    <style>
-        body { font-family: 'Inter', sans-serif !important; }
+@section('title', 'Enter Marks | ' . ($exam->subject?->subject_name ?? 'Subject'))
 
-        /* Modern Box Styling */
-        .content .box { 
-            border-radius: 12px; 
-            border-top: none; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05); 
-            margin-bottom: 25px; 
-            overflow: hidden; 
-            background: #ffffff;
-        }
-        .content .box-header { 
-            border-bottom: 1px solid #f1f5f9; 
-            padding: 20px 25px; 
-            background: #fff; 
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .content .box-title { 
-            font-weight: 800 !important; 
-            color: #1e293b; 
-            font-size: 18px; 
-            margin: 0;
-        }
-        
-        /* Table overrides */
-        .content .table > tbody > tr > td { 
-            vertical-align: middle !important; 
-            padding: 16px 20px; 
-            border-top: 1px solid #f1f5f9; 
-            font-size: 14px; 
-            color: #334155; 
-        }
-        .content .table > thead > tr > th { 
-            border-bottom: 2px solid #e2e8f0; 
-            color: #64748b; 
-            font-weight: 700; 
-            padding: 16px 20px; 
-            text-transform: uppercase; 
-            font-size: 12px; 
-            letter-spacing: 0.5px; 
-            background: #f8fafc; 
-        }
-        .content .table-hover > tbody > tr:hover { 
-            background-color: #f8fafc; 
-        }
-
-        /* Form Inputs */
-        .content .form-control { 
-            border-radius: 8px; 
-            border: 1px solid #cbd5e1; 
-            box-shadow: none; 
-            padding: 10px 15px; 
-            height: auto; 
-            font-size: 14px; 
-            transition: all 0.3s ease; 
-        }
-        .content .form-control:focus { 
-            border-color: #3b82f6; 
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); 
-        }
-        .content .input-group-addon {
-            border-radius: 0 8px 8px 0;
-            border: 1px solid #cbd5e1;
-            border-left: none;
-            background: #f8fafc;
-            color: #64748b;
-            font-weight: 600;
-        }
-        
-        /* Saved State Feedback */
-        .content .input-saved { 
-            background-color: #f0fdf4 !important; 
-            border-color: #86efac !important; 
-            color: #166534;
-        }
-
-        /* Buttons */
-        .content .btn-success-modern { 
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%); 
-            border: none; 
-            border-radius: 8px; 
-            font-weight: 700; 
-            padding: 12px 25px; 
-            color: #fff;
-            transition: transform 0.2s, box-shadow 0.2s; 
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); 
-        }
-        .content .btn-success-modern:hover { 
-            transform: translateY(-2px); 
-            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); 
-            color: #fff;
-        }
-        .content .btn-default-modern {
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-weight: 600;
-            padding: 12px 20px;
-            color: #475569;
-            transition: all 0.2s;
-        }
-        .content .btn-default-modern:hover {
-            background: #f1f5f9;
-            color: #1e293b;
-        }
-
-        /* Sticky Footer */
-        .content .sticky-footer {
-            background: #f8fafc;
-            padding: 20px 25px;
-            border-top: 1px solid #e2e8f0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-radius: 0 0 12px 12px;
-        }
-
-        /* Badges */
-        .content .badge-status { 
-            padding: 6px 12px; 
-            border-radius: 30px; 
-            font-size: 12px; 
-            font-weight: 700; 
-            letter-spacing: 0.5px; 
-        }
-        .content .badge-info-modern { background: #eff6ff; color: #3b82f6; border: 1px solid #bfdbfe; }
-        .content .badge-pending { background: #f8fafc; color: #64748b; border: 1px solid #cbd5e1; }
-        .content .badge-complete { background: #f0fdf4; color: #10b981; border: 1px solid #a7f3d0; }
-    </style>
-</head>
-<body class="hold-transition skin-blue sidebar-mini">
-    <div class="wrapper">
-        @include('layouts.topbar')
-        @include('layouts.sidebar')
-
-        <div class="content-wrapper">
-            <section class="content-header" style="padding-bottom: 15px;">
-                <h1 style="font-weight: 800; color: #1e293b; font-size: 28px;">
-                    Marks Entry: <span style="color: #3b82f6;">{{ $exam->subject?->subject_name }}</span>
-                    <small style="color: #64748b; font-weight: 600; font-size: 14px;">{{ $exam->exam_name }} — Grade: <b style="color: #1e293b;">{{ $grade }}</b></small>
-                </h1>
-                <ol class="breadcrumb" style="background: transparent; padding: 0; margin-top: 10px; font-size: 13px;">
-                    <li><a href="{{ route('exams.index') }}" style="color: #3b82f6;"><i class="fa fa-calendar"></i> Exams</a></li>
-                    <li class="active" style="color: #64748b;">Enter Marks</li>
-                </ol>
-            </section>
-
-            <section class="content">
-                @if(session('error'))
-                    <div class="alert alert-danger alert-dismissible" style="border-radius: 8px; box-shadow: 0 4px 10px rgba(239,68,68,0.2);">
-                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-                        <h4 style="font-weight: 700; margin-bottom: 0;"><i class="icon fa fa-ban"></i> {{ session('error') }}</h4>
-                    </div>
-                @endif
-                @if(session('success'))
-                    <div class="alert alert-success alert-dismissible" style="border-radius: 8px; box-shadow: 0 4px 10px rgba(16,185,129,0.2);">
-                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-                        <h4 style="font-weight: 700; margin-bottom: 0;"><i class="icon fa fa-check-circle"></i> {{ session('success') }}</h4>
-                    </div>
-                @endif
-
-                <div class="row">
-                    <div class="col-xs-12">
-                        <div class="box">
-                            <div class="box-header with-border">
-                                <h3 class="box-title">
-                                    <i class="fa fa-edit text-blue" style="margin-right: 5px;"></i> Score Sheet — {{ \Carbon\Carbon::parse($exam->exam_date)->format('d M Y') }}
-                                </h3>
-                                <div>
-                                    <span class="badge-status badge-info-modern">Term: {{ $exam->term?->term_name }}</span>
-                                    <span class="badge-status badge-pending" style="margin-left: 8px;" id="entryCount">
-                                        0 / {{ count($students) }} Entered
-                                    </span>
-                                </div>
-                            </div>
-
-                            <form action="{{ route('marks.bulk_store') }}" method="POST" id="marksForm">
-                                @csrf
-                                <input type="hidden" name="exam_id" value="{{ $exam->id }}">
-
-                                <div class="box-body no-padding">
-                                    <div class="table-responsive" style="max-height: 65vh; overflow-y: auto;">
-                                        <table class="table table-hover mb-0">
-                                            <thead style="position: sticky; top: 0; z-index: 10;">
-                                                <tr>
-                                                    <th style="width: 60px" class="text-center">#</th>
-                                                    <th>Student Details</th>
-                                                    <th style="width: 200px;" class="text-center">Score (Max {{ $exam->max_marks ?? 100 }})</th>
-                                                    <th>Teacher's Comment</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @forelse($students as $index => $student)
-                                                    @php
-                                                        $existingMark = $student->marks->firstWhere('exam_id', $exam->id);
-                                                        $score = $existingMark ? $existingMark->score : '';
-                                                        $comment = $existingMark ? $existingMark->teacher_comment : '';
-                                                    @endphp
-                                                    <tr>
-                                                        <td class="text-center">
-                                                            <span style="color: #94a3b8; font-weight: 600; font-family: monospace;">{{ str_pad($index + 1, 2, '0', STR_PAD_LEFT) }}</span>
-                                                        </td>
-                                                        <td>
-                                                            <div style="display: flex; align-items: center;">
-                                                                <img src="https://ui-avatars.com/api/?name={{ urlencode($student->name) }}&background=f1f5f9&color=475569&size=40" class="img-circle" alt="User Image" style="margin-right: 15px; border: 1px solid #e2e8f0;">
-                                                                <div>
-                                                                    <strong style="color: #1e293b; font-size: 15px; text-transform: uppercase;">{{ $student->surname }}, {{ $student->name }}</strong><br>
-                                                                    <small style="color: #64748b; font-family: monospace; font-size: 12px;">{{ $student->student_number ?? $student->student_id }}</small>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td>
-                                                            <div class="input-group" style="width: 100%;">
-                                                                <input type="number"
-                                                                       name="marks[{{ $student->id }}][score]"
-                                                                       class="form-control text-center score-input {{ $score !== '' ? 'input-saved' : '' }}"
-                                                                       style="border-right: none;"
-                                                                       value="{{ $score }}"
-                                                                       min="0" max="{{ $exam->max_marks ?? 100 }}" step="0.1"
-                                                                       placeholder="0-{{ $exam->max_marks ?? 100 }}">
-                                                                <span class="input-group-addon" style="background: transparent; border-left: 0;"><i class="fa fa-percent"></i></span>
-                                                            </div>
-                                                        </td>
-                                                        <td>
-                                                            <input type="text"
-                                                                   name="marks[{{ $student->id }}][comment]"
-                                                                   class="form-control comment-input {{ $comment ? 'input-saved' : '' }}"
-                                                                   value="{{ $comment }}"
-                                                                   placeholder="e.g. Excellent progress, keep it up">
-                                                        </td>
-                                                    </tr>
-                                                @empty
-                                                    <tr>
-                                                        <td colspan="4" class="text-center" style="padding: 60px 20px;">
-                                                            <div style="width: 80px; height: 80px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
-                                                                <i class="fa fa-users" style="font-size: 35px; color: #94a3b8;"></i>
-                                                            </div>
-                                                            <h4 style="font-weight: 700; color: #475569;">No Students Found</h4>
-                                                            <p style="color: #94a3b8;">No students are assigned to Grade {{ $grade }}.</p>
-                                                        </td>
-                                                    </tr>
-                                                @endforelse
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-
-                                <div class="sticky-footer">
-                                    <a href="{{ route('exams.index') }}" class="btn btn-default-modern">
-                                        <i class="fa fa-arrow-left" style="margin-right: 5px;"></i> Back to Schedule
-                                    </a>
-                                    <button type="submit" class="btn btn-success-modern">
-                                        <i class="fa fa-save" style="margin-right: 5px;"></i> SAVE ALL MARKS
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </section>
+@section('header')
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
+                Marks Entry: <span class="text-indigo-600 dark:text-indigo-400">{{ $exam->subject?->subject_name }}</span>
+            </h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                {{ $exam->exam_name }} — Grade: <strong class="text-slate-800 dark:text-slate-200">{{ $grade }}</strong>
+            </p>
         </div>
-        
-        @include('layouts.footer')
+        <div class="mt-4 sm:mt-0 flex items-center space-x-3">
+            <a href="{{ Route::has('exams.index') ? route('exams.index') : url('/exams') }}" 
+               class="inline-flex items-center px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all border border-slate-200 dark:border-slate-700">
+                <i class="fa-solid fa-arrow-left mr-2"></i> Back to Schedule
+            </a>
+        </div>
     </div>
+@endsection
 
-    @include('components.scripts')
-    <script>
-        $(document).ready(function() {
-            // Function to update the counter label
-            function updateCounter() {
-                const total = $('.score-input').length;
-                const filled = $('.score-input').filter(function() {
-                    return $(this).val() !== "";
-                }).length;
-                
-                $('#entryCount').text(filled + ' / ' + total + ' Entered');
+@section('content')
+    <div x-data="{ 
+        total: {{ count($students) }},
+        scores: {},
+        get filledCount() {
+            return Object.values(this.scores).filter(v => v !== '' && v !== null && v !== undefined).length;
+        }
+    }" class="space-y-6">
 
-                if(filled === total && total > 0) {
-                    $('#entryCount').removeClass('badge-pending').addClass('badge-complete');
-                } else {
-                    $('#entryCount').removeClass('badge-complete').addClass('badge-pending');
-                }
-            }
+        {{-- Alerts --}}
+        @if(session('error'))
+            <div class="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 text-rose-800 dark:text-rose-200 flex items-center justify-between shadow-sm">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-circle-exclamation text-rose-600 dark:text-rose-400 text-lg"></i>
+                    <p class="text-xs font-medium">{{ session('error') }}</p>
+                </div>
+            </div>
+        @endif
 
-            // Listen for input changes dynamically
-            $('.score-input, .comment-input').on('input', function() {
-                if($(this).hasClass('score-input')) {
-                    updateCounter();
-                }
-                
-                if($(this).val() !== "") {
-                    $(this).addClass('input-saved');
-                } else {
-                    $(this).removeClass('input-saved');
-                }
-            });
+        @if(session('success'))
+            <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-200 flex items-center justify-between shadow-sm">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-circle-check text-emerald-600 dark:text-emerald-400 text-lg"></i>
+                    <p class="text-xs font-medium">{{ session('success') }}</p>
+                </div>
+            </div>
+        @endif
 
-            // Trigger initial count on page load
-            updateCounter();
-        });
-    </script>
-</body>
-</html>
+        {{-- Main Container Card --}}
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
+            
+            {{-- Header Bar --}}
+            <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                    <i class="fa-solid fa-file-pen text-indigo-500 mr-2.5"></i> Score Sheet — {{ \Carbon\Carbon::parse($exam->exam_date)->format('d M Y') }}
+                </h3>
+                <div class="flex items-center space-x-2">
+                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/50">
+                        Term: {{ $exam->term?->term_name }}
+                    </span>
+                    <span :class="filledCount === total && total > 0 ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600'" 
+                          class="px-3 py-1 rounded-full text-xs font-bold border">
+                        <span x-text="filledCount"></span> / <span x-text="total"></span> Entered
+                    </span>
+                </div>
+            </div>
+
+            <form action="{{ Route::has('marks.bulk_store') ? route('marks.bulk_store') : url('/marks/bulk-store') }}" method="POST" id="marksForm">
+                @csrf
+                <input type="hidden" name="exam_id" value="{{ $exam->id }}">
+
+                <div class="overflow-x-auto max-h-[65vh] overflow-y-auto">
+                    <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700/60 text-xs">
+                        <thead class="bg-slate-50 dark:bg-slate-800/90 sticky top-0 z-10 backdrop-blur-sm">
+                            <tr>
+                                <th scope="col" class="px-6 py-3.5 text-center font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-12">#</th>
+                                <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Student Details</th>
+                                <th scope="col" class="px-6 py-3.5 text-center font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-48">Score (Max {{ $exam->max_marks ?? 100 }})</th>
+                                <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Teacher's Comment</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700/60">
+                            @forelse($students as $index => $student)
+                                @php
+                                    $existingMark = $student->marks->firstWhere('exam_id', $exam->id);
+                                    $score = $existingMark ? $existingMark->score : '';
+                                    $comment = $existingMark ? $existingMark->teacher_comment : '';
+                                    $avatarBg = ($student->gender == 'Female') ? 'ec4899' : '3b82f6';
+                                    $avatarUrl = "https://ui-avatars.com/api/?name=" . urlencode($student->name . ' ' . $student->surname) . "&background={$avatarBg}&color=fff&size=80";
+                                @endphp
+                                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors" x-init="scores[{{ $student->id }}] = '{{ $score }}'">
+                                    <td class="px-6 py-4 text-center font-mono font-bold text-slate-400">
+                                        {{ str_pad($index + 1, 2, '0', STR_PAD_LEFT) }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center space-x-3">
+                                            <img src="{{ $student->photo_path ? asset('storage/' . $student->photo_path) : $avatarUrl }}" 
+                                                 alt="{{ $student->name }}" 
+                                                 class="w-9 h-9 rounded-xl object-cover border border-slate-200 dark:border-slate-700">
+                                            <div>
+                                                <strong class="text-xs font-bold text-slate-900 dark:text-white block uppercase tracking-wide">
+                                                    {{ $student->surname }}, {{ $student->name }}
+                                                </strong>
+                                                <span class="text-[11px] font-mono text-slate-400 block mt-0.5">
+                                                    {{ $student->student_number ?? $student->student_id }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="relative rounded-xl shadow-sm max-w-[140px] mx-auto">
+                                            <input type="number" 
+                                                   name="marks[{{ $student->id }}][score]"
+                                                   x-model="scores[{{ $student->id }}]"
+                                                   :class="scores[{{ $student->id }}] !== '' && scores[{{ $student->id }}] !== null ? 'bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-400 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100'"
+                                                   class="w-full pl-3 pr-8 py-2 text-xs text-center font-bold rounded-xl border focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                                                   min="0" max="{{ $exam->max_marks ?? 100 }}" step="0.1"
+                                                   placeholder="0-{{ $exam->max_marks ?? 100 }}">
+                                            <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none text-slate-400 text-[10px] font-bold">
+                                                %
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <input type="text" 
+                                               name="marks[{{ $student->id }}][comment]"
+                                               value="{{ $comment }}"
+                                               placeholder="e.g. Excellent progress, keep it up"
+                                               class="w-full px-3 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                                        <div class="w-12 h-12 bg-slate-100 dark:bg-slate-700/50 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-400">
+                                            <i class="fa-solid fa-user-slash text-xl"></i>
+                                        </div>
+                                        <h4 class="font-bold text-slate-700 dark:text-slate-300">No Students Found</h4>
+                                        <p class="text-xs text-slate-400 mt-1">No students are assigned to Grade {{ $grade }}.</p>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                {{-- Sticky Footer --}}
+                <div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200/80 dark:border-slate-700/60 flex items-center justify-between">
+                    <a href="{{ Route::has('exams.index') ? route('exams.index') : url('/exams') }}" 
+                       class="inline-flex items-center px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors">
+                        <i class="fa-solid fa-arrow-left mr-2"></i> Cancel
+                    </a>
+                    <button type="submit" 
+                            class="inline-flex items-center px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm">
+                        <i class="fa-solid fa-floppy-disk mr-2"></i> Save All Marks
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+@endsection

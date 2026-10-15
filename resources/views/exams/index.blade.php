@@ -1,396 +1,235 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Exams Management | {{ env('SCHOOL_ACRONYM') }}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    @include('components.adminlte')
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+{{-- resources/views/exams/index.blade.php --}}
+@extends('layouts.admin.app')
 
-    <!-- Scoped Modern UI Updates -->
-    <style>
-        body { font-family: 'Inter', sans-serif !important; }
+@section('title', 'Exams Management | ' . env('SCHOOL_ACRONYM', 'SMS'))
 
-        /* Modern Box Styling */
-        .content .box { 
-            border-radius: 12px; 
-            border-top: none; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05); 
-            margin-bottom: 25px; 
-            overflow: hidden; 
-            background: #ffffff;
-        }
-        .content .box-header { 
-            border-bottom: 1px solid #f1f5f9; 
-            padding: 20px 25px; 
-            background: #fff; 
-        }
-        .content .box-title { 
-            font-weight: 800 !important; 
-            color: #1e293b; 
-            font-size: 18px; 
-        }
-        
-        /* Filter Bar */
-        .content .filter-bar {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 15px 25px;
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
-        }
+@section('header')
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Examination Hub</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Term Context: {{ $selectedTerm->term_name }}</p>
+        </div>
+    </div>
+@endsection
 
-        /* Form Inputs */
-        .content .form-group label { 
-            font-weight: 700; 
-            color: #475569; 
-            font-size: 13px; 
-            text-transform: uppercase; 
-            letter-spacing: 0.5px; 
-            margin-bottom: 8px; 
-        }
-        .content .form-control { 
-            border-radius: 8px; 
-            border: 1px solid #cbd5e1; 
-            box-shadow: none; 
-            padding: 10px 15px; 
-            height: auto; 
-            font-size: 14px; 
-            transition: all 0.3s ease; 
-        }
-        .content .form-control:focus { 
-            border-color: #3b82f6; 
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); 
-        }
-        .content .form-control[disabled] { 
-            background-color: #f1f5f9 !important; 
-            color: #94a3b8;
-            border: 1px dashed #cbd5e1; 
-            cursor: not-allowed; 
-        }
+@section('content')
+    <div x-data="{ activeModal: null }" class="space-y-6">
 
-        /* Select2 Modernization */
-        .select2-container--default .select2-selection--single { 
-            border-radius: 8px; 
-            border: 1px solid #cbd5e1; 
-            height: 43px; 
-            padding: 6px 15px; 
-        }
-        .select2-container--default .select2-selection--single .select2-selection__arrow { height: 41px; }
-        
-        /* Primary Button */
-        .content .btn-primary { 
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); 
-            border: none; 
-            border-radius: 8px; 
-            font-weight: 700; 
-            padding: 12px 20px; 
-            transition: transform 0.2s, box-shadow 0.2s; 
-            box-shadow: 0 4px 15px rgba(59,130,246,0.3); 
-        }
-        .content .btn-primary:hover { 
-            transform: translateY(-2px); 
-            box-shadow: 0 6px 20px rgba(59,130,246,0.4); 
-        }
-        
-        /* Table overrides */
-        .content .table > tbody > tr > td { 
-            vertical-align: middle !important; 
-            padding: 16px 20px; 
-            border-top: 1px solid #f1f5f9; 
-            font-size: 14px; 
-            color: #334155; 
-        }
-        .content .table > thead > tr > th { 
-            border-bottom: 2px solid #e2e8f0; 
-            color: #64748b; 
-            font-weight: 700; 
-            padding: 16px 20px; 
-            text-transform: uppercase; 
-            font-size: 12px; 
-            letter-spacing: 0.5px; 
-            background: #f8fafc; 
-        }
-        .content .table-hover > tbody > tr:hover { 
-            background-color: #f8fafc; 
-        }
+        {{-- Term Filter Bar --}}
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 p-4 transition-colors">
+            <form method="GET" action="{{ url()->current() }}" class="flex flex-wrap items-center gap-4">
+                <label class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center">
+                    <i class="fa-solid fa-filter mr-2 text-indigo-500"></i> Switch View to Term:
+                </label>
+                <select name="term_id" onchange="this.form.submit()" class="px-3.5 py-2 text-xs font-bold rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none">
+                    @foreach($terms as $t)
+                        <option value="{{ $t->id }}" {{ ($selectedTerm->id == $t->id) ? 'selected' : '' }}>
+                            {{ $t->term_name }} ({{ $t->academic_year ?? $t->academicYear?->year_name }})
+                        </option>
+                    @endforeach
+                </select>
 
-        /* Subject Card Style */
-        .subject-row { cursor: pointer; transition: all 0.2s; }
-        .subject-row:hover { background: #eff6ff !important; }
-        .subject-icon { width: 40px; height: 40px; border-radius: 8px; background: #e0e7ff; color: #4f46e5; display: flex; align-items: center; justify-content: center; font-size: 18px; margin-right: 15px; }
+                @if(isset($activeTerm) && $selectedTerm->id == $activeTerm->id)
+                    <span class="px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center">
+                        <i class="fa-solid fa-circle-check mr-1.5 text-xs"></i> CURRENT ACTIVE TERM
+                    </span>
+                @endif
+            </form>
+        </div>
 
-        /* Action Chips */
-        .content .action-chip {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            text-decoration: none !important;
-            margin: 2px;
-        }
-        .content .action-chip:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .content .chip-grade {
-            background: #f0fdf4;
-            color: #10b981;
-            border: 1px solid #a7f3d0;
-        }
-        .content .chip-grade:hover {
-            background: #10b981;
-            color: #ffffff;
-            border-color: #10b981;
-        }
-        .content .chip-scan {
-            background: #f8fafc;
-            color: #64748b;
-            border: 1px solid #cbd5e1;
-        }
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        /* Modals */
-        .modal-content { border-radius: 12px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
-        .modal-header { border-bottom: 1px solid #f1f5f9; background: #f8fafc; border-radius: 12px 12px 0 0; padding: 20px 25px; }
-        .modal-title { font-weight: 800; color: #1e293b; }
-        
-        /* Typography Utilities */
-        .content .text-amount { font-family: monospace; font-weight: 700; color: #1e293b; font-size: 14px; background: #f1f5f9; padding: 4px 8px; border-radius: 4px; border: 1px solid #e2e8f0; }
-        .content .badge-status { background: #10b981; color: white; padding: 6px 12px; border-radius: 30px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; }
-    </style>
-</head>
-<body class="hold-transition skin-blue sidebar-mini">
-    <div class="wrapper">
-        @include('layouts.topbar')
-        @include('layouts.sidebar')
+            {{-- Create Exam Form (Admin) --}}
+            @if(Auth::user()->role == 'admin')
+            <div class="lg:col-span-4">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
+                    <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/80">
+                        <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                            <i class="fa-solid fa-calendar-plus text-indigo-500 mr-2.5"></i> Schedule Exam
+                        </h3>
+                    </div>
 
-        <div class="content-wrapper">
-            <section class="content-header" style="padding-bottom: 15px;">
-                <h1 style="font-weight: 800; color: #1e293b; font-size: 28px;">
-                    Examination Hub
-                    <small style="color: #64748b; font-weight: 600; font-size: 14px;">Term Context: {{ $selectedTerm->term_name }}</small>
-                </h1>
-            </section>
+                    <form action="{{ Route::has('exams.store') ? route('exams.store') : url('/exams') }}" method="POST" class="p-6 space-y-4">
+                        @csrf
+                        <input type="hidden" name="term_id" value="{{ $selectedTerm->id }}">
 
-            <section class="content">
-                {{-- 1. THE MAIN SWITCHER (Top Bar) --}}
-                <div class="filter-bar">
-                    <form method="GET" action="{{ url()->current() }}" class="form-inline" style="display: flex; align-items: center; width: 100%; gap: 15px;">
-                        <div class="form-group" style="margin: 0; display: flex; align-items: center; gap: 10px;">
-                            <label style="margin: 0; color: #475569;"><i class="fa fa-filter text-blue"></i> Switch View to Term:</label>
-                            <select name="term_id" class="form-control" onchange="this.form.submit()" style="min-width: 250px; font-weight: 600;">
-                                @foreach($terms as $t)
-                                    <option value="{{ $t->id }}" {{ ($selectedTerm->id == $t->id) ? 'selected' : '' }}>
-                                        {{ $t->term_name }} ({{ $t->academic_year ?? $t->academicYear->year_name }})
-                                    </option>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">Academic Term (Locked)</label>
+                            <input type="text" value="{{ $selectedTerm->term_name }} ({{ $selectedTerm->academic_year }})" disabled
+                                   class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">Exam / Paper Title <span class="text-rose-500">*</span></label>
+                            <input type="text" name="exam_name" placeholder="e.g. Paper 1" required
+                                   class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">Subject <span class="text-rose-500">*</span></label>
+                            <select name="subject_id" required class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="">Choose Subject...</option>
+                                @foreach($subjects as $subject)
+                                    <option value="{{ $subject->id }}">{{ $subject->subject_name }}</option>
                                 @endforeach
                             </select>
                         </div>
-                        @if(isset($activeTerm) && $selectedTerm->id == $activeTerm->id)
-                            <span class="badge-status"><i class="fa fa-check-circle" style="margin-right: 4px;"></i> CURRENT ACTIVE TERM</span>
-                        @endif
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">Exam Date <span class="text-rose-500">*</span></label>
+                                <input type="date" name="exam_date" value="{{ date('Y-m-d') }}" required
+                                       class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">Max Marks <span class="text-rose-500">*</span></label>
+                                <input type="number" name="max_marks" value="100" required
+                                       class="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                        </div>
+
+                        <div class="pt-2">
+                            <button type="submit" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm">
+                                <i class="fa-solid fa-check mr-2"></i> Confirm Schedule
+                            </button>
+                        </div>
                     </form>
                 </div>
+            </div>
+            @endif
 
-                <div class="row">
-                    {{-- 2. CREATE FORM --}}
-                    @if(Auth::user()->role == 'admin')
-                    <div class="col-md-4">
-                        <div class="box">
-                            <div class="box-header with-border">
-                                <h3 class="box-title"><i class="fa fa-calendar-plus-o text-blue"></i> Schedule Exam</h3>
-                            </div>
-                            <form action="{{ route('exams.store') }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="term_id" value="{{ $selectedTerm->id }}">
-
-                                <div class="box-body" style="padding: 25px;">
-                                    <div class="form-group">
-                                        <label>Academic Term (Locked)</label>
-                                        <select class="form-control" disabled>
-                                            <option>{{ $selectedTerm->term_name }} ({{ $selectedTerm->academic_year }})</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label>Exam / Paper Title</label>
-                                        <input type="text" name="exam_name" class="form-control" placeholder="e.g. Paper 1" required>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label>Subject</label>
-                                        <select name="subject_id" class="form-control select2" required style="width: 100%;">
-                                            <option value="">Choose Subject...</option>
-                                            @foreach($subjects as $subject)
-                                                <option value="{{ $subject->id }}">{{ $subject->subject_name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-
-                                    <div class="row">
-                                        <div class="col-xs-6">
-                                            <div class="form-group" style="margin-bottom: 0;">
-                                                <label>Exam Date</label>
-                                                <input type="date" name="exam_date" class="form-control" value="{{ date('Y-m-d') }}" required>
-                                            </div>
-                                        </div>
-                                        <div class="col-xs-6">
-                                            <div class="form-group" style="margin-bottom: 0;">
-                                                <label>Max Marks</label>
-                                                <input type="number" name="max_marks" class="form-control" value="100" required>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="box-footer" style="padding: 20px 25px; background: #f8fafc; border-top: 1px solid #f1f5f9;">
-                                    <button type="submit" class="btn btn-primary btn-block">
-                                        <i class="fa fa-check" style="margin-right: 5px;"></i> CONFIRM SCHEDULE
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
+            {{-- Scheduled Subjects List --}}
+            <div class="{{ Auth::user()->role == 'admin' ? 'lg:col-span-8' : 'lg:col-span-12' }}">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
+                    <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/80 flex items-center justify-between">
+                        <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                            <i class="fa-solid fa-book text-emerald-500 mr-2.5"></i> Scheduled Subjects
+                        </h3>
+                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
+                            {{ $exams->groupBy('subject_id')->count() }} Subjects Active
+                        </span>
                     </div>
-                    @endif
 
-                    {{-- 3. THE LIST (Subjects List Triggering Modals) --}}
-                    <div class="{{ Auth::user()->role == 'admin' ? 'col-md-8' : 'col-md-12' }}">
-                        <div class="box">
-                            <div class="box-header with-border" style="display: flex; justify-content: space-between; align-items: center;">
-                                <h3 class="box-title"><i class="fa fa-book text-green"></i> Scheduled Subjects</h3>
-                                <span class="label" style="background: #e2e8f0; color: #475569; font-size: 13px; padding: 6px 12px; border-radius: 30px;">
-                                    {{ $exams->groupBy('subject_id')->count() }} Subjects Active
-                                </span>
-                            </div>
-                            <div class="box-body no-padding">
-                                <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th>Subject Name</th>
-                                                <th>Papers Scheduled</th>
-                                                <th class="text-right">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @forelse($exams->groupBy('subject_id') as $subjectId => $subjectExams)
-                                                @php $subjectName = $subjectExams->first()->subject->subject_name ?? 'Unknown Subject'; @endphp
-                                                <tr class="subject-row" data-toggle="modal" data-target="#modal-subject-{{ $subjectId }}">
-                                                    <td>
-                                                        <div style="display: flex; align-items: center;">
-                                                            <div class="subject-icon">
-                                                                <i class="fa fa-graduation-cap"></i>
-                                                            </div>
-                                                            <div>
-                                                                <strong style="color: #1e293b; font-size: 16px;">{{ $subjectName }}</strong>
-                                                                <span style="display: block; color: #64748b; font-size: 12px; margin-top: 2px;">Click to view papers & classes</span>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <span style="background: #e2e8f0; color: #334155; font-weight: 700; padding: 5px 12px; border-radius: 20px; font-size: 13px;">
-                                                            {{ $subjectExams->count() }} Paper(s)
-                                                        </span>
-                                                    </td>
-                                                    <td class="text-right">
-                                                        <button class="btn btn-sm" style="background: #f8fafc; border: 1px solid #cbd5e1; color: #3b82f6; border-radius: 6px; font-weight: 600;">
-                                                            View Classes & Papers <i class="fa fa-arrow-right" style="margin-left: 5px;"></i>
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            @empty
-                                            <tr>
-                                                <td colspan="3" class="text-center" style="padding: 60px 20px;">
-                                                    <div style="width: 80px; height: 80px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
-                                                        <i class="fa fa-folder-open-o" style="font-size: 35px; color: #94a3b8;"></i>
-                                                    </div>
-                                                    <h4 style="font-weight: 700; color: #475569;">No Exams Scheduled</h4>
-                                                    <p style="color: #94a3b8;">Use the form to schedule an exam or paper for this term.</p>
-                                                </td>
-                                            </tr>
-                                            @endforelse
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700/60 text-xs">
+                            <thead class="bg-slate-50 dark:bg-slate-800/80">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Subject Name</th>
+                                    <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Papers Scheduled</th>
+                                    <th scope="col" class="px-6 py-3.5 text-right font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700/60">
+                                @forelse($exams->groupBy('subject_id') as $subjectId => $subjectExams)
+                                    @php $subjectName = $subjectExams->first()->subject->subject_name ?? 'Unknown Subject'; @endphp
+                                    <tr @click="activeModal = 'subject-{{ $subjectId }}'" 
+                                        class="hover:bg-indigo-50/40 dark:hover:bg-slate-700/30 cursor-pointer transition-colors">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center space-x-3">
+                                                <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg">
+                                                    <i class="fa-solid fa-graduation-cap"></i>
+                                                </div>
+                                                <div>
+                                                    <strong class="text-sm font-bold text-slate-800 dark:text-slate-100 block">{{ $subjectName }}</strong>
+                                                    <span class="text-[11px] text-slate-400">Click to view papers & classes</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-3 py-1 rounded-full font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                                                {{ $subjectExams->count() }} Paper(s)
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                                            <button type="button" class="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-bold border border-slate-200 dark:border-slate-600 transition-colors">
+                                                View Classes & Papers <i class="fa-solid fa-arrow-right ml-1.5"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="3" class="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                                            <div class="w-12 h-12 bg-slate-100 dark:bg-slate-700/50 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-400">
+                                                <i class="fa-solid fa-folder-open text-xl"></i>
+                                            </div>
+                                            <h4 class="font-bold text-slate-700 dark:text-slate-300">No Exams Scheduled</h4>
+                                            <p class="text-xs text-slate-400 mt-1">Use the form to schedule an exam or paper for this term.</p>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-            </section>
+            </div>
         </div>
-        
-        @include('layouts.footer')
-    </div>
 
-    {{-- MODALS FOR EACH SUBJECT --}}
-    @foreach($exams->groupBy('subject_id') as $subjectId => $subjectExams)
-        @php $subjectName = $subjectExams->first()->subject->subject_name ?? 'Unknown Subject'; @endphp
-        <div class="modal fade" id="modal-subject-{{ $subjectId }}" tabindex="-1" role="dialog" aria-hidden="true">
-            <div class="modal-dialog modal-lg" style="width: 90%; max-width: 1000px;">
-                <div class="modal-content">
-                    <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <h4 class="modal-title" style="font-size: 22px;">
-                                <i class="fa fa-book text-blue" style="margin-right: 8px;"></i> {{ $subjectName }}
-                            </h4>
-                            <p style="margin: 5px 0 0 0; color: #64748b; font-size: 13px;">Manage classes and enter marks for all scheduled papers.</p>
+        {{-- MODALS FOR EACH SUBJECT --}}
+        @foreach($exams->groupBy('subject_id') as $subjectId => $subjectExams)
+            @php $subjectName = $subjectExams->first()->subject->subject_name ?? 'Unknown Subject'; @endphp
+            <div x-show="activeModal === 'subject-{{ $subjectId }}'" 
+                 class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+                <div class="flex items-center justify-center min-h-screen px-4 text-center">
+                    <div @click="activeModal = null" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
+
+                    <div class="inline-block w-full max-w-4xl p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-slate-800 rounded-2xl shadow-xl z-10 border border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-700">
+                            <div>
+                                <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                                    <i class="fa-solid fa-book text-indigo-500 mr-2"></i> {{ $subjectName }}
+                                </h3>
+                                <p class="text-xs text-slate-400 mt-0.5">Manage classes and enter marks for scheduled papers.</p>
+                            </div>
+                            <button @click="activeModal = null" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
                         </div>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="font-size: 28px; opacity: 0.5;">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body no-padding" style="background: #f8fafc;">
-                        <div class="table-responsive">
-                            <table class="table table-hover" style="margin-bottom: 0;">
-                                <thead>
+
+                        <div class="py-4 overflow-x-auto">
+                            <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700/60 text-xs">
+                                <thead class="bg-slate-50 dark:bg-slate-900/50">
                                     <tr>
-                                        <th style="width: 25%">Paper Title / Date</th>
-                                        <th style="width: 15%">Max Marks</th>
-                                        <th>Select Class to Enter Marks</th>
-                                        <th class="text-center" style="width: 10%">Manage</th>
+                                        <th class="px-4 py-3 text-left font-bold text-slate-500">Paper Title / Date</th>
+                                        <th class="px-4 py-3 text-left font-bold text-slate-500">Max Marks</th>
+                                        <th class="px-4 py-3 text-left font-bold text-slate-500">Select Class to Enter Marks</th>
+                                        <th class="px-4 py-3 text-center font-bold text-slate-500">Manage</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-700/60">
                                     @foreach($subjectExams as $exam)
-                                    <tr style="background: #ffffff;">
-                                        <td>
-                                            <strong style="color: #1e293b; font-size: 15px; display: block;">{{ $exam->exam_name }}</strong>
-                                            <span style="color: #64748b; font-size: 13px;"><i class="fa fa-calendar" style="margin-right: 4px;"></i> {{ \Carbon\Carbon::parse($exam->exam_date)->format('d M, Y') }}</span>
+                                    <tr>
+                                        <td class="px-4 py-3">
+                                            <strong class="text-slate-800 dark:text-slate-100 block">{{ $exam->exam_name }}</strong>
+                                            <span class="text-[11px] text-slate-400">
+                                                <i class="fa-solid fa-calendar mr-1"></i> {{ \Carbon\Carbon::parse($exam->exam_date)->format('d M, Y') }}
+                                            </span>
                                         </td>
-                                        <td>
-                                            <span class="text-amount">{{ $exam->max_marks ?? 100 }}</span>
+                                        <td class="px-4 py-3">
+                                            <span class="font-mono font-bold bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-700 dark:text-slate-300">
+                                                {{ $exam->max_marks ?? 100 }}
+                                            </span>
                                         </td>
-                                        <td>
-                                            {{-- Classes / Grades Badges for this specific paper --}}
-                                            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                                                <a href="{{ route('exams.verify', $exam->id) }}" class="action-chip chip-scan" title="Scan Student QR/Barcode">
-                                                    <i class="fa fa-qrcode" style="margin-right: 4px;"></i> Scan
+                                        <td class="px-4 py-3">
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <a href="{{ Route::has('exams.verify') ? route('exams.verify', $exam->id) : url('/exams/' . $exam->id . '/verify') }}" 
+                                                   class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 border border-slate-200 dark:border-slate-600 flex items-center">
+                                                    <i class="fa-solid fa-qrcode mr-1"></i> Scan
                                                 </a>
                                                 
                                                 @foreach($grades as $grade)
-                                                    <a href="{{ route('marks.create', ['exam_id' => $exam->id, 'grade' => $grade]) }}" class="action-chip chip-grade" title="Enter Marks for Class: {{ $grade }}">
-                                                        <i class="fa fa-users" style="margin-right: 4px;"></i> {{ $grade }}
+                                                    <a href="{{ Route::has('exams.create') ? route('exams.create', ['exam_id' => $exam->id, 'grade' => $grade]) : url('/exams/create?exam_id=' . $exam->id . '&grade=' . $grade) }}" 
+                                                       class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 border border-emerald-200 dark:border-emerald-800/50 flex items-center">
+                                                        <i class="fa-solid fa-users mr-1"></i> {{ $grade }}
                                                     </a>
                                                 @endforeach
                                             </div>
                                         </td>
-                                        <td class="text-center">
+                                        <td class="px-4 py-3 text-center">
                                             @if(Auth::user()->role == 'admin')
-                                            <form action="{{ route('exams.destroy', $exam->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this specific exam paper? All associated marks will be lost.')">
+                                            <form action="{{ Route::has('exams.destroy') ? route('exams.destroy', $exam->id) : url('/exams/' . $exam->id) }}" method="POST" onsubmit="return confirm('Delete this exam paper? Associated marks will be deleted.')">
                                                 @csrf @method('DELETE')
-                                                <button type="submit" class="btn btn-sm" style="background: #fef2f2; color: #ef4444; border-radius: 6px; border: 1px solid #fecaca; width: 100%;" title="Delete Exam">
-                                                    <i class="fa fa-trash" style="margin-right: 4px;"></i> Delete
+                                                <button type="submit" class="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40">
+                                                    <i class="fa-solid fa-trash-can"></i>
                                                 </button>
                                             </form>
                                             @endif
@@ -400,24 +239,16 @@
                                 </tbody>
                             </table>
                         </div>
-                    </div>
-                    <div class="modal-footer" style="border-top: 1px solid #f1f5f9; background: #fff; border-radius: 0 0 12px 12px;">
-                        <button type="button" class="btn btn-default" data-dismiss="modal" style="border-radius: 6px; font-weight: 600;">Close View</button>
+
+                        <div class="pt-3 border-t border-slate-200 dark:border-slate-700 flex justify-end">
+                            <button type="button" @click="activeModal = null" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold">
+                                Close View
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    @endforeach
-    
-    @include('components.scripts')
-    <script>
-        $(document).ready(function() {
-            if ($.fn.select2) {
-                $('.select2').select2({
-                    placeholder: "Choose Subject..."
-                });
-            }
-        });
-    </script>
-</body>
-</html>
+        @endforeach
+
+    </div>
+@endsection

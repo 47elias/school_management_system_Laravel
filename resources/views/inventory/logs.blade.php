@@ -1,59 +1,89 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Inventory Logs | {{ env('SCHOOL_ACRONYM') }}</title>
-    @include('components.adminlte')
-</head>
-<body class="hold-transition skin-blue sidebar-mini">
-    @include('layouts.topbar')
-    @include('layouts.sidebar')
+{{-- resources/views/inventory/logs.blade.php --}}
+@extends('layouts.admin.app')
 
-    <div class="wrapper">
-        <div class="content-wrapper">
-            <section class="content-header">
-                <h1>Stock History <small>Audit Trail</small></h1>
-            </section>
+@section('title', 'Inventory Logs | ' . env('SCHOOL_ACRONYM', 'SMS'))
 
-            <section class="content">
-                <div class="box box-default">
-                    <div class="box-header with-border">
-                        <h3 class="box-title">Recent Stock Movements</h3>
-                    </div>
-                    <div class="box-body table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr class="bg-gray">
-                                    <th>Date</th>
-                                    <th>Item</th>
-                                    <th>Type</th>
-                                    <th>Quantity</th>
-                                    <th>Remarks</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($logs as $log)
-                                <tr>
-                                    <td>{{ $log->created_at->format('d M Y, h:i A') }}</td>
-                                    <td>{{ $log->item->item_name }}</td>
-                                    <td>
-                                        @if($log->type == 'in')
-                                            <span class="text-green"><i class="fa fa-arrow-up"></i> Stock In</span>
-                                        @else
-                                            <span class="text-red"><i class="fa fa-arrow-down"></i> Stock Out</span>
-                                        @endif
-                                    </td>
-                                    <td><strong>{{ $log->quantity }}</strong></td>
-                                    <td>{{ $log->remarks ?? '-' }}</td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                        {{ $logs->links() }}
-                    </div>
-                </div>
-            </section>
+@section('header')
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Inventory Logs</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Complete audit trail of stock movements and supply adjustments</p>
+        </div>
+        <div class="mt-4 sm:mt-0">
+            <a href="{{ Route::has('inventory.index') ? route('inventory.index') : url('/inventory') }}" 
+               class="inline-flex items-center px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all border border-slate-200 dark:border-slate-700">
+                <i class="fa-solid fa-arrow-left mr-2"></i> Back to Inventory
+            </a>
         </div>
     </div>
-    @include('components.scripts')
-</body>
-</html>
+@endsection
+
+@section('content')
+    <div class="space-y-6">
+
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
+            <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/80">
+                <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                    <i class="fa-solid fa-clock-rotate-left text-indigo-500 mr-2.5"></i> Recent Stock Movements
+                </h3>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700/60 text-xs">
+                    <thead class="bg-slate-50 dark:bg-slate-800/80">
+                        <tr>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date & Time</th>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Item Name</th>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Transaction Type</th>
+                            <th scope="col" class="px-6 py-3.5 text-center font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Quantity</th>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Remarks / Context</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700/60">
+                        @forelse($logs ?? [] as $log)
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap font-mono text-slate-500 dark:text-slate-400">
+                                {{ $log->created_at ? $log->created_at->format('d M Y, h:i A') : 'N/A' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap font-bold text-slate-800 dark:text-slate-100">
+                                {{ $log->item->item_name ?? 'N/A' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if(($log->type ?? 'in') == 'in')
+                                    <span class="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-bold">
+                                        <i class="fa-solid fa-arrow-up mr-1.5 text-xs"></i> Stock In
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center text-rose-600 dark:text-rose-400 font-bold">
+                                        <i class="fa-solid fa-arrow-down mr-1.5 text-xs"></i> Stock Out
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center font-mono font-extrabold text-slate-800 dark:text-slate-100 text-sm">
+                                {{ $log->quantity }}
+                            </td>
+                            <td class="px-6 py-4 text-slate-600 dark:text-slate-300">
+                                {{ $log->remarks ?? '-' }}
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="5" class="px-6 py-12 text-center text-slate-400">
+                                <i class="fa-solid fa-clock-rotate-left text-2xl text-slate-300 dark:text-slate-600 mb-2 block"></i>
+                                No stock movements recorded yet.
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            @if(isset($logs) && method_exists($logs, 'hasPages') && $logs->hasPages())
+                <div class="px-6 py-4 bg-slate-50/50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700/60">
+                    {{ $logs->links() }}
+                </div>
+            @endif
+        </div>
+
+    </div>
+@endsection

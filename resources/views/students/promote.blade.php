@@ -1,278 +1,147 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Bulk Promotion | {{ env('SCHOOL_ACRONYM') }}</title>
-    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+{{-- resources/views/students/promote.blade.php --}}
+@extends('layouts.admin.app')
 
-    @include('components.adminlte')
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+@section('title', 'Mass Academic Promotion | ' . env('SCHOOL_ACRONYM', 'SIT'))
 
-    <style>
-        :root {
-            --brand-indigo: #4f46e5;
-            --brand-indigo-hover: #4338ca;
-            --brand-danger: #ef4444;
-            --bg-light: #f8fafc;
-            --border-color: #e2e8f0;
-        }
+@section('header')
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Mass Academic Promotion</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Batch transition students to target grades for the new academic year</p>
+        </div>
+        <div class="mt-4 sm:mt-0">
+            <a href="{{ route('students.index') }}" 
+               class="inline-flex items-center px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold transition-all border border-slate-200 dark:border-slate-700">
+                <i class="fa-solid fa-arrow-left mr-2"></i> Student Directory
+            </a>
+        </div>
+    </div>
+@endsection
 
-        body { font-family: 'Inter', sans-serif !important; background-color: var(--bg-light) !important; }
-        .content-wrapper { background-color: var(--bg-light) !important; }
+@section('content')
+    <div class="max-w-5xl mx-auto space-y-6">
 
-        .promo-card {
-            background: #ffffff; 
-            border-radius: 16px; 
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.02);
-            margin-bottom: 30px;
-            overflow: hidden;
-        }
-
-        .promo-card .box-header {
-            padding: 24px 25px;
-            border-bottom: 1px solid var(--border-color);
-            background: #ffffff;
-        }
-
-        .form-control-modern {
-            border-radius: 8px; 
-            border: 1px solid var(--border-color);
-            height: 42px; 
-            box-shadow: none; 
-            transition: all 0.2s ease;
-            font-size: 14px;
-            color: #1e293b;
-        }
-
-        .form-control-modern:focus {
-            border-color: var(--brand-indigo);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-        }
-
-        .table-promo thead th {
-            background: #f1f5f9; 
-            color: #475569;
-            text-transform: uppercase; 
-            font-size: 11px; 
-            letter-spacing: 1px;
-            padding: 16px 20px; 
-            border: none !important;
-        }
-
-        .table-promo tbody td {
-            vertical-align: middle !important;
-            padding: 18px 20px;
-            border-top: 1px solid #f1f5f9;
-            font-size: 14px;
-            color: #334155;
-        }
-
-        .table-promo tbody tr:hover {
-            background-color: #f8fafc;
-        }
-
-        .btn-execute {
-            background: var(--brand-indigo); 
-            color: white;
-            border: none; 
-            border-radius: 10px; 
-            padding: 12px 28px;
-            font-weight: 700; 
-            font-size: 14px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
-        }
-
-        .btn-execute:hover { 
-            background: var(--brand-indigo-hover); 
-            color: white; 
-            transform: translateY(-1px); 
-            box-shadow: 0 6px 12px -2px rgba(79, 70, 229, 0.3);
-        }
-
-        .arrow-icon { 
-            color: #94a3b8; 
-            font-size: 16px;
-            background: #f1f5f9;
-            width: 32px;
-            height: 32px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-        }
-
-        .grade-badge {
-            background: #f1f5f9; 
-            color: #334155; 
-            font-size: 13px; 
-            font-weight: 600;
-            padding: 6px 14px; 
-            border-radius: 6px;
-            border: 1px solid #e2e8f0;
-        }
-
-        input[type="checkbox"] {
-            width: 18px; 
-            height: 18px; 
-            accent-color: var(--brand-indigo); 
-            cursor: pointer;
-        }
-    </style>
-</head>
-<body class="hold-transition skin-blue sidebar-mini">
-    <div class="wrapper">
-        @include('layouts.topbar')
-        @include('layouts.sidebar')
-
-        <div class="content-wrapper">
-            <section class="content-header" style="padding: 30px 25px 15px 25px;">
-                <h1 style="font-weight: 800; color: #1e293b; font-size: 26px; margin: 0;">
-                    Mass Academic Promotion
-                    <small style="display: block; color: #64748b; font-weight: 500; font-size: 13px; margin-top: 5px;">Year-End Transition Management</small>
-                </h1>
-                <ol class="breadcrumb" style="top: 25px;">
-                    <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
-                    <li class="active">Bulk Promotion</li>
-                </ol>
-            </section>
-
-            <section class="content">
-                <div class="row">
-                    <div class="col-md-12">
-
-                        {{-- Alert Messages --}}
-                        @if(session('success'))
-                            <div class="alert alert-success alert-dismissible" style="border-radius: 10px; border: none; box-shadow: 0 4px 12px rgba(16,185,129,0.15);">
-                                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-                                <h4><i class="icon fa fa-check-circle"></i> Success!</h4>
-                                {{ session('success') }}
-                            </div>
-                        @endif
-
-                        @if(session('error'))
-                            <div class="alert alert-danger alert-dismissible" style="border-radius: 10px; border: none; box-shadow: 0 4px 12px rgba(239,68,68,0.15);">
-                                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-                                <h4><i class="icon fa fa-ban"></i> Error!</h4>
-                                {{ session('error') }}
-                            </div>
-                        @endif
-
-                        <div class="callout callout-info" style="border-radius: 12px; border-left-width: 5px; background: #eff6ff; color: #1e40af; border-color: #3b82f6;">
-                            <h4><i class="fa fa-info-circle"></i> Batch Promotion Logic</h4>
-                            <p style="margin-bottom: 0;">Map each current class precisely to its next destination. Active students will be cleanly migrated in a single batch pass. Use "Graduated" for final-year students.</p>
-                        </div>
-
-                        <form id="massPromotionForm" action="{{ route('students.promote.mass') }}" method="POST">
-                            @csrf
-
-                            {{-- Global Settings Card --}}
-                            <div class="promo-card">
-                                <div class="box-header with-border">
-                                    <h3 class="box-title" style="font-weight: 700; color: #1e293b; font-size: 16px;"><i class="fa fa-calendar text-indigo" style="margin-right: 8px;"></i> 1. Target Academic Term</h3>
-                                </div>
-                                <div class="box-body" style="padding: 25px;">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <label style="font-weight: 600; color: #475569; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px;">Select Term Students Are Moving Into:</label>
-                                            <select name="target_term_id" class="form-control form-control-modern" required>
-                                                @foreach($terms as $term)
-                                                    <option value="{{ $term->id }}" {{ $term->is_current ? 'selected' : '' }}>
-                                                        {{ $term->term_name }} ({{ $term->academic_year }})
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {{-- Transition Mapping Card --}}
-                            <div class="promo-card">
-                                <div class="box-header with-border">
-                                    <h3 class="box-title" style="font-weight: 700; color: #1e293b; font-size: 16px;"><i class="fa fa-exchange text-indigo" style="margin-right: 8px;"></i> 2. Class Mapping Overview</h3>
-                                </div>
-                                <div class="box-body no-padding">
-                                    <table class="table table-promo">
-                                        <thead>
-                                            <tr>
-                                                <th width="8%" class="text-center">Status</th>
-                                                <th width="35%">Current Class (From)</th>
-                                                <th width="12%" class="text-center">Transition</th>
-                                                <th width="45%">Destination Class (To)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach($classes as $class)
-                                            <tr>
-                                                <td class="text-center">
-                                                    {{-- Uses unique class ID as key to prevent index mismatch --}}
-                                                    <input type="checkbox" name="promote[{{ $class->id }}][active]" value="1" checked>
-                                                </td>
-                                                <td>
-                                                    <input type="hidden" name="promote[{{ $class->id }}][from_grade]" value="{{ $class->class_name }}">
-                                                    <span class="grade-badge">{{ $class->class_name }}</span>
-                                                </td>
-                                                <td class="text-center">
-                                                    <i class="fa fa-long-arrow-right arrow-icon"></i>
-                                                </td>
-                                                <td>
-                                                    <select name="promote[{{ $class->id }}][to_grade]" class="form-control form-control-modern">
-                                                        <option value="">-- Skip / No Change --</option>
-                                                        @foreach($classes as $destClass)
-                                                            <option value="{{ $destClass->class_name }}">{{ $destClass->class_name }}</option>
-                                                        @endforeach
-                                                        <option value="Graduated" style="color: var(--brand-danger); font-weight: bold;">🎓 Graduated / Alumni</option>
-                                                    </select>
-                                                </td>
-                                            </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="box-footer" style="padding: 25px; background: #f8fafc; border-top: 1px solid var(--border-color);">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <p class="text-muted small" style="margin-top: 8px; margin-bottom: 0;">
-                                                <i class="fa fa-warning text-yellow" style="margin-right: 4px;"></i>
-                                                Verify that all financial accounts and fee mappings are updated for the target term before executing.
-                                            </p>
-                                        </div>
-                                        <div class="col-md-6 text-right">
-                                            <button type="submit" class="btn btn-execute">
-                                                <i class="fa fa-rocket" style="margin-right: 6px;"></i> PROCESS ALL PROMOTIONS
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
+        {{-- Alerts --}}
+        @if(session('success'))
+            <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-200 flex items-center justify-between shadow-sm">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-circle-check text-emerald-600 dark:text-emerald-400 text-lg"></i>
+                    <span class="text-xs font-semibold">{{ session('success') }}</span>
                 </div>
-            </section>
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 text-rose-800 dark:text-rose-200 flex items-center justify-between shadow-sm">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-triangle-exclamation text-rose-600 dark:text-rose-400 text-lg"></i>
+                    <span class="text-xs font-semibold">{{ session('error') }}</span>
+                </div>
+            </div>
+        @endif
+
+        {{-- Logic Info Banner --}}
+        <div class="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/50 flex items-start space-x-3 text-xs">
+            <i class="fa-solid fa-circle-info text-indigo-600 dark:text-indigo-400 text-lg mt-0.5 shrink-0"></i>
+            <div>
+                <h4 class="font-bold text-indigo-950 dark:text-indigo-200">Batch Promotion Guidance</h4>
+                <p class="text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+                    Map each existing class level precisely to its new target destination. Active student accounts will be batch migrated in a single pass. Select <strong>Graduated / Alumni</strong> for final-year streams.
+                </p>
+            </div>
         </div>
 
-        @include('layouts.footer')
+        <form id="massPromotionForm" action="{{ route('students.promote.mass') }}" method="POST" class="space-y-6">
+            @csrf
+
+            {{-- 1. Target Academic Term --}}
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
+                <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/90">
+                    <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                        <i class="fa-solid fa-calendar-days text-indigo-500 mr-2.5"></i> 1. Target Destination Academic Term
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <label for="target_term_id" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+                        Select Academic Term Students Are Moving Into:
+                    </label>
+                    <select name="target_term_id" id="target_term_id" required
+                            class="w-full md:w-1/2 px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        @foreach($terms as $term)
+                            <option value="{{ $term->id }}" {{ $term->is_current ? 'selected' : '' }}>
+                                {{ $term->term_name }} ({{ $term->academic_year }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
+            {{-- 2. Class Transition Mapping --}}
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
+                <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/90">
+                    <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                        <i class="fa-solid fa-arrows-rotate text-indigo-500 mr-2.5"></i> 2. Class Level Mapping Matrix
+                    </h3>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700/60">
+                        <thead class="bg-slate-50 dark:bg-slate-800/80">
+                            <tr>
+                                <th scope="col" class="px-6 py-3.5 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-6 py-3.5 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Current Class (From)</th>
+                                <th scope="col" class="px-6 py-3.5 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Transition</th>
+                                <th scope="col" class="px-6 py-3.5 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Destination Class (To)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-700/60 bg-white dark:bg-slate-800">
+                            @foreach($classes as $class)
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                                <td class="px-6 py-4 text-center">
+                                    <input type="checkbox" name="promote[{{ $class->id }}][active]" value="1" checked
+                                           class="w-4 h-4 text-indigo-600 rounded border-slate-300 dark:border-slate-700 focus:ring-indigo-500">
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <input type="hidden" name="promote[{{ $class->id }}][from_grade]" value="{{ $class->class_name }}">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-600">
+                                        {{ $class->class_name }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 flex items-center justify-center mx-auto">
+                                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <select name="promote[{{ $class->id }}][to_grade]" 
+                                            class="w-full max-w-xs px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                        <option value="">-- Skip / No Change --</option>
+                                        @foreach($classes as $destClass)
+                                            <option value="{{ $destClass->class_name }}">{{ $destClass->class_name }}</option>
+                                        @endforeach
+                                        <option value="Graduated" class="text-rose-600 font-bold">🎓 Graduated / Alumni</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+                {{-- Submit Footer --}}
+                <div class="p-6 border-t border-slate-200/80 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/90 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 flex items-center">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-500 mr-2"></i> Verify target fee structures before completing transition.
+                    </p>
+                    <button type="submit" 
+                            onclick="return confirm('You are about to execute batch student promotions system-wide. Proceed?')"
+                            class="px-6 py-2.5 text-xs font-bold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 transition-all shadow-sm hover:shadow">
+                        <i class="fa-solid fa-rocket mr-2"></i> Process All Promotions
+                    </button>
+                </div>
+            </div>
+
+        </form>
+
     </div>
-
-    @include('components.scripts')
-    <script>
-        $(document).ready(function() {
-            $('#massPromotionForm').on('submit', function(e) {
-                const selections = $(this).find('select[name$="[to_grade]"]');
-                let valid = true;
-
-                selections.each(function() {
-                    const row = $(this).closest('tr');
-                    const isChecked = row.find('input[type="checkbox"]').is(':checked');
-                    // Only validate if checked AND a destination was partially touched, or ensure selections make sense
-                });
-
-                return confirm("CRITICAL ACTION: You are about to process batch student promotions across your system. Proceed?");
-            });
-        });
-    </script>
-</body>
-</html>
+@endsection

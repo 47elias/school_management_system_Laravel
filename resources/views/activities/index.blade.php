@@ -1,118 +1,152 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Continuous Assessment | Admin</title>
-    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
-    @include('components.adminlte')
-</head>
-<body class="hold-transition skin-blue sidebar-mini">
-    <div class="wrapper">
-        @include('layouts.topbar')
-        @include('layouts.sidebar')
+{{-- resources/views/activities/index.blade.php --}}
+@extends('layouts.admin.app')
 
-        <div class="content-wrapper">
-            <section class="content-header">
-                <h1>
-                    Continuous Assessment
-                    <small>School-wide daily activity marks, independent of exams</small>
-                </h1>
-                <ol class="breadcrumb">
-                    <li><a href="{{ route('dashboard') }}"><i class="fa fa-dashboard"></i> Home</a></li>
-                    <li class="active">Continuous Assessment</li>
-                </ol>
-                <a href="{{ route('activities.analytics') }}" class="btn btn-primary" style="position:absolute; top:15px; right:15px;">
-                    <i class="fa fa-bar-chart"></i> View Analytics Dashboard
-                </a>
-            </section>
+@section('title', 'Continuous Assessment | ' . env('SCHOOL_ACRONYM', 'SMS'))
 
-            <section class="content">
-
-                <div class="box box-solid box-default">
-                    <div class="box-body">
-                        <form method="GET" class="form-inline">
-                            <div class="form-group" style="margin-right:10px;">
-                                <label style="margin-right:5px;">Term</label>
-                                <select name="term_id" class="form-control" onchange="this.form.submit()">
-                                    @foreach($terms as $t)
-                                        <option value="{{ $t->id }}" {{ $selectedTerm && $selectedTerm->id == $t->id ? 'selected' : '' }}>{{ $t->term_name }} ({{ $t->academic_year }})</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="form-group" style="margin-right:10px;">
-                                <label style="margin-right:5px;">Class</label>
-                                <select name="class_id" class="form-control" onchange="this.form.submit()">
-                                    <option value="">All Classes</option>
-                                    @foreach($classes as $c)
-                                        <option value="{{ $c->id }}" {{ request('class_id') == $c->id ? 'selected' : '' }}>{{ $c->class_name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="form-group" style="margin-right:10px;">
-                                <label style="margin-right:5px;">Subject</label>
-                                <select name="subject_id" class="form-control" onchange="this.form.submit()">
-                                    <option value="">All Subjects</option>
-                                    @foreach($subjects as $s)
-                                        <option value="{{ $s->id }}" {{ request('subject_id') == $s->id ? 'selected' : '' }}>{{ $s->subject_name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label style="margin-right:5px;">Type</label>
-                                <select name="type" class="form-control" onchange="this.form.submit()">
-                                    <option value="">All Types</option>
-                                    @foreach(['classwork','homework','quiz','participation','practical','project','other'] as $type)
-                                        <option value="{{ $type }}" {{ request('type') == $type ? 'selected' : '' }}>{{ ucfirst($type) }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <div class="box box-primary">
-                    <div class="box-header with-border">
-                        <h3 class="box-title">Logged Activities</h3>
-                    </div>
-                    <div class="box-body no-padding">
-                        <table class="table table-striped table-hover">
-                            <thead>
-                                <tr class="bg-gray">
-                                    <th>Title</th>
-                                    <th>Type</th>
-                                    <th>Subject</th>
-                                    <th>Class</th>
-                                    <th>Date</th>
-                                    <th class="text-center">Recorded</th>
-                                    <th class="text-center">Avg %</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($activities as $activity)
-                                    <tr>
-                                        <td><b>{{ $activity->title }}</b></td>
-                                        <td><span class="label {{ $activity->type_color }}">{{ $activity->type_label }}</span></td>
-                                        <td>{{ $activity->subjectAssignment->subject->subject_name ?? 'N/A' }}</td>
-                                        <td>{{ $activity->subjectAssignment->schoolClass->class_name ?? 'N/A' }}</td>
-                                        <td>{{ $activity->formatted_date }}</td>
-                                        <td class="text-center">{{ $activity->marks_count }}</td>
-                                        <td class="text-center">{{ $activity->average_percent }}%</td>
-                                    </tr>
-                                @empty
-                                    <tr><td colspan="7" class="text-center text-muted">No activities logged for this filter.</td></tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="box-footer">
-                        {{ $activities->links() }}
-                    </div>
-                </div>
-            </section>
+@section('header')
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Continuous Assessment</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">School-wide daily activity marks, independent of exams</p>
         </div>
-        @include('layouts.footer')
+        <div class="mt-4 sm:mt-0">
+            <a href="{{ Route::has('activities.analytics') ? route('activities.analytics') : url('/activities/analytics') }}" 
+               class="inline-flex items-center px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition-all">
+                <i class="fa-solid fa-chart-column mr-2"></i> View Analytics Dashboard
+            </a>
+        </div>
     </div>
-    @include('components.scripts')
-</body>
-</html>
+@endsection
+
+@section('content')
+    <div class="space-y-6">
+
+        {{-- Filters Bar --}}
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 p-4 transition-colors">
+            <form method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Term</label>
+                    <select name="term_id" onchange="this.form.submit()" 
+                            class="w-full px-3 py-2 text-xs font-semibold rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        @foreach($terms as $t)
+                            <option value="{{ $t->id }}" {{ $selectedTerm && $selectedTerm->id == $t->id ? 'selected' : '' }}>
+                                {{ $t->term_name }} ({{ $t->academic_year }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Class</label>
+                    <select name="class_id" onchange="this.form.submit()" 
+                            class="w-full px-3 py-2 text-xs font-semibold rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">All Classes</option>
+                        @foreach($classes as $c)
+                            <option value="{{ $c->id }}" {{ request('class_id') == $c->id ? 'selected' : '' }}>
+                                {{ $c->class_name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Subject</label>
+                    <select name="subject_id" onchange="this.form.submit()" 
+                            class="w-full px-3 py-2 text-xs font-semibold rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">All Subjects</option>
+                        @foreach($subjects as $s)
+                            <option value="{{ $s->id }}" {{ request('subject_id') == $s->id ? 'selected' : '' }}>
+                                {{ $s->subject_name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Activity Type</label>
+                    <select name="type" onchange="this.form.submit()" 
+                            class="w-full px-3 py-2 text-xs font-semibold rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">All Types</option>
+                        @foreach(['classwork','homework','quiz','participation','practical','project','other'] as $type)
+                            <option value="{{ $type }}" {{ request('type') == $type ? 'selected' : '' }}>
+                                {{ ucfirst($type) }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+            </form>
+        </div>
+
+        {{-- Logged Activities Directory --}}
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
+            <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/80">
+                <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                    <i class="fa-solid fa-list-check text-indigo-500 mr-2.5"></i> Logged Activities
+                </h3>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700/60 text-xs">
+                    <thead class="bg-slate-50 dark:bg-slate-800/80">
+                        <tr>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Title</th>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Type</th>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Subject</th>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Class</th>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                            <th scope="col" class="px-6 py-3.5 text-center font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Recorded</th>
+                            <th scope="col" class="px-6 py-3.5 text-center font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Avg %</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700/60">
+                        @forelse($activities as $activity)
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap font-bold text-slate-800 dark:text-slate-100">
+                                    {{ $activity->title }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/50">
+                                        {{ $activity->type_label ?? $activity->type }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-slate-700 dark:text-slate-300 font-medium">
+                                    {{ $activity->subjectAssignment->subject->subject_name ?? 'N/A' }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-0.5 rounded font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                                        {{ $activity->subjectAssignment->schoolClass->class_name ?? 'N/A' }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-slate-500 dark:text-slate-400 font-mono">
+                                    {{ $activity->formatted_date }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center font-mono font-bold text-slate-700 dark:text-slate-300">
+                                    {{ $activity->marks_count }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                                    {{ $activity->average_percent }}%
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="px-6 py-12 text-center text-slate-400">
+                                    <i class="fa-solid fa-folder-open text-2xl text-slate-300 dark:text-slate-600 mb-2 block"></i>
+                                    No activities logged for this filter context.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            @if($activities->hasPages())
+                <div class="px-6 py-4 bg-slate-50/50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700/60">
+                    {{ $activities->links() }}
+                </div>
+            @endif
+        </div>
+
+    </div>
+@endsection

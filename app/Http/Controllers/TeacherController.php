@@ -16,8 +16,6 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
 
 class TeacherController extends Controller
 {
@@ -286,8 +284,6 @@ class TeacherController extends Controller
         $imageData = $request->input('face_image');
 
         // BIOMETRIC RECOGNITION INTERPOLATOR ENGINE
-        // Selects a random eligible target student matching this specific writing class context for presentation simulation.
-        // Swap this expression row with explicit cloud OpenCV analytics scripts or AWS endpoints if necessary.
         $matchedStudent = Student::where('class_id', $exam->class_id)->inRandomOrder()->first();
 
         if (!$matchedStudent) {
@@ -351,7 +347,7 @@ class TeacherController extends Controller
         
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => ['required', 'email', \Illuminate\Validation\Rule::unique('users')->ignore($user->id)],
+            'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
             'phone_number' => 'nullable|string',
             'password' => 'nullable|min:8|confirmed',
         ]);
@@ -367,120 +363,5 @@ class TeacherController extends Controller
         $user->save();
         
         return back()->with('success', 'Profile updated successfully!');
-    }
-
-    /**
-     * --- ADMIN ACCESSIBLE STAFF ERP RECORDS ---
-     */
-    public function index()
-    {
-        // Gets all staff members (excluding students if they are in the same table, though usually they are separate)
-        $teachers = User::where('role', '!=', 'student')->latest()->get();
-        return view('teachers.index', compact('teachers'));
-    }
-
-    public function create()
-    {
-        return view('teachers.create');
-    }
-
-    public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'national_id' => 'required|unique:users,national_id',
-            'dob' => 'required|date',
-            'ec_number' => 'required|unique:users,ec_number',
-            'password' => 'required|min:8',
-            'role' => 'required|in:admin,teacher,receptionist', // Keeping legacy role check for compatibility
-        ]);
-
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'national_id' => $request->national_id,
-            'dob' => $request->dob,
-            'phone_number' => $request->phone_number,
-            'ec_number' => $request->ec_number,
-            'password' => Hash::make($request->password),
-            'role' => $request->role, // Fallback legacy column
-        ]);
-
-        // Automatically assign the Spatie Role upon creation
-        $user->assignRole($request->role);
-
-        return redirect()->route('teachers.index')->with('success', 'Staff account created successfully!');
-    }
-
-    public function edit($id)
-    {
-        $staff = User::findOrFail($id);
-        $roles = Role::all();
-        $permissions = Permission::all();
-        
-        return view('teachers.edit', compact('staff', 'roles', 'permissions'));
-    }
-
-    public function update(Request $request, $id)
-    {
-        $staff = User::findOrFail($id);
-        
-        // 1. Validate basic input (removed the legacy 'role' rule since we use Spatie arrays now)
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $staff->id,
-            'national_id' => 'required|string|unique:users,national_id,' . $staff->id,
-            'dob' => 'required|date',
-            'ec_number' => 'required|string|unique:users,ec_number,' . $staff->id,
-        ]);
-
-        // 2. Update basic details
-        $staff->name = $request->name;
-        $staff->email = $request->email;
-        $staff->phone_number = $request->phone_number;
-        $staff->ec_number = $request->ec_number;
-        $staff->national_id = $request->national_id;
-        $staff->dob = $request->dob;
-
-        // Keep legacy role column in sync if a primary role is selected
-        if ($request->has('roles') && count($request->roles) > 0) {
-            $staff->role = $request->roles[0];
-        }
-
-        // 3. Update password only if provided
-        if ($request->filled('password')) {
-            $staff->password = Hash::make($request->password);
-        }
-
-        $staff->save();
-
-        // 4. Assign / Sync Roles (Spatie)
-        if ($request->has('roles')) {
-            $staff->syncRoles($request->roles);
-        } else {
-            // If no checkboxes are checked, remove all roles
-            $staff->syncRoles([]);
-        }
-
-        // 5. Assign / Sync Direct Permissions (Spatie)
-        if ($request->has('permissions')) {
-            $staff->syncPermissions($request->permissions);
-        } else {
-            // If no checkboxes are checked, remove all direct permissions
-            $staff->syncPermissions([]);
-        }
-
-        return redirect()->route('teachers.index')->with('success', 'Staff member and roles updated successfully.');
-    }
-
-    public function destroy($id)
-    {
-        $user = User::findOrFail($id);
-        if ($user->id === Auth::id()) {
-            return back()->with('error', 'You cannot delete yourself.');
-        }
-        $user->delete();
-        return back()->with('success', 'Staff member deleted successfully.');
     }
 }

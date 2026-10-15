@@ -1,180 +1,113 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>Audit Logs | {{ env('SCHOOL_ACRONYM', 'SMS') }}</title>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    @include('components.adminlte')
+{{-- resources/views/audit_logs/index.blade.php --}}
+@extends('layouts.admin.app')
 
-    <!-- Scoped Modern UI Updates (Will not affect AdminLTE Footer/Layout) -->
-    <style>
-        /* Modern Box Styling */
-        .content .box { 
-            border-radius: 12px; 
-            border-top: none; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05); 
-            margin-bottom: 25px; 
-            overflow: hidden; 
-            background: #ffffff;
-        }
-        .content .box-header { 
-            border-bottom: 1px solid #f1f5f9; 
-            padding: 20px 25px; 
-            background: #fff; 
-        }
-        .content .box-title { 
-            font-weight: 800 !important; 
-            color: #1e293b; 
-            font-size: 18px; 
-        }
-        
-        /* Table overrides */
-        .content .table > tbody > tr > td { 
-            vertical-align: middle !important; 
-            padding: 16px 20px; 
-            border-top: 1px solid #f1f5f9; 
-            font-size: 15px; 
-            color: #334155; 
-        }
-        .content .table > thead > tr > th { 
-            border-bottom: 2px solid #e2e8f0; 
-            color: #64748b; 
-            font-weight: 700; 
-            padding: 16px 20px; 
-            text-transform: uppercase; 
-            font-size: 12px; 
-            letter-spacing: 0.5px; 
-            background: #f8fafc; 
-        }
-        .content .table-hover > tbody > tr:hover { 
-            background-color: #f8fafc; 
-        }
+@section('title', 'System Audit Logs | ' . env('SCHOOL_ACRONYM', 'SMS'))
 
-        /* Event Badges */
-        .content .badge-event {
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            display: inline-block;
-        }
-        .content .event-created { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-        .content .event-updated { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
-        .content .event-deleted { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-        .content .event-default { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
-        
-        /* Pagination Override */
-        .content .box-footer {
-            background: #fff;
-            padding: 15px 25px;
-            border-top: 1px solid #f1f5f9;
-        }
-    </style>
-</head>
-<body class="hold-transition skin-blue sidebar-collapse sidebar-mini">
-    <div class="wrapper">
-        @include('layouts.topbar')
-        @include('layouts.sidebar')
-
-        <div class="content-wrapper">
-            <section class="content-header" style="padding-bottom: 15px;">
-                <h1 style="font-weight: 800; color: #1e293b; font-size: 28px;">
-                    System Audit Logs
-                    <small style="color: #64748b; font-weight: 600; font-size: 14px;">Track user activities and system changes</small>
-                </h1>
-            </section>
-
-            <section class="content">
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="box">
-                            <div class="box-header with-border">
-                                <h3 class="box-title"><i class="fa fa-history text-blue" style="margin-right: 8px;"></i> Activity Trail</h3>
-                            </div>
-                            <div class="box-body table-responsive no-padding">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 15%;">Date & Time</th>
-                                            <th style="width: 20%;">Action Performed By</th>
-                                            <th style="width: 20%;">Module / Record</th>
-                                            <th style="width: 15%;">Event</th>
-                                            <th style="width: 30%;">Description</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse($logs as $log)
-                                        <tr>
-                                            <td>
-                                                <strong style="color: #1e293b; font-size: 15px; display: block;">{{ $log->created_at->format('d M, Y') }}</strong>
-                                                <span style="color: #64748b; font-size: 13px; font-family: monospace;">{{ $log->created_at->format('H:i:s') }}</span>
-                                            </td>
-                                            <td>
-                                                @if($log->causer)
-                                                    <div style="display: flex; align-items: center;">
-                                                        <div style="width: 32px; height: 32px; border-radius: 50%; background: #e0e7ff; color: #4f46e5; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px;">
-                                                            {{ substr($log->causer->name, 0, 1) }}
-                                                        </div>
-                                                        <div>
-                                                            <strong style="color: #1e293b; font-size: 14px;">{{ $log->causer->name }}</strong>
-                                                            <div style="font-size: 12px; color: #64748b;">{{ class_basename($log->causer_type) }}</div>
-                                                        </div>
-                                                    </div>
-                                                @else
-                                                    <span style="color: #94a3b8; font-style: italic;"><i class="fa fa-server" style="margin-right: 4px;"></i> System / Auto</span>
-                                                @endif
-                                            </td>
-                                            <td>
-                                                <span style="font-family: monospace; color: #475569; background: #f1f5f9; padding: 4px 8px; border-radius: 4px; border: 1px solid #e2e8f0; font-size: 13px;">
-                                                    {{ class_basename($log->subject_type) }} #{{ $log->subject_id }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                @php
-                                                    $badgeClass = 'event-default';
-                                                    if($log->event === 'created') $badgeClass = 'event-created';
-                                                    if($log->event === 'updated') $badgeClass = 'event-updated';
-                                                    if($log->event === 'deleted') $badgeClass = 'event-deleted';
-                                                @endphp
-                                                <span class="badge-event {{ $badgeClass }}">{{ $log->event }}</span>
-                                            </td>
-                                            <td>
-                                                <span style="color: #334155; font-size: 14px;">{{ $log->description }}</span>
-                                            </td>
-                                        </tr>
-                                        @empty
-                                        <tr>
-                                            <td colspan="5" class="text-center" style="padding: 60px 20px;">
-                                                <div style="width: 80px; height: 80px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
-                                                    <i class="fa fa-clock-o" style="font-size: 35px; color: #94a3b8;"></i>
-                                                </div>
-                                                <h4 style="font-weight: 700; color: #475569;">No Activity Found</h4>
-                                                <p style="color: #94a3b8;">There are currently no recorded audit logs in the system.</p>
-                                            </td>
-                                        </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-                            
-                            @if($logs->hasPages())
-                            <div class="box-footer text-center">
-                                {{ $logs->links() }}
-                            </div>
-                            @endif
-                            
-                        </div>
-                    </div>
-                </div>
-            </section>
+@section('header')
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">System Audit Logs</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Track user activities, security events, and system changes</p>
         </div>
-        
-        @include('layouts.footer')
     </div>
+@endsection
 
-    @include('components.scripts')
-</body>
-</html>
+@section('content')
+    <div class="space-y-6">
+
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
+            <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/80">
+                <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                    <i class="fa-solid fa-clock-rotate-left text-indigo-500 mr-2.5"></i> Activity Trail
+                </h3>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700/60 text-xs">
+                    <thead class="bg-slate-50 dark:bg-slate-800/80">
+                        <tr>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date & Time</th>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Action Performed By</th>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Module / Record</th>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Event</th>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700/60">
+                        @forelse($logs ?? [] as $log)
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <strong class="text-xs font-bold text-slate-800 dark:text-slate-100 block">
+                                    {{ $log->created_at ? $log->created_at->format('d M, Y') : 'N/A' }}
+                                </strong>
+                                <span class="text-[11px] font-mono text-slate-400">
+                                    {{ $log->created_at ? $log->created_at->format('H:i:s') : '00:00:00' }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if(isset($log->causer) && $log->causer)
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/50 flex items-center justify-center font-bold text-xs uppercase">
+                                            {{ substr($log->causer->name ?? 'A', 0, 1) }}
+                                        </div>
+                                        <div>
+                                            <strong class="text-xs font-bold text-slate-800 dark:text-slate-100 block">{{ $log->causer->name ?? 'User' }}</strong>
+                                            <span class="text-[10px] text-slate-400">{{ class_basename($log->causer_type ?? 'User') }}</span>
+                                        </div>
+                                    </div>
+                                @else
+                                    <span class="inline-flex items-center text-xs font-medium text-slate-400 italic">
+                                        <i class="fa-solid fa-server mr-1.5"></i> System / Auto
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="font-mono text-xs px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-600">
+                                    {{ class_basename($log->subject_type ?? 'Record') }} #{{ $log->subject_id ?? '-' }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if(($log->event ?? '') === 'created')
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
+                                        Created
+                                    </span>
+                                @elseif(($log->event ?? '') === 'updated')
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800/50">
+                                        Updated
+                                    </span>
+                                @elseif(($log->event ?? '') === 'deleted')
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50">
+                                        Deleted
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-600">
+                                        {{ $log->event ?? 'Event' }}
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 text-slate-700 dark:text-slate-300 font-medium">
+                                {{ $log->description ?? 'No description provided' }}
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="5" class="px-6 py-12 text-center text-slate-400">
+                                <i class="fa-solid fa-clock-rotate-left text-3xl text-slate-300 dark:text-slate-600 mb-3 block"></i>
+                                <span class="font-bold text-sm block text-slate-700 dark:text-slate-300">No Activity Found</span>
+                                <span class="text-xs text-slate-400">There are currently no recorded audit logs in the system.</span>
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            @if(isset($logs) && method_exists($logs, 'hasPages') && $logs->hasPages())
+                <div class="px-6 py-4 bg-slate-50/50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700/60">
+                    {{ $logs->links() }}
+                </div>
+            @endif
+        </div>
+
+    </div>
+@endsection

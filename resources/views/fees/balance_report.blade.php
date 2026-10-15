@@ -1,296 +1,241 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Balance Report | {{ env('SCHOOL_ACRONYM') }}</title>
-    @include('components.adminlte')
-    @include('components.scripts')
-    <style>
-        :root {
-            --grad-blue: linear-gradient(45deg, #0073b7, #00c0ef);
-            --grad-green: linear-gradient(45deg, #00a65a, #2ecc71);
-            --grad-orange: linear-gradient(45deg, #f39c12, #ffcc33);
-            --grad-red: linear-gradient(45deg, #dd4b39, #ed5565);
-            --grad-dark: linear-gradient(45deg, #2c3e50, #34495e);
-            --grad-gray: linear-gradient(45deg, #6c757d, #adb5bd);
-        }
+{{-- resources/views/fees/report.blade.php --}}
+@extends('layouts.admin.app')
 
-        body { background-color: #f0f3f7 !important; font-family: 'Source Sans Pro', sans-serif; }
+@section('title', 'Financial Balance Report | ' . env('SCHOOL_ACRONYM', 'SMS'))
 
-        .info-box-text { text-transform: uppercase; font-weight: 600; font-size: 11px; }
-        .info-box-number { font-size: 18px; }
-        .text-bold { font-weight: bold; }
-        .text-red { color: #dd4b39 !important; }
-        .text-green { color: #00a65a !important; }
-        .badge-new { background-color: #007bff !important; color: white; padding: 3px 7px; border-radius: 4px; font-size: 10px; }
+@section('header')
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full no-print">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Financial Balance Report</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Overview of revenue, collections, and outstanding student balances</p>
+        </div>
+        <div class="mt-4 sm:mt-0 flex flex-wrap items-center gap-2.5">
+            <a href="{{ Route::has('expenses.index') ? route('expenses.index') : url('/expenses') }}" 
+               class="inline-flex items-center px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-sm">
+                <i class="fa-solid fa-circle-minus mr-2"></i> Record Expense
+            </a>
+            <button onclick="exportToExcel()" 
+                    class="inline-flex items-center px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm">
+                <i class="fa-solid fa-file-excel mr-2"></i> Export Excel
+            </button>
+            <button onclick="window.print()" 
+                    class="inline-flex items-center px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all border border-slate-200 dark:border-slate-700">
+                <i class="fa-solid fa-print mr-2"></i> Print
+            </button>
+        </div>
+    </div>
+@endsection
 
-        /* Modern Box Styling */
-        .box, .info-box, .small-box { 
-            border-radius: 12px; 
-            border: none; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-        .small-box:hover, .info-box:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
-        
-        .box-header { padding: 15px; border-bottom: 1px solid #f4f4f4; }
-        .box-header .box-title { font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+@section('content')
+    {{-- Printable Header --}}
+    <div class="hidden print:block text-center border-b-2 border-slate-900 pb-4 mb-6">
+        <h2 class="text-2xl font-black uppercase text-slate-900">{{ env('SCHOOL_NAME', 'Mukahlera School Management System') }}</h2>
+        <h4 class="text-base font-bold uppercase tracking-widest text-slate-700 mt-1">Financial Balance Report</h4>
+        <p class="text-xs text-slate-600 mt-1">
+            <strong>Target Term:</strong> {{ $currentTerm->term_name }} | <strong>Date:</strong> {{ date('d/m/Y H:i') }}
+        </p>
+    </div>
 
-        /* Gradients mapping to AdminLTE classes */
-        .bg-navy { background: var(--grad-dark) !important; color: #fff; }
-        .bg-green { background: var(--grad-green) !important; color: #fff; }
-        .bg-red { background: var(--grad-red) !important; color: #fff; }
-        .bg-aqua { background: var(--grad-blue) !important; color: #fff; }
-        .bg-gray { background: var(--grad-gray) !important; color: #fff !important; }
+    <div class="space-y-6">
+        {{-- Top Info Boxes --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 no-print">
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-sm relative overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Gross Collections</span>
+                        <h3 class="text-2xl font-black text-slate-800 dark:text-slate-100 mt-1">${{ number_format($totalRevenue, 2) }}</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-money-bill-wave"></i>
+                    </div>
+                </div>
+                <p class="text-[11px] font-medium text-slate-400 mt-3 border-t border-slate-100 dark:border-slate-700/60 pt-2">All Terms (Before Deductions)</p>
+            </div>
 
-        .table-vibrant thead th {
-            background: #f8fafc;
-            color: #64748b;
-            text-transform: uppercase;
-            font-size: 11px;
-            padding: 12px 10px;
-            border-bottom: 2px solid #e2e8f0 !important;
-        }
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-sm relative overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Net Available Funds</span>
+                        <h3 class="text-2xl font-black text-slate-800 dark:text-slate-100 mt-1">${{ number_format($schoolBalance, 2) }}</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-building-columns"></i>
+                    </div>
+                </div>
+                <p class="text-[11px] font-medium text-slate-400 mt-3 border-t border-slate-100 dark:border-slate-700/60 pt-2">Actual Money (After Expenses)</p>
+            </div>
 
-        /* Print Styles */
-        @media print {
-            .no-print, .main-header, .main-sidebar, .main-footer, .filter-box { display: none !important; }
-            .content-wrapper { margin-left: 0 !important; padding: 0 !important; background: white !important; }
-            .box { border: 1px solid #eee !important; box-shadow: none !important; }
-            .print-header { display: block !important; }
-            .table-bordered > thead > tr > th { background-color: #f4f4f4 !important; color: #000 !important; border: 1px solid #000 !important; }
-            .table-bordered > tbody > tr > td { border: 1px solid #000 !important; }
-        }
-        .print-header { display: none; text-align: center; margin-bottom: 20px; border-bottom: 3px double #333; padding-bottom: 10px; }
-    </style>
-</head>
-<body class="hold-transition skin-blue sidebar-mini">
-<div class="wrapper">
-    @include('layouts.layout_separator')
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-sm relative overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Term Expenses</span>
+                        <h3 class="text-2xl font-black text-slate-800 dark:text-slate-100 mt-1">${{ number_format($currentTermExpenses, 2) }}</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-receipt"></i>
+                    </div>
+                </div>
+                <p class="text-[11px] font-medium text-slate-400 mt-3 border-t border-slate-100 dark:border-slate-700/60 pt-2">Salaries & Costs (This Term)</p>
+            </div>
 
-    <div class="content-wrapper">
-        {{-- Formal Print Header --}}
-        <div class="print-header">
-            <h2 style="margin:0;">{{ env('SCHOOL_NAME', 'Mukahlera School Management System') }}</h2>
-            <h4 style="text-transform: uppercase; letter-spacing: 2px;">Financial Balance Report</h4>
-            <p><b>Target Term:</b> {{ $currentTerm->term_name }} | <b>Date:</b> {{ date('d/m/Y H:i') }}</p>
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-sm relative overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Today's Income</span>
+                        <h3 class="text-2xl font-black text-slate-800 dark:text-slate-100 mt-1">${{ number_format($dailyIncome, 2) }}</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                </div>
+                <p class="text-[11px] font-medium text-slate-400 mt-3 border-t border-slate-100 dark:border-slate-700/60 pt-2">Payments Received Today</p>
+            </div>
         </div>
 
-        <section class="content-header no-print" style="padding: 25px 25px 10px 25px;">
-            <h1>
-                <span class="text-bold"><i class="fa fa-line-chart text-blue"></i> Financial Revenue & Balance</span>
-                <div class="pull-right">
-                    <a href="{{ route('expenses.index') }}" class="btn btn-danger btn-sm text-bold" style="border-radius: 6px; margin-right: 5px;">
-                        <i class="fa fa-minus-circle"></i> RECORD EXPENSE
-                    </a>
-                    <button onclick="exportToExcel()" class="btn btn-success btn-sm text-bold" style="border-radius: 6px;">
-                        <i class="fa fa-file-excel-o"></i> EXPORT EXCEL
+        {{-- Filter Card --}}
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 p-6 no-print transition-colors">
+            <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center mb-4">
+                <i class="fa-solid fa-filter text-indigo-500 mr-2"></i> Search & Term Filters
+            </h3>
+            <form action="{{ Route::has('fees.report') ? route('fees.report') : url('/fees/report') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
+                <div class="lg:col-span-3">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Search Name/ID</label>
+                    <input type="text" name="search" value="{{ $searchName }}" placeholder="Enter Student Name..."
+                           class="w-full px-3.5 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div class="lg:col-span-2">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Grade</label>
+                    <select name="grade" class="w-full px-3.5 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">All Grades</option>
+                        @foreach($grades as $g)
+                            <option value="{{ $g }}" {{ $selectedGrade == $g ? 'selected' : '' }}>Grade {{ $g }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="lg:col-span-3">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Target View Session</label>
+                    <select name="term_id" class="w-full px-3.5 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        @foreach($terms as $term)
+                            <option value="{{ $term->id }}" {{ ($selectedTermId ?? $currentTerm->id) == $term->id ? 'selected' : '' }}>
+                                {{ $term->term_name }} ({{ $term->academic_year }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="lg:col-span-2">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Status</label>
+                    <select name="status" class="w-full px-3.5 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">All Students</option>
+                        <option value="arrears" {{ $status == 'arrears' ? 'selected' : '' }}>Arrears Only</option>
+                    </select>
+                </div>
+
+                <div class="lg:col-span-2">
+                    <button type="submit" class="w-full inline-flex items-center justify-center px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm">
+                        Apply Filter
                     </button>
-                    <button onclick="window.print()" class="btn btn-default btn-sm text-bold" style="border-radius: 6px; margin-left: 5px;">
-                        <i class="fa fa-print"></i> PRINT
-                    </button>
                 </div>
-            </h1>
-        </section>
+            </form>
+        </div>
 
-        <section class="content">
-            {{-- Top Info Boxes --}}
-            <div class="row no-print">
-                <div class="col-md-3 col-sm-6 col-xs-12">
-                    <div class="info-box bg-aqua">
-                        <span class="info-box-icon"><i class="fa fa-money"></i></span>
-                        <div class="info-box-content">
-                            <span class="info-box-text">Gross Collections</span>
-                            <span class="info-box-number">${{ number_format($totalRevenue, 2) }}</span>
-                            <div class="progress"><div class="progress-bar" style="width: 100%"></div></div>
-                            <span class="progress-description">All Terms (Before Deductions)</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6 col-xs-12">
-                    <div class="info-box bg-navy">
-                        <span class="info-box-icon"><i class="fa fa-university"></i></span>
-                        <div class="info-box-content">
-                            <span class="info-box-text">Net Available Funds</span>
-                            <span class="info-box-number">${{ number_format($schoolBalance, 2) }}</span>
-                            <div class="progress"><div class="progress-bar" style="width: 100%"></div></div>
-                            <span class="progress-description">Actual Money (After Expenses)</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6 col-xs-12">
-                    <div class="info-box bg-red">
-                        <span class="info-box-icon"><i class="fa fa-shopping-cart"></i></span>
-                        <div class="info-box-content">
-                            <span class="info-box-text">Term Expenses</span>
-                            <span class="info-box-number">${{ number_format($currentTermExpenses, 2) }}</span>
-                            <div class="progress"><div class="progress-bar" style="width: 100%"></div></div>
-                            <span class="progress-description">Salaries & Costs (This Term)</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6 col-xs-12">
-                    <div class="info-box bg-green">
-                        <span class="info-box-icon"><i class="fa fa-line-chart"></i></span>
-                        <div class="info-box-content">
-                            <span class="info-box-text">Today's Income</span>
-                            <span class="info-box-number">${{ number_format($dailyIncome, 2) }}</span>
-                            <div class="progress"><div class="progress-bar" style="width: 100%"></div></div>
-                            <span class="progress-description">Payments Received Today</span>
-                        </div>
-                    </div>
-                </div>
+        {{-- Summary Cards --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div class="bg-slate-900 text-white p-5 rounded-2xl shadow-sm border border-slate-800">
+                <span class="text-xs font-medium text-slate-400">Total Valid Billing</span>
+                <h3 class="text-2xl font-extrabold mt-1">${{ number_format($report->sum('expected'), 2) }}</h3>
             </div>
+            <div class="bg-emerald-600 text-white p-5 rounded-2xl shadow-sm border border-emerald-500">
+                <span class="text-xs font-medium text-emerald-100">Actual Collected</span>
+                <h3 class="text-2xl font-extrabold mt-1">${{ number_format($report->sum('paid'), 2) }}</h3>
+            </div>
+            <div class="bg-rose-600 text-white p-5 rounded-2xl shadow-sm border border-rose-500">
+                <span class="text-xs font-medium text-rose-100">Total Arrears</span>
+                <h3 class="text-2xl font-extrabold mt-1">${{ number_format($report->sum('balance'), 2) }}</h3>
+            </div>
+            <div class="bg-sky-600 text-white p-5 rounded-2xl shadow-sm border border-sky-500">
+                <span class="text-xs font-medium text-sky-100">Current Term Dues</span>
+                <h3 class="text-2xl font-extrabold mt-1">${{ number_format($report->sum('monthly_arrears'), 2) }}</h3>
+            </div>
+        </div>
 
-            {{-- Filter Box --}}
-            <div class="box box-default no-print filter-box" style="border-top: 3px solid #3c8dbc;">
-                <div class="box-header with-border">
-                    <h3 class="box-title text-bold"><i class="fa fa-filter text-blue"></i> Search & Term Filters</h3>
-                </div>
-                <form action="{{ route('fees.report') }}" method="GET">
-                    <div class="box-body">
-                        <div class="row">
-                            <div class="col-md-3">
-                                <label>Search Name/ID</label>
-                                <input type="text" name="search" class="form-control" value="{{ $searchName }}" placeholder="Enter Student Name..." style="border-radius: 6px;">
-                            </div>
-                            <div class="col-md-2">
-                                <label>Grade</label>
-                                <select name="grade" class="form-control" style="border-radius: 6px;">
-                                    <option value="">All Grades</option>
-                                    @foreach($grades as $g)
-                                        <option value="{{ $g }}" {{ $selectedGrade == $g ? 'selected' : '' }}>Grade {{ $g }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label>Target View Session</label>
-                                <select name="term_id" class="form-control" style="border-radius: 6px;">
-                                    @foreach($terms as $term)
-                                        <option value="{{ $term->id }}" {{ ($selectedTermId ?? $currentTerm->id) == $term->id ? 'selected' : '' }}>
-                                            {{ $term->term_name }} ({{ $term->academic_year }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                <label>Status</label>
-                                <select name="status" class="form-control" style="border-radius: 6px;">
-                                    <option value="">All Students</option>
-                                    <option value="arrears" {{ $status == 'arrears' ? 'selected' : '' }}>Arrears Only</option>
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                <label>&nbsp;</label>
-                                <button type="submit" class="btn btn-primary btn-block text-bold uppercase" style="border-radius: 6px;">Apply Filter</button>
-                            </div>
-                        </div>
-                    </div>
-                </form>
+        {{-- Main Table --}}
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
+            <div class="overflow-x-auto">
+                <table id="reportTable" class="min-w-full divide-y divide-slate-200 dark:divide-slate-700/60">
+                    <thead class="bg-slate-50 dark:bg-slate-800/80">
+                        <tr>
+                            <th scope="col" class="px-6 py-3.5 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Student ID</th>
+                            <th scope="col" class="px-6 py-3.5 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Full Name</th>
+                            <th scope="col" class="px-6 py-3.5 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Grade</th>
+                            <th scope="col" class="px-6 py-3.5 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Billed (Since Join)</th>
+                            <th scope="col" class="px-6 py-3.5 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Paid</th>
+                            <th scope="col" class="px-6 py-3.5 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Term Status</th>
+                            <th scope="col" class="px-6 py-3.5 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Current Balance</th>
+                            <th scope="col" class="px-6 py-3.5 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider no-print">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700/60 text-xs">
+                        @foreach($report as $data)
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                            <td class="px-6 py-4 font-mono font-bold text-slate-600 dark:text-slate-300">{{ $data->student_number }}</td>
+                            <td class="px-6 py-4">
+                                <span class="font-bold text-slate-900 dark:text-white">{{ $data->name }} {{ $data->surname }}</span>
+                                @if($data->term_id == ($selectedTermId ?? $currentTerm->id))
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-sky-500 text-white ml-2 no-print">NEW ENROLL</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 text-center font-semibold text-slate-600 dark:text-slate-300">{{ $data->grade }}</td>
+                            <td class="px-6 py-4 text-right font-medium text-slate-700 dark:text-slate-300">${{ number_format($data->expected, 2) }}</td>
+                            <td class="px-6 py-4 text-right font-bold text-emerald-600 dark:text-emerald-400">${{ number_format($data->paid, 2) }}</td>
+                            <td class="px-6 py-4 text-center">
+                                @if($data->monthly_arrears > 0)
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full font-bold bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50">
+                                        ${{ number_format($data->monthly_arrears, 2) }} Owed
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
+                                        <i class="fa-solid fa-check mr-1 text-[10px]"></i> CLEARED
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 text-right font-bold {{ $data->balance > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }}">
+                                ${{ number_format($data->balance, 2) }}
+                            </td>
+                            <td class="px-6 py-4 text-center no-print">
+                                <a href="{{ Route::has('fees.show') ? route('fees.show', $data->id) : url('/fees/show/' . $data->id) }}" 
+                                   class="inline-flex items-center px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 font-bold border border-indigo-200 dark:border-indigo-800/50 transition-colors">
+                                    STATEMENT
+                                </a>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot class="bg-slate-50 dark:bg-slate-800/80 font-bold text-xs text-slate-800 dark:text-slate-100 border-t-2 border-slate-200 dark:border-slate-700">
+                        <tr>
+                            <td colspan="3" class="px-6 py-4 text-right">GRAND TOTALS:</td>
+                            <td class="px-6 py-4 text-right">${{ number_format($report->sum('expected'), 2) }}</td>
+                            <td class="px-6 py-4 text-right text-emerald-600 dark:text-emerald-400">${{ number_format($report->sum('paid'), 2) }}</td>
+                            <td class="px-6 py-4 text-center text-rose-600 dark:text-rose-400">${{ number_format($report->sum('monthly_arrears'), 2) }}</td>
+                            <td class="px-6 py-4 text-right text-rose-600 dark:text-rose-400">${{ number_format($report->sum('balance'), 2) }}</td>
+                            <td class="no-print"></td>
+                        </tr>
+                    </tfoot>
+                </table>
             </div>
-
-            {{-- Summary Cards --}}
-            <div class="row">
-                <div class="col-md-3 col-sm-6">
-                    <div class="small-box bg-gray">
-                        <div class="inner"><h3>${{ number_format($report->sum('expected'), 2) }}</h3><p>Total Valid Billing</p></div>
-                        <div class="icon"><i class="fa fa-calculator"></i></div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6">
-                    <div class="small-box bg-green">
-                        <div class="inner"><h3>${{ number_format($report->sum('paid'), 2) }}</h3><p>Actual Collected</p></div>
-                        <div class="icon"><i class="fa fa-bank"></i></div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6">
-                    <div class="small-box bg-red">
-                        <div class="inner"><h3>${{ number_format($report->sum('balance'), 2) }}</h3><p>Total Arrears</p></div>
-                        <div class="icon"><i class="fa fa-warning"></i></div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6">
-                    <div class="small-box bg-aqua">
-                        <div class="inner"><h3>${{ number_format($report->sum('monthly_arrears'), 2) }}</h3><p>Current Term Dues</p></div>
-                        <div class="icon"><i class="fa fa-bullseye"></i></div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Main Table --}}
-            <div class="box box-primary">
-                <div class="box-body no-padding table-responsive">
-                    <table id="reportTable" class="table table-vibrant table-bordered table-striped table-hover">
-                        <thead>
-                            <tr>
-                                <th>Student ID</th>
-                                <th>Full Name</th>
-                                <th class="text-center">Grade</th>
-                                <th class="text-right">Billed (Since Join)</th>
-                                <th class="text-right">Total Paid</th>
-                                <th class="text-center">Term Status</th>
-                                <th class="text-right">Current Balance</th>
-                                <th class="no-print text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($report as $data)
-                            <tr>
-                                <td>{{ $data->student_number }}</td>
-                                <td>
-                                    <span class="text-bold">{{ $data->name }} {{ $data->surname }}</span>
-                                    @if($data->term_id == ($selectedTermId ?? $currentTerm->id))
-                                        <span class="badge-new no-print">NEW ENROLL</span>
-                                    @endif
-                                </td>
-                                <td class="text-center">{{ $data->grade }}</td>
-                                <td class="text-right">${{ number_format($data->expected, 2) }}</td>
-                                <td class="text-right text-green text-bold">${{ number_format($data->paid, 2) }}</td>
-                                <td class="text-center">
-                                    @if($data->monthly_arrears > 0)
-                                        <span class="label label-danger" style="border-radius: 4px; padding: 4px 8px;">${{ number_format($data->monthly_arrears, 2) }} Owed</span>
-                                    @else
-                                        <span class="label label-success" style="border-radius: 4px; padding: 4px 8px;"><i class="fa fa-check"></i> CLEARED</span>
-                                    @endif
-                                </td>
-                                <td class="text-right text-bold {{ $data->balance > 0 ? 'text-red' : 'text-green' }}">
-                                    ${{ number_format($data->balance, 2) }}
-                                </td>
-                                <td class="no-print text-center">
-                                    <a href="{{ route('fees.show', $data->id) }}" class="btn btn-xs btn-primary text-bold" style="border-radius: 4px;">
-                                        VIEW STATEMENT
-                                    </a>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                        <tfoot>
-                            <tr style="background-color: #f8fafc; font-weight: 700;">
-                                <td colspan="3" class="text-right">GRAND TOTALS:</td>
-                                <td class="text-right">${{ number_format($report->sum('expected'), 2) }}</td>
-                                <td class="text-right text-green">${{ number_format($report->sum('paid'), 2) }}</td>
-                                <td class="text-center text-red">${{ number_format($report->sum('monthly_arrears'), 2) }}</td>
-                                <td class="text-right text-red">${{ number_format($report->sum('balance'), 2) }}</td>
-                                <td class="no-print"></td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            </div>
-        </section>
+        </div>
     </div>
-</div>
 
-<script>
-    function exportToExcel() {
-        var table = document.getElementById("reportTable");
-        var html = table.outerHTML;
-        // Clean up icons and action buttons for Excel
-        html = html.replace(/<i class=".*?"><\/i>/g, '');
-        html = html.replace(/<th class="no-print.*?<\/th>/g, '');
-        html = html.replace(/<td class="no-print.*?<\/td>/g, '');
-        window.open('data:application/vnd.ms-excel,' + encodeURIComponent(html));
-    }
-</script>
-</body>
-</html>
+    <script>
+        function exportToExcel() {
+            var table = document.getElementById("reportTable");
+            var html = table.outerHTML;
+            html = html.replace(/<i class=".*?"><\/i>/g, '');
+            html = html.replace(/<th class="no-print.*?<\/th>/g, '');
+            html = html.replace(/<td class="no-print.*?<\/td>/g, '');
+            window.open('data:application/vnd.ms-excel,' + encodeURIComponent(html));
+        }
+    </script>
+@endsection

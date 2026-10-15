@@ -1,211 +1,175 @@
+{{-- resources/views/payroll/print.blade.php --}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>FINAL_PAYMENT_AGREEMENT_{{ $payslip->user->name }}</title>
-    {{-- Using your local AdminLTE assets --}}
-    @include('components.adminlte')
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FINAL_PAYMENT_AGREEMENT_{{ preg_replace('/[^A-Za-z0-9_]/', '_', $payslip->user->name ?? 'STAFF') }}</title>
+    
+    <!-- Fonts & FontAwesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        serif: ['Times New Roman', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
 
     <style>
         @page {
-            size: A4;
+            size: A4 portrait;
             margin: 0;
         }
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            background-color: #f3f4f6;
-        }
-        body {
-            font-family: 'Times New Roman', Times, serif;
-            color: #000;
-        }
-        /* A4 Container */
-        .agreement-page {
-            width: 210mm;
-            height: 297mm;
-            padding: 15mm;
-            background: #fff;
-            margin: 0 auto;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-        }
-        /* Inner Border Box */
-        .main-content {
-            border: 2px solid #000;
-            padding: 30px;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-        /* Header & Logo */
-        .header-section { text-align: center; margin-bottom: 20px; }
-        .school-logo { max-height: 80px; margin-bottom: 10px; }
-        .school-name { font-size: 32pt; font-weight: 900; text-transform: uppercase; margin: 0; letter-spacing: -1px; }
-        .doc-title {
-            font-size: 16pt;
-            font-weight: bold;
-            text-transform: uppercase;
-            border-bottom: 2px solid #000;
-            display: inline-block;
-            padding-bottom: 5px;
-            margin-top: 5px;
-        }
-
-        /* Typography */
-        .statement-text { font-size: 13pt; line-height: 1.4; text-align: justify; margin-bottom: 15px; }
-        .highlight-box { background-color: #eee; padding: 2px 8px; font-weight: bold; font-size: 15pt; text-decoration: underline; }
-
-        /* Table Styling */
-        .financial-table { width: 100%; border: 2px solid #000; border-collapse: collapse; margin-bottom: 20px; }
-        .financial-table th, .financial-table td { border: 1px solid #000; padding: 10px; font-size: 12pt; }
-        .financial-table th { background-color: #f5f5f5; text-transform: uppercase; font-size: 10pt; }
-        .net-row { background-color: #000; color: #fff; }
-        .net-row td { padding: 15px; font-size: 18pt; font-weight: bold; }
-
-        /* Signature Section */
-        .footer-grid { display: table; width: 100%; margin-top: auto; }
-        .footer-col { display: table-cell; width: 33.33%; vertical-align: bottom; }
-        .signature-line { border-top: 2px solid #000; width: 90%; margin-top: 40px; }
-        .stamp-zone {
-            width: 120px;
-            height: 120px;
-            border: 2px dashed #000;
-            border-radius: 50%;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            font-size: 9pt;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        .legal-footer {
-            text-align: center;
-            font-size: 8pt;
-            color: #666;
-            text-transform: uppercase;
-            border-top: 1px solid #ccc;
-            margin-top: 20px;
-            padding-top: 10px;
-        }
-
-        /* Print Controls */
         @media print {
             .no-print { display: none !important; }
-            body { background: #fff; }
-            .agreement-page { box-shadow: none; margin: 0; border: none; }
+            body { background: #fff !important; color: #000 !important; }
+            .agreement-page { box-shadow: none !important; margin: 0 !important; border: none !important; padding: 12mm !important; }
         }
     </style>
 </head>
-<body>
+<body class="bg-slate-100 font-serif text-black antialiased min-h-screen py-8 px-4 sm:px-6">
 
-    <div class="agreement-page">
-        <div class="main-content">
+    <div class="max-w-4xl mx-auto space-y-6">
 
-            {{-- 1. INSTITUTIONAL HEADER --}}
-            <div class="header-section">
-                @if(env('SCHOOL_LOGO_PATH'))
-                    <img src="{{ asset(env('SCHOOL_LOGO_PATH')) }}" alt="Logo" class="school-logo">
-                @endif
-                <h1 class="school-name">{{ env('SCHOOL_NAME', 'KNOWLEDGE PLANET COLLEGE') }}</h1>
-                <div class="doc-title">Official Salary Disbursement Advice</div>
-                <div style="margin-top: 10px; font-size: 10pt;">
-                    {{ env('SCHOOL_ADDRESS') }}<br>
-                    Contact: {{ env('SCHOOL_PHONE') }} | Email: {{ env('SCHOOL_EMAIL') }}
-                </div>
-            </div>
+        {{-- Printable A4 Page Container --}}
+        <div class="agreement-page bg-white p-8 sm:p-12 rounded-2xl shadow-lg border border-slate-200 text-black flex flex-col justify-between min-h-[297mm]">
+            
+            <div class="border-2 border-black p-8 flex-1 flex flex-col justify-between">
 
-            {{-- 2. FORMAL BINDING STATEMENT --}}
-            <div class="statement-text">
-                <p>This document constitutes a binding legal acknowledgment of funds received. It confirms that the Employer, <b>{{ env('SCHOOL_NAME') }}</b>, has fulfilled its financial obligations to the Employee for the specified duration.</p>
+                {{-- 1. INSTITUTIONAL HEADER --}}
+                <div>
+                    <div class="text-center pb-6 border-b-2 border-black mb-6">
+                        @if(env('SCHOOL_LOGO_PATH'))
+                            <img src="{{ asset(env('SCHOOL_LOGO_PATH')) }}" alt="Logo" class="h-16 mx-auto mb-3 object-contain">
+                        @endif
+                        <h1 class="text-3xl font-black uppercase tracking-tight font-serif">{{ env('SCHOOL_NAME', 'KNOWLEDGE PLANET COLLEGE') }}</h1>
+                        <div class="inline-block mt-2 px-4 py-1 text-sm font-bold uppercase tracking-wider border-b-2 border-black font-sans">
+                            Official Salary Disbursement Advice
+                        </div>
+                        <div class="mt-3 text-xs font-sans text-slate-700 leading-tight">
+                            {{ env('SCHOOL_ADDRESS') }}<br>
+                            Contact: {{ env('SCHOOL_PHONE') }} | Email: {{ env('SCHOOL_EMAIL') }}
+                        </div>
+                    </div>
 
-                <p>I, <b style="text-decoration: underline; font-size: 16pt; text-transform: uppercase;">{{ $payslip->user->name }}</b>,
-                   employed as <i>{{ $payslip->user->role }}</i> ({{ $payslip->user->job_type ?? 'Full-Time' }}),
-                   hereby acknowledge receipt of my net remuneration for the pay period: <b>{{ $payslip->pay_period }}</b>.</p>
+                    {{-- 2. FORMAL BINDING STATEMENT --}}
+                    <div class="text-sm font-serif leading-relaxed space-y-4 mb-6">
+                        <p class="text-justify">
+                            This document constitutes a binding legal acknowledgment of funds received. It confirms that the Employer, 
+                            <strong>{{ env('SCHOOL_NAME', 'Knowledge Planet College') }}</strong>, has fulfilled its financial obligations to the Employee for the specified duration.
+                        </p>
 
-                <p>A total sum of <span class="highlight-box">${{ number_format($payslip->net_salary, 2) }}</span> has been settled in my favor, representing the final balance after all statutory and agreed deductions.</p>
-            </div>
+                        <p class="text-justify">
+                            I, <strong class="underline text-base uppercase font-bold">{{ $payslip->user->name ?? 'Staff Member' }}</strong>,
+                            employed as <em>{{ $payslip->user->role ?? 'Employee' }}</em> ({{ $payslip->user->job_type ?? 'Full-Time' }}),
+                            hereby acknowledge receipt of my net remuneration for the pay period: <strong>{{ $payslip->pay_period }}</strong>.
+                        </p>
 
-            {{-- 3. FINANCIAL AUDIT TABLE --}}
-            <table class="financial-table">
-                <thead>
-                    <tr>
-                        <th style="text-align: left;">Description of Entitlements</th>
-                        <th style="text-align: right;">Amount (USD)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><b>Contracted Basic Salary</b></td>
-                        <td style="text-align: right;"><b>${{ number_format($payslip->base_salary, 2) }}</b></td>
-                    </tr>
-                    <tr>
-                        <td>Allowances</td>
-                        <td style="text-align: right;">${{ number_format($payslip->allowances, 2) }}</td>
-                    </tr>
-                    <tr style="color: #a94442; background-color: #f2dede;">
-                        <td><i>Total Deductions (Statutory & Other)</i></td>
-                        <td style="text-align: right;">- ${{ number_format($payslip->deductions, 2) }}</td>
-                    </tr>
-                    <tr class="net-row">
-                        <td style="text-align: right; text-transform: uppercase;"><b>Net Total Disbursed</b></td>
-                        <td style="text-align: right; border-left: 2px solid white;">
-                            <b>${{ number_format($payslip->net_salary, 2) }}</b>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                        <p class="text-justify">
+                            A total sum of <span class="bg-slate-200 px-3 py-1 font-bold text-base underline font-mono">${{ number_format($payslip->net_salary, 2) }}</span> 
+                            has been settled in my favor, representing the final balance after all statutory and agreed deductions.
+                        </p>
+                    </div>
 
-            {{-- 4. SIGNATURE & VALIDATION --}}
-            <div class="footer-grid">
-                {{-- Employer --}}
-                <div class="footer-col">
-                    <p style="font-size: 8pt; font-weight: bold; text-transform: uppercase;">Administrative Authorization:</p>
-                    <div class="signature-line"></div>
-                    <p style="font-size: 8pt; font-weight: bold; margin-top: 5px;">Authorized Finance Officer</p>
-                    <p style="font-size: 8pt; font-style: italic;">Issued: {{ date('d/m/Y') }}</p>
-                </div>
-
-                {{-- STAMP --}}
-                <div class="footer-col" style="text-align: center;">
-                    <div class="stamp-zone">
-                        Official<br>Institutional<br>Stamp
+                    {{-- 3. FINANCIAL AUDIT TABLE --}}
+                    <div class="mb-6">
+                        <table class="w-full border-2 border-black text-xs font-serif divide-y divide-black">
+                            <thead class="bg-slate-100 font-sans uppercase">
+                                <tr>
+                                    <th class="p-3 text-left font-bold border-r border-black">Description of Entitlements</th>
+                                    <th class="p-3 text-right font-bold">Amount (USD)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-black">
+                                <tr>
+                                    <td class="p-3 font-bold border-r border-black">Contracted Basic Salary</td>
+                                    <td class="p-3 text-right font-mono font-bold">${{ number_format($payslip->base_salary, 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 border-r border-black">Allowances</td>
+                                    <td class="p-3 text-right font-mono">${{ number_format($payslip->allowances, 2) }}</td>
+                                </tr>
+                                <tr class="bg-rose-50 text-rose-900">
+                                    <td class="p-3 italic border-r border-black">Total Deductions (Statutory & Other)</td>
+                                    <td class="p-3 text-right font-mono">- ${{ number_format($payslip->deductions, 2) }}</td>
+                                </tr>
+                                <tr class="bg-black text-white font-sans">
+                                    <td class="p-4 text-right uppercase font-bold text-sm border-r border-white">Net Total Disbursed</td>
+                                    <td class="p-4 text-right font-mono text-xl font-black">${{ number_format($payslip->net_salary, 2) }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
-                {{-- Employee --}}
-                <div class="footer-col" style="text-align: right;">
-                    <p style="font-size: 8pt; font-weight: bold; text-transform: uppercase;">Employee Acknowledgment:</p>
-                    <div style="margin-top: 10px; text-align: left; padding-left: 10%;">
-                        <span style="font-size: 7pt; font-weight: bold;">ID / PASSPORT NO:</span>
-                        <div style="border-bottom: 1px solid #000; height: 15px; background: #fafafa;"></div>
+                {{-- 4. SIGNATURE & VALIDATION --}}
+                <div class="mt-8">
+                    <div class="grid grid-cols-3 gap-6 items-end font-sans text-xs">
+                        
+                        {{-- Employer Signature --}}
+                        <div>
+                            <p class="font-bold uppercase text-[10px] text-slate-700">Administrative Authorization:</p>
+                            <div class="border-b-2 border-black w-full mt-10 mb-1"></div>
+                            <p class="font-bold">Authorized Finance Officer</p>
+                            <p class="text-[10px] text-slate-500 italic">Issued: {{ date('d/m/Y') }}</p>
+                        </div>
+
+                        {{-- Official Stamp Zone --}}
+                        <div class="text-center">
+                            <div class="w-28 h-28 border-2 border-dashed border-black rounded-full mx-auto flex items-center justify-center text-[10px] font-bold uppercase text-center leading-tight">
+                                Official<br>Institutional<br>Stamp
+                            </div>
+                        </div>
+
+                        {{-- Employee Signature --}}
+                        <div>
+                            <p class="font-bold uppercase text-[10px] text-slate-700 text-right">Employee Acknowledgment:</p>
+                            <div class="mt-4 text-left pl-4">
+                                <span class="text-[9px] font-bold uppercase block text-slate-600">ID / PASSPORT NO:</span>
+                                <div class="border-b border-black h-4 bg-slate-50 w-full mt-0.5"></div>
+                            </div>
+                            <div class="border-b-2 border-black w-full mt-6 mb-1"></div>
+                            <p class="font-bold uppercase text-right">{{ $payslip->user->name ?? 'Staff Member' }}</p>
+                            <p class="text-[10px] text-slate-500 italic text-right">Date: ____/____/20__</p>
+                        </div>
+
                     </div>
-                    <div class="signature-line" style="margin-left: 10%;"></div>
-                    <p style="font-size: 8pt; font-weight: bold; margin-top: 5px;">{{ strtoupper($payslip->user->name) }}</p>
-                    <p style="font-size: 8pt; font-style: italic;">Date: ____/____/20__</p>
+
+                    {{-- LEGAL FOOTER --}}
+                    <div class="mt-8 pt-4 border-t border-slate-300 text-center font-sans text-[10px] text-slate-500 uppercase leading-tight">
+                        This document is generated by the {{ config('app.name', 'SMS') }} Management System. Ref: {{ strtoupper(substr(md5($payslip->id ?? time()), 0, 8)) }} <br>
+                        Certified as a true record of payment in accordance with Labor Laws.
+                    </div>
                 </div>
+
             </div>
 
-            {{-- LEGAL FOOTER --}}
-            <div class="legal-footer">
-                This document is generated by the {{ config('app.name') }} Management System. Ref: {{ strtoupper(substr(md5($payslip->id), 0, 8)) }} <br>
-                Certified as a true record of payment in accordance with Labor Laws.
-            </div>
         </div>
 
         {{-- CONTROLS (Hidden on Print) --}}
-        <div class="no-print" style="text-align: center; margin-top: 20px; padding-bottom: 20px;">
-            <button onclick="window.print()" class="btn btn-lg btn-warning" style="padding: 15px 40px; font-weight: bold; text-transform: uppercase;">
-                <i class="fa fa-print"></i> Print Agreement
+        <div class="no-print text-center flex items-center justify-center space-x-4 pt-4">
+            <button onclick="window.print()" 
+                    class="px-8 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs uppercase tracking-wider shadow-md transition-all flex items-center">
+                <i class="fa-solid fa-print mr-2 text-sm"></i> Print Agreement
             </button>
-            <a href="{{ route('payroll.index') }}" class="btn btn-lg btn-default" style="padding: 15px 40px; margin-left: 10px;">Back</a>
+            <a href="{{ Route::has('payroll.index') ? route('payroll.index') : url('/payroll') }}" 
+               class="px-8 py-3.5 rounded-2xl bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 font-bold text-xs uppercase tracking-wider border border-slate-200 dark:border-slate-700 transition-all">
+                Back to Payroll
+            </a>
         </div>
+
     </div>
 
 </body>

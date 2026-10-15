@@ -1,294 +1,250 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>CA Analytics | {{ env('SCHOOL_ACRONYM') }}</title>
-    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    @include('components.adminlte')
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{{-- resources/views/activities/analytics.blade.php --}}
+@extends('layouts.admin.app')
 
-    <style>
-        :root {
-            --grad-blue: linear-gradient(45deg, #0073b7, #00c0ef);
-            --grad-green: linear-gradient(45deg, #00a65a, #2ecc71);
-            --grad-orange: linear-gradient(45deg, #f39c12, #ffcc33);
-            --grad-red: linear-gradient(45deg, #dd4b39, #ed5565);
-            --grad-purple: linear-gradient(45deg, #605ca8, #9b8cf2);
-        }
-        body { background-color: #f0f3f7 !important; font-family: 'Source Sans Pro', sans-serif; }
-        .small-box { border-radius: 15px; overflow: hidden; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: none; }
-        .small-box:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
-        .small-box .inner { padding: 20px; }
-        .small-box .icon { top: 5px; right: 15px; font-size: 60px; color: rgba(255,255,255,0.15); transition: 0.3s; }
-        .small-box:hover .icon { color: rgba(255,255,255,0.3); transform: scale(1.1); }
-        .bg-blue-grad { background: var(--grad-blue) !important; color: #fff; }
-        .bg-green-grad { background: var(--grad-green) !important; color: #fff; }
-        .bg-orange-grad { background: var(--grad-orange) !important; color: #fff; }
-        .bg-red-grad { background: var(--grad-red) !important; color: #fff; }
-        .bg-purple-grad { background: var(--grad-purple) !important; color: #fff; }
-        .box { border-radius: 12px; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .box-header { padding: 15px; border-bottom: 1px solid #f4f4f4; }
-        .box-header .box-title { font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-        .table-vibrant thead th { background: #f8fafc; color: #64748b; text-transform: uppercase; font-size: 11px; padding: 12px 10px; }
-        .chart-container { position: relative; height: 300px; width: 100%; }
-        .chart-container-sm { position: relative; height: 220px; width: 100%; }
-        .badge-modern { padding: 4px 10px; border-radius: 50px; font-weight: 600; font-size: 10px; }
+@section('title', 'CA Analytics | ' . env('SCHOOL_ACRONYM', 'SMS'))
 
-        .rank-card { border-radius: 12px; padding: 20px; color: #fff; }
-        .rank-card h4 { margin: 0 0 5px 0; font-weight: 300; opacity: .9; }
-        .rank-card h2 { margin: 0; font-weight: 700; }
-        .rank-card .sub { opacity: .85; font-size: 13px; margin-top: 5px; }
-
-        #aiInsightsBox {
-            background: #f8fafc; border-radius: 10px; padding: 18px; line-height: 1.7;
-            font-size: 14px; color: #334155; white-space: pre-line; min-height: 60px;
-        }
-        .ai-loading { text-align: center; padding: 30px; color: #94a3b8; }
-    </style>
-</head>
-<body class="hold-transition skin-blue sidebar-mini">
-    <div class="wrapper">
-        @include('layouts.topbar')
-        @include('layouts.sidebar')
-
-        <div class="content-wrapper">
-            <section class="content-header">
-                <h1>
-                    CA Analytics
-                    <small>Statistical breakdown of Continuous Assessment across the school</small>
-                </h1>
-                <ol class="breadcrumb">
-                    <li><a href="{{ route('dashboard') }}"><i class="fa fa-dashboard"></i> Home</a></li>
-                    <li><a href="{{ route('activities.index') }}">Continuous Assessment</a></li>
-                    <li class="active">Analytics</li>
-                </ol>
-            </section>
-
-            <section class="content">
-
-                {{-- TERM FILTER --}}
-                <div class="box box-solid box-default">
-                    <div class="box-body">
-                        <form method="GET" class="form-inline">
-                            <div class="form-group">
-                                <label style="margin-right:8px;">Term</label>
-                                <select name="term_id" class="form-control" onchange="this.form.submit()">
-                                    @foreach($terms as $t)
-                                        <option value="{{ $t->id }}" {{ $selectedTerm && $selectedTerm->id == $t->id ? 'selected' : '' }}>
-                                            {{ $t->term_name }} ({{ $t->academic_year }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                {{-- KPI ROW --}}
-                <div class="row">
-                    <div class="col-lg-3 col-xs-6">
-                        <div class="small-box bg-blue-grad">
-                            <div class="inner">
-                                <h3>{{ $overall['avg_pct'] }}%</h3>
-                                <p>School-Wide CA Average</p>
-                            </div>
-                            <div class="icon"><i class="fa fa-line-chart"></i></div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-xs-6">
-                        <div class="small-box bg-green-grad">
-                            <div class="inner">
-                                <h3>{{ $overall['activity_count'] }}</h3>
-                                <p>Activities Logged</p>
-                            </div>
-                            <div class="icon"><i class="fa fa-tasks"></i></div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-xs-6">
-                        <div class="small-box bg-purple-grad">
-                            <div class="inner">
-                                <h3>{{ $overall['marks_count'] }}</h3>
-                                <p>Scores Recorded</p>
-                            </div>
-                            <div class="icon"><i class="fa fa-pencil"></i></div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-xs-6">
-                        <div class="small-box bg-red-grad">
-                            <div class="inner">
-                                <h3>{{ $overall['at_risk_count'] }}</h3>
-                                <p>At-Risk Scores (&lt; 40%)</p>
-                            </div>
-                            <div class="icon"><i class="fa fa-exclamation-triangle"></i></div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- BEST / WORST CLASS CALLOUTS --}}
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="rank-card" style="background: var(--grad-green);">
-                            <h4><i class="fa fa-trophy"></i> Best Performing Class</h4>
-                            @if($bestClass)
-                                <h2>{{ $bestClass['class_name'] }} — {{ $bestClass['avg_pct'] }}%</h2>
-                                <div class="sub">{{ $bestClass['marks_count'] }} scores recorded this term</div>
-                            @else
-                                <h2>No data yet</h2>
-                            @endif
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="rank-card" style="background: var(--grad-red);">
-                            <h4><i class="fa fa-arrow-down"></i> Lowest Performing Class</h4>
-                            @if($worstClass)
-                                <h2>{{ $worstClass['class_name'] }} — {{ $worstClass['avg_pct'] }}%</h2>
-                                <div class="sub">{{ $worstClass['marks_count'] }} scores recorded this term</div>
-                            @else
-                                <h2>Not enough classes to compare</h2>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-
-                {{-- AI INSIGHTS PANEL --}}
-                <div class="box box-primary">
-                    <div class="box-header with-border">
-                        <h3 class="box-title"><i class="fa fa-magic text-purple"></i> AI Analysis</h3>
-                        <div class="box-tools">
-                            <button id="generateInsightsBtn" class="btn btn-sm btn-primary">
-                                <i class="fa fa-refresh"></i> Generate AI Insights
-                            </button>
-                        </div>
-                    </div>
-                    <div class="box-body">
-                        <div id="aiInsightsBox">
-                            <span class="text-muted"><i class="fa fa-info-circle"></i> Click "Generate AI Insights" to get a written analysis of the trends, risks, and recommendations behind the numbers below.</span>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- CLASS RANKING + SUBJECT BREAKDOWN --}}
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="box">
-                            <div class="box-header">
-                                <h3 class="box-title"><i class="fa fa-bar-chart text-blue"></i> CA Average by Class</h3>
-                            </div>
-                            <div class="box-body">
-                                <div class="chart-container">
-                                    <canvas id="classChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="box">
-                            <div class="box-header">
-                                <h3 class="box-title"><i class="fa fa-bar-chart text-orange"></i> CA Average by Subject</h3>
-                            </div>
-                            <div class="box-body">
-                                <div class="chart-container">
-                                    <canvas id="subjectChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- TREND + DISTRIBUTION --}}
-                <div class="row">
-                    <div class="col-md-8">
-                        <div class="box">
-                            <div class="box-header">
-                                <h3 class="box-title"><i class="fa fa-line-chart text-green"></i> Weekly CA Average Trend</h3>
-                            </div>
-                            <div class="box-body">
-                                <div class="chart-container">
-                                    <canvas id="trendChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="box">
-                            <div class="box-header">
-                                <h3 class="box-title"><i class="fa fa-pie-chart text-purple"></i> Grade Distribution</h3>
-                            </div>
-                            <div class="box-body">
-                                <div class="chart-container">
-                                    <canvas id="distributionChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- ACTIVITY TYPE + TOP/BOTTOM STUDENTS --}}
-                <div class="row">
-                    <div class="col-md-5">
-                        <div class="box">
-                            <div class="box-header">
-                                <h3 class="box-title"><i class="fa fa-tags text-aqua"></i> Average by Activity Type</h3>
-                            </div>
-                            <div class="box-body">
-                                <div class="chart-container-sm">
-                                    <canvas id="typeChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-7">
-                        <div class="box">
-                            <div class="box-header">
-                                <h3 class="box-title"><i class="fa fa-star text-yellow"></i> Top & Bottom Students (min. 3 scores)</h3>
-                            </div>
-                            <div class="box-body no-padding">
-                                <div class="row" style="margin:0;">
-                                    <div class="col-xs-6" style="padding:0;">
-                                        <table class="table table-vibrant">
-                                            <thead><tr><th colspan="2" class="text-green"><i class="fa fa-arrow-up"></i> Top 5</th></tr></thead>
-                                            <tbody>
-                                                @forelse($topStudents as $s)
-                                                    <tr>
-                                                        <td>{{ $s['student_name'] }}<br><small class="text-muted">{{ $s['class_name'] }}</small></td>
-                                                        <td class="text-right text-bold text-green">{{ $s['avg_pct'] }}%</td>
-                                                    </tr>
-                                                @empty
-                                                    <tr><td colspan="2" class="text-muted text-center">No data</td></tr>
-                                                @endforelse
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <div class="col-xs-6" style="padding:0; border-left:1px solid #f4f4f4;">
-                                        <table class="table table-vibrant">
-                                            <thead><tr><th colspan="2" class="text-red"><i class="fa fa-arrow-down"></i> Bottom 5</th></tr></thead>
-                                            <tbody>
-                                                @forelse($bottomStudents as $s)
-                                                    <tr>
-                                                        <td>{{ $s['student_name'] }}<br><small class="text-muted">{{ $s['class_name'] }}</small></td>
-                                                        <td class="text-right text-bold text-red">{{ $s['avg_pct'] }}%</td>
-                                                    </tr>
-                                                @empty
-                                                    <tr><td colspan="2" class="text-muted text-center">No data</td></tr>
-                                                @endforelse
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </section>
+@section('header')
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">CA Analytics</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Statistical breakdown of Continuous Assessment across the school</p>
         </div>
-        @include('layouts.footer')
+        <div class="mt-4 sm:mt-0">
+            <a href="{{ Route::has('activities.index') ? route('activities.index') : url('/activities') }}" 
+               class="inline-flex items-center px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all border border-slate-200 dark:border-slate-700">
+                <i class="fa-solid fa-list-check mr-2"></i> View Activities List
+            </a>
+        </div>
     </div>
+@endsection
 
-    @include('components.scripts')
+@section('content')
+    <div class="space-y-6">
 
+        {{-- Term Filter Card --}}
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 p-4 transition-colors">
+            <form method="GET" class="flex flex-wrap items-center gap-4">
+                <label class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center">
+                    <i class="fa-solid fa-filter mr-2 text-indigo-500"></i> Target Term:
+                </label>
+                <select name="term_id" onchange="this.form.submit()" 
+                        class="px-3.5 py-2 text-xs font-bold rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    @foreach($terms as $t)
+                        <option value="{{ $t->id }}" {{ $selectedTerm && $selectedTerm->id == $t->id ? 'selected' : '' }}>
+                            {{ $t->term_name }} ({{ $t->academic_year }})
+                        </option>
+                    @endforeach
+                </select>
+            </form>
+        </div>
+
+        {{-- KPI Grid --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            {{-- School Average --}}
+            <div class="bg-gradient-to-br from-sky-500 to-indigo-600 rounded-2xl p-5 text-white shadow-sm relative overflow-hidden">
+                <div class="relative z-10">
+                    <span class="text-xs font-bold uppercase tracking-wider opacity-80 block">School-Wide CA Average</span>
+                    <h3 class="text-3xl font-black mt-2 tracking-tight">{{ $overall['avg_pct'] }}%</h3>
+                </div>
+                <i class="fa-solid fa-chart-line absolute right-4 bottom-2 text-6xl opacity-15"></i>
+            </div>
+
+            {{-- Activities Logged --}}
+            <div class="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-5 text-white shadow-sm relative overflow-hidden">
+                <div class="relative z-10">
+                    <span class="text-xs font-bold uppercase tracking-wider opacity-80 block">Activities Logged</span>
+                    <h3 class="text-3xl font-black mt-2 tracking-tight">{{ $overall['activity_count'] }}</h3>
+                </div>
+                <i class="fa-solid fa-list-check absolute right-4 bottom-2 text-6xl opacity-15"></i>
+            </div>
+
+            {{-- Scores Recorded --}}
+            <div class="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl p-5 text-white shadow-sm relative overflow-hidden">
+                <div class="relative z-10">
+                    <span class="text-xs font-bold uppercase tracking-wider opacity-80 block">Scores Recorded</span>
+                    <h3 class="text-3xl font-black mt-2 tracking-tight">{{ $overall['marks_count'] }}</h3>
+                </div>
+                <i class="fa-solid fa-pen-to-square absolute right-4 bottom-2 text-6xl opacity-15"></i>
+            </div>
+
+            {{-- At-Risk Scores --}}
+            <div class="bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl p-5 text-white shadow-sm relative overflow-hidden">
+                <div class="relative z-10">
+                    <span class="text-xs font-bold uppercase tracking-wider opacity-80 block">At-Risk Scores (&lt; 40%)</span>
+                    <h3 class="text-3xl font-black mt-2 tracking-tight">{{ $overall['at_risk_count'] }}</h3>
+                </div>
+                <i class="fa-solid fa-triangle-exclamation absolute right-4 bottom-2 text-6xl opacity-15"></i>
+            </div>
+
+        </div>
+
+        {{-- Best / Worst Class Highlights --}}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-2xl p-6 text-white shadow-sm">
+                <div class="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-emerald-100">
+                    <i class="fa-solid fa-trophy text-amber-300"></i>
+                    <span>Best Performing Class</span>
+                </div>
+                @if($bestClass)
+                    <h2 class="text-2xl font-black mt-2">{{ $bestClass['class_name'] }} — {{ $bestClass['avg_pct'] }}%</h2>
+                    <p class="text-xs text-emerald-100/80 mt-1 font-medium">{{ $bestClass['marks_count'] }} scores recorded this term</p>
+                @else
+                    <h2 class="text-xl font-bold mt-2">No data yet</h2>
+                @endif
+            </div>
+
+            <div class="bg-gradient-to-br from-rose-600 to-pink-700 rounded-2xl p-6 text-white shadow-sm">
+                <div class="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-rose-100">
+                    <i class="fa-solid fa-arrow-trend-down"></i>
+                    <span>Lowest Performing Class</span>
+                </div>
+                @if($worstClass)
+                    <h2 class="text-2xl font-black mt-2">{{ $worstClass['class_name'] }} — {{ $worstClass['avg_pct'] }}%</h2>
+                    <p class="text-xs text-rose-100/80 mt-1 font-medium">{{ $worstClass['marks_count'] }} scores recorded this term</p>
+                @else
+                    <h2 class="text-xl font-bold mt-2">Not enough classes to compare</h2>
+                @endif
+            </div>
+        </div>
+
+        {{-- AI Analysis Panel --}}
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
+            <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/80 flex items-center justify-between">
+                <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                    <i class="fa-solid fa-wand-magic-sparkles text-purple-500 mr-2.5"></i> AI Analysis & Recommendations
+                </h3>
+                <button id="generateInsightsBtn" 
+                        class="inline-flex items-center px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-sm transition-all">
+                    <i class="fa-solid fa-rotate mr-1.5"></i> Generate AI Insights
+                </button>
+            </div>
+            <div class="p-6">
+                <div id="aiInsightsBox" class="p-5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-700/60 text-xs text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line min-h-[80px]">
+                    <span class="text-slate-400 flex items-center">
+                        <i class="fa-solid fa-circle-info mr-2 text-indigo-500"></i> Click "Generate AI Insights" to get an automated analysis of performance trends, risk areas, and strategic recommendations.
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        {{-- Charts Row 1: Class Ranking & Subject Breakdown --}}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 p-6 transition-colors">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-4 flex items-center">
+                    <i class="fa-solid fa-chart-simple text-indigo-500 mr-2"></i> CA Average by Class
+                </h3>
+                <div class="relative h-64 w-full">
+                    <canvas id="classChart"></canvas>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 p-6 transition-colors">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-4 flex items-center">
+                    <i class="fa-solid fa-chart-column text-amber-500 mr-2"></i> CA Average by Subject
+                </h3>
+                <div class="relative h-64 w-full">
+                    <canvas id="subjectChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        {{-- Charts Row 2: Trend & Distribution --}}
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-8 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 p-6 transition-colors">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-4 flex items-center">
+                    <i class="fa-solid fa-chart-line text-emerald-500 mr-2"></i> Weekly CA Average Trend
+                </h3>
+                <div class="relative h-64 w-full">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+
+            <div class="lg:col-span-4 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 p-6 transition-colors">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-4 flex items-center">
+                    <i class="fa-solid fa-chart-pie text-purple-500 mr-2"></i> Grade Distribution
+                </h3>
+                <div class="relative h-64 w-full">
+                    <canvas id="distributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        {{-- Row 3: Activity Types & Top/Bottom Students --}}
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-5 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 p-6 transition-colors">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-4 flex items-center">
+                    <i class="fa-solid fa-tags text-sky-500 mr-2"></i> Average by Activity Type
+                </h3>
+                <div class="relative h-60 w-full">
+                    <canvas id="typeChart"></canvas>
+                </div>
+            </div>
+
+            <div class="lg:col-span-7 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
+                <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/80">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 flex items-center">
+                        <i class="fa-solid fa-star text-amber-500 mr-2"></i> Top & Bottom Performers (min. 3 scores)
+                    </h3>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 dark:divide-slate-700/60 text-xs">
+                    {{-- Top 5 --}}
+                    <div class="p-4">
+                        <h4 class="font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-3 flex items-center text-[11px]">
+                            <i class="fa-solid fa-arrow-up mr-1.5"></i> Top 5 Performers
+                        </h4>
+                        <table class="w-full divide-y divide-slate-100 dark:divide-slate-700/60">
+                            <tbody>
+                                @forelse($topStudents as $s)
+                                    <tr>
+                                        <td class="py-2">
+                                            <strong class="text-slate-800 dark:text-slate-200 block">{{ $s['student_name'] }}</strong>
+                                            <span class="text-[10px] text-slate-400">{{ $s['class_name'] }}</span>
+                                        </td>
+                                        <td class="py-2 text-right font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
+                                            {{ $s['avg_pct'] }}%
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="2" class="py-4 text-center text-slate-400">No data available</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {{-- Bottom 5 --}}
+                    <div class="p-4">
+                        <h4 class="font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 mb-3 flex items-center text-[11px]">
+                            <i class="fa-solid fa-arrow-down mr-1.5"></i> Bottom 5 Performers
+                        </h4>
+                        <table class="w-full divide-y divide-slate-100 dark:divide-slate-700/60">
+                            <tbody>
+                                @forelse($bottomStudents as $s)
+                                    <tr>
+                                        <td class="py-2">
+                                            <strong class="text-slate-800 dark:text-slate-200 block">{{ $s['student_name'] }}</strong>
+                                            <span class="text-[10px] text-slate-400">{{ $s['class_name'] }}</span>
+                                        </td>
+                                        <td class="py-2 text-right font-mono font-extrabold text-rose-600 dark:text-rose-400">
+                                            {{ $s['avg_pct'] }}%
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="2" class="py-4 text-center text-slate-400">No data available</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+@endsection
+
+@section('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const classLabels = {!! json_encode($byClass->pluck('class_name')) !!};
@@ -304,21 +260,20 @@
 
             const tooltipDefaults = {
                 backgroundColor: '#1e293b', padding: 12,
-                titleFont: { size: 14 }, bodyFont: { size: 13 }, cornerRadius: 8
+                titleFont: { size: 12, weight: 'bold' }, bodyFont: { size: 12 }, cornerRadius: 8
             };
 
             function barColor(values) {
-                // Highlight best (green) and worst (red) bar, blue-gradient the rest.
-                if (!values.length) return ['#0073b7'];
+                if (!values.length) return ['#3b82f6'];
                 const max = Math.max(...values), min = Math.min(...values);
                 return values.map(v => {
-                    if (v === max && max !== min) return '#00a65a';
-                    if (v === min && max !== min) return '#dd4b39';
-                    return '#00c0ef';
+                    if (v === max && max !== min) return '#10b981';
+                    if (v === min && max !== min) return '#f43f5e';
+                    return '#3b82f6';
                 });
             }
 
-            // --- Class ranking chart ---
+            // Class ranking chart
             new Chart(document.getElementById('classChart').getContext('2d'), {
                 type: 'bar',
                 data: {
@@ -327,7 +282,7 @@
                         label: 'CA Average %',
                         data: classData.length ? classData : [0],
                         backgroundColor: barColor(classData),
-                        borderRadius: 8, borderSkipped: false, barPercentage: 0.6
+                        borderRadius: 6, barPercentage: 0.6
                     }]
                 },
                 options: {
@@ -337,7 +292,7 @@
                 }
             });
 
-            // --- Subject breakdown chart ---
+            // Subject breakdown chart
             new Chart(document.getElementById('subjectChart').getContext('2d'), {
                 type: 'bar',
                 data: {
@@ -346,7 +301,7 @@
                         label: 'CA Average %',
                         data: subjectData.length ? subjectData : [0],
                         backgroundColor: barColor(subjectData),
-                        borderRadius: 8, borderSkipped: false, barPercentage: 0.6
+                        borderRadius: 6, barPercentage: 0.6
                     }]
                 },
                 options: {
@@ -356,11 +311,11 @@
                 }
             });
 
-            // --- Weekly trend line chart ---
+            // Weekly trend line chart
             const trendCtx = document.getElementById('trendChart').getContext('2d');
             const trendGrad = trendCtx.createLinearGradient(0, 0, 0, 300);
-            trendGrad.addColorStop(0, 'rgba(0,166,90,0.35)');
-            trendGrad.addColorStop(1, 'rgba(0,166,90,0)');
+            trendGrad.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
+            trendGrad.addColorStop(1, 'rgba(16, 185, 129, 0)');
             new Chart(trendCtx, {
                 type: 'line',
                 data: {
@@ -368,9 +323,8 @@
                     datasets: [{
                         label: 'CA Average %',
                         data: trendData.length ? trendData : [0],
-                        borderColor: '#00a65a', backgroundColor: trendGrad,
-                        fill: true, tension: 0.35, pointRadius: 4,
-                        pointBackgroundColor: '#00a65a'
+                        borderColor: '#10b981', backgroundColor: trendGrad,
+                        fill: true, tension: 0.35, pointRadius: 4, pointBackgroundColor: '#10b981'
                     }]
                 },
                 options: {
@@ -380,23 +334,23 @@
                 }
             });
 
-            // --- Grade distribution doughnut ---
+            // Grade distribution doughnut
             new Chart(document.getElementById('distributionChart').getContext('2d'), {
                 type: 'doughnut',
                 data: {
                     labels: distLabels,
                     datasets: [{
                         data: distData,
-                        backgroundColor: ['#00a65a', '#00c0ef', '#0073b7', '#f39c12', '#ff8f00', '#dd4b39']
+                        backgroundColor: ['#10b981', '#06b6d4', '#3b82f6', '#f59e0b', '#f97316', '#ef4444']
                     }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }, tooltip: tooltipDefaults }
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }, tooltip: tooltipDefaults }
                 }
             });
 
-            // --- Activity type horizontal bar ---
+            // Activity type horizontal bar
             new Chart(document.getElementById('typeChart').getContext('2d'), {
                 type: 'bar',
                 data: {
@@ -404,8 +358,8 @@
                     datasets: [{
                         label: 'CA Average %',
                         data: typeData.length ? typeData : [0],
-                        backgroundColor: '#605ca8',
-                        borderRadius: 6, borderSkipped: false, barPercentage: 0.6
+                        backgroundColor: '#8b5cf6',
+                        borderRadius: 6, barPercentage: 0.6
                     }]
                 },
                 options: {
@@ -415,17 +369,17 @@
                 }
             });
 
-            // --- AI Insights (on-demand) ---
+            // AI Insights Handler
             const btn = document.getElementById('generateInsightsBtn');
             const box = document.getElementById('aiInsightsBox');
             const termId = {{ $selectedTerm->id ?? 'null' }};
 
             btn.addEventListener('click', function () {
                 btn.disabled = true;
-                btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Analyzing...';
-                box.innerHTML = '<div class="ai-loading"><i class="fa fa-spinner fa-spin fa-2x"></i><br><br>Crunching the numbers and writing the analysis...</div>';
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Analyzing...';
+                box.innerHTML = '<div class="text-center py-6 text-slate-400"><i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2"></i><br>Processing analytics metrics...</div>';
 
-                fetch("{{ route('activities.analytics.ai_insights') }}", {
+                fetch("{{ Route::has('activities.analytics.ai_insights') ? route('activities.analytics.ai_insights') : url('/activities/analytics/ai-insights') }}", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -438,14 +392,13 @@
                     box.innerText = data.insights;
                 })
                 .catch(() => {
-                    box.innerHTML = '<span class="text-danger"><i class="fa fa-exclamation-circle"></i> Something went wrong generating the analysis. Please try again.</span>';
+                    box.innerHTML = '<span class="text-rose-500 font-bold"><i class="fa-solid fa-circle-exclamation mr-1"></i> Failed to generate AI analysis. Please try again.</span>';
                 })
                 .finally(() => {
                     btn.disabled = false;
-                    btn.innerHTML = '<i class="fa fa-refresh"></i> Regenerate';
+                    btn.innerHTML = '<i class="fa-solid fa-rotate mr-1.5"></i> Regenerate';
                 });
             });
         });
     </script>
-</body>
-</html>
+@endsection

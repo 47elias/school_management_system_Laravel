@@ -1,332 +1,343 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>Admission Management | {{ env('SCHOOL_ACRONYM', 'SMS') }}</title>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{{-- resources/views/admissions/manage.blade.php --}}
+@extends('layouts.admin.app')
 
-    @include('components.adminlte')
-    @include('components.scripts')
+@section('title', 'Admission Management | ' . env('SCHOOL_ACRONYM', 'SMS'))
 
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic">
+@section('header')
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Admissions Registry</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Review and process student applications</p>
+        </div>
+    </div>
+@endsection
 
-    <!-- Scoped Modern UI Updates (Will not affect AdminLTE Footer/Layout) -->
-    <style>
-        /* Modern Gradient Cards */
-        .content .info-box-modern { border-radius: 12px; padding: 25px 20px; color: #fff; position: relative; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.08); transition: transform 0.3s ease; margin-bottom: 20px; }
-        .content .info-box-modern:hover { transform: translateY(-5px); }
-        .bg-gradient-blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
-        .bg-gradient-orange { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
-        .bg-gradient-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
-        .bg-gradient-red { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
-        .content .info-box-modern .inner h3 { font-size: 36px; font-weight: 800; margin: 0 0 5px 0; letter-spacing: 1px; }
-        .content .info-box-modern .inner p { font-size: 15px; margin: 0; font-weight: 600; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px; }
-        .content .info-box-modern .icon { position: absolute; right: 20px; top: 20px; font-size: 55px; opacity: 0.2; }
+@section('content')
+    <div x-data="{ activeModal: null }" class="space-y-6">
 
-        /* Box & Table Overrides */
-        .content .box { border-radius: 12px; border-top: none; box-shadow: 0 4px 20px rgba(0,0,0,0.05); background: #ffffff; }
-        .content .box-header { border-bottom: 1px solid #f1f5f9; padding: 20px; background: #fff; border-radius: 12px 12px 0 0; }
-        .content .box-title { font-weight: 700 !important; color: #1e293b; font-size: 18px; }
-        
-        .content .table > tbody > tr > td { vertical-align: middle !important; padding: 15px; border-top: 1px solid #f1f5f9; }
-        .content .table > thead > tr > th { border-bottom: 2px solid #e2e8f0; color: #64748b; font-weight: 700; padding: 15px; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; background: #f8fafc; }
-        
-        .content .status-badge { padding: 6px 12px; border-radius: 30px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
-        
-        /* Modal Modernization */
-        .modal-content { border-radius: 12px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
-        .modal-header-custom { background: #f8fafc; color: #1e293b; border-bottom: 1px solid #e2e8f0; border-radius: 12px 12px 0 0; padding: 25px; }
-        .modal-title { font-weight: 800; font-size: 20px; }
-        .modal-body { padding: 30px; background: #fff; }
-        
-        /* Data Display Typography */
-        .section-title { font-size: 14px; font-weight: 700; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 20px; margin-top: 15px; }
-        .section-title:first-child { margin-top: 0; }
-        .info-label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: block; }
-        .data-value { font-size: 15px; color: #334155; font-weight: 600; margin-bottom: 20px; display: block; word-wrap: break-word; }
-        .data-value.block-text { background: #f8fafc; border-left: 4px solid #cbd5e1; padding: 12px 15px; border-radius: 0 6px 6px 0; font-size: 14px; font-weight: 400; }
-        
-        /* Forms inside modal */
-        .content .form-control { border-radius: 6px; border: 1px solid #cbd5e1; box-shadow: none; padding: 10px 15px; height: auto; }
-        .content .form-control:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
-        
-        /* Document Buttons */
-        .doc-btn { border-radius: 6px; padding: 10px 15px; font-weight: 600; transition: all 0.2s; margin-bottom: 10px; display: block; text-align: left; background: #f8fafc; border: 1px solid #e2e8f0; color: #334155; }
-        .doc-btn:hover { background: #f1f5f9; color: #3b82f6; border-color: #cbd5e1; text-decoration: none; }
-        .doc-btn i { font-size: 18px; width: 25px; text-align: center; margin-right: 5px; }
-    </style>
-</head>
-<body class="hold-transition skin-blue sidebar-mini">
-    <div class="wrapper">
-        @include('layouts.topbar')
-        @include('layouts.sidebar')
-
-        <div class="content-wrapper">
-            <section class="content-header" style="padding-bottom: 15px;">
-                <h1 style="font-weight: 800; color: #1e293b; font-size: 28px;">
-                    Admissions Registry
-                    <small style="color: #64748b; font-weight: 600; font-size: 14px;">Review and process student applications</small>
-                </h1>
-            </section>
-
-            <section class="content">
-
-                <!-- 1. MODERN DASHBOARD CARDS -->
-                <div class="row">
-                    <div class="col-md-3 col-sm-6">
-                        <div class="info-box-modern bg-gradient-blue">
-                            <div class="inner"><h3>{{ $admissions->total() }}</h3><p>Total Apps</p></div>
-                            <div class="icon"><i class="fa fa-folder-open"></i></div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-sm-6">
-                        <div class="info-box-modern bg-gradient-orange">
-                            <div class="inner"><h3>{{ $pendingCount ?? $admissions->where('status', 'pending')->count() }}</h3><p>Pending Review</p></div>
-                            <div class="icon"><i class="fa fa-hourglass-half"></i></div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-sm-6">
-                        <div class="info-box-modern bg-gradient-green">
-                            <div class="inner"><h3>{{ $approvedCount ?? $admissions->where('status', 'approved')->count() }}</h3><p>Approved</p></div>
-                            <div class="icon"><i class="fa fa-check-circle"></i></div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-sm-6">
-                        <div class="info-box-modern bg-gradient-red">
-                            <div class="inner"><h3>{{ $declinedCount ?? $admissions->where('status', 'declined')->count() }}</h3><p>Declined / Rejected</p></div>
-                            <div class="icon"><i class="fa fa-times-circle"></i></div>
-                        </div>
-                    </div>
+        {{-- 1. STAT CARDS --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            {{-- Total Apps --}}
+            <div class="bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl p-5 text-white shadow-sm relative overflow-hidden">
+                <div class="relative z-10">
+                    <span class="text-xs font-bold uppercase tracking-wider opacity-80 block">Total Apps</span>
+                    <h3 class="text-3xl font-black mt-2 tracking-tight">{{ $admissions->total() }}</h3>
                 </div>
+                <i class="fa-solid fa-folder-open absolute right-4 bottom-2 text-6xl opacity-15"></i>
+            </div>
 
-                <!-- 2. SEARCH BAR -->
-                <div class="box">
-                    <div class="box-body" style="padding: 20px;">
-                        <form action="{{ route('admissions.manage') }}" method="GET">
-                            <div class="input-group input-group-lg" style="box-shadow: 0 2px 10px rgba(0,0,0,0.02); border-radius: 8px;">
-                                <input type="text" name="search" class="form-control" style="border-radius: 8px 0 0 8px; border-right: none;" placeholder="Search by Student Name, ID Number, or Tracking ID..." value="{{ request('search') }}">
-                                <span class="input-group-btn">
-                                    <button type="submit" class="btn btn-primary" style="border-radius: 0 8px 8px 0; padding: 10px 25px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border: none; font-weight: 700;"><i class="fa fa-search"></i> SEARCH</button>
+            {{-- Pending Review --}}
+            <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-5 text-white shadow-sm relative overflow-hidden">
+                <div class="relative z-10">
+                    <span class="text-xs font-bold uppercase tracking-wider opacity-80 block">Pending Review</span>
+                    <h3 class="text-3xl font-black mt-2 tracking-tight">{{ $pendingCount ?? $admissions->where('status', 'pending')->count() }}</h3>
+                </div>
+                <i class="fa-solid fa-hourglass-half absolute right-4 bottom-2 text-6xl opacity-15"></i>
+            </div>
+
+            {{-- Approved --}}
+            <div class="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-5 text-white shadow-sm relative overflow-hidden">
+                <div class="relative z-10">
+                    <span class="text-xs font-bold uppercase tracking-wider opacity-80 block">Approved</span>
+                    <h3 class="text-3xl font-black mt-2 tracking-tight">{{ $approvedCount ?? $admissions->where('status', 'approved')->count() }}</h3>
+                </div>
+                <i class="fa-solid fa-circle-check absolute right-4 bottom-2 text-6xl opacity-15"></i>
+            </div>
+
+            {{-- Declined --}}
+            <div class="bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl p-5 text-white shadow-sm relative overflow-hidden">
+                <div class="relative z-10">
+                    <span class="text-xs font-bold uppercase tracking-wider opacity-80 block">Declined / Rejected</span>
+                    <h3 class="text-3xl font-black mt-2 tracking-tight">{{ $declinedCount ?? $admissions->where('status', 'declined')->count() }}</h3>
+                </div>
+                <i class="fa-solid fa-circle-xmark absolute right-4 bottom-2 text-6xl opacity-15"></i>
+            </div>
+
+        </div>
+
+        {{-- 2. SEARCH BAR --}}
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 p-4 transition-colors">
+            <form action="{{ Route::has('admissions.manage') ? route('admissions.manage') : url('/admissions/manage') }}" method="GET">
+                <div class="relative rounded-xl flex items-center">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </div>
+                    <input type="text" name="search" value="{{ request('search') }}" 
+                           placeholder="Search by Student Name, ID Number, or Tracking ID..."
+                           class="w-full pl-10 pr-28 py-2.5 text-xs font-medium rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <button type="submit" class="absolute right-1 px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm">
+                        SEARCH
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        @if(session('success'))
+            <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-200 flex items-center justify-between shadow-sm">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-circle-check text-emerald-600 dark:text-emerald-400 text-lg"></i>
+                    <p class="text-xs font-medium">{{ session('success') }}</p>
+                </div>
+            </div>
+        @endif
+
+        {{-- 3. DATA TABLE --}}
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
+            <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/80">
+                <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                    <i class="fa-solid fa-list text-indigo-500 mr-2.5"></i> Applicant Registry
+                </h3>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700/60 text-xs">
+                    <thead class="bg-slate-50 dark:bg-slate-800/80">
+                        <tr>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tracking ID</th>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Student Details</th>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Grade</th>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Contact</th>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-6 py-3.5 text-right font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700/60">
+                        @forelse($admissions as $app)
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="font-mono text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700/60 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-600">
+                                    {{ $app->tracking_id }}
                                 </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <strong class="text-xs font-bold text-slate-800 dark:text-slate-100 block uppercase">{{ $app->student_name }}</strong>
+                                <span class="text-[11px] font-mono text-slate-400 flex items-center mt-0.5">
+                                    <i class="fa-solid fa-id-card mr-1"></i> {{ $app->identity_number }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/50">
+                                    {{ $app->applied_grade }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <strong class="text-slate-700 dark:text-slate-300 block">{{ $app->guardian_name }}</strong>
+                                <span class="text-[11px] font-mono text-slate-400 flex items-center mt-0.5">
+                                    <i class="fa-solid fa-phone mr-1"></i> {{ $app->guardian_phone }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if($app->status == 'approved')
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold tracking-wider uppercase bg-emerald-500 text-white shadow-sm">
+                                        APPROVED
+                                    </span>
+                                @elseif($app->status == 'declined' || $app->status == 'rejected')
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold tracking-wider uppercase bg-rose-500 text-white shadow-sm">
+                                        DECLINED
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold tracking-wider uppercase bg-amber-500 text-white shadow-sm">
+                                        PENDING
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right">
+                                <button type="button" @click="activeModal = 'app-{{ $app->id }}'" 
+                                        class="inline-flex items-center px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 text-xs font-bold border border-slate-200 dark:border-slate-600 transition-colors">
+                                    <i class="fa-solid fa-magnifying-glass-plus mr-1.5"></i> REVIEW
+                                </button>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-slate-400">
+                                <i class="fa-solid fa-inbox text-2xl text-slate-300 dark:text-slate-600 mb-2 block"></i>
+                                No applications found matching your search.
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            @if($admissions->hasPages())
+                <div class="px-6 py-4 bg-slate-50/50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700/60">
+                    {!! $admissions->appends(request()->query())->links() !!}
+                </div>
+            @endif
+        </div>
+
+        {{-- 4. REVIEW MODALS --}}
+        @foreach($admissions as $app)
+            <div x-show="activeModal === 'app-{{ $app->id }}'" 
+                 class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+                <div class="flex items-center justify-center min-h-screen px-4 text-center sm:p-0">
+                    <div @click="activeModal = null" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
+
+                    <div class="inline-block w-full max-w-5xl p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-slate-800 rounded-3xl shadow-2xl z-10 border border-slate-200 dark:border-slate-700">
+                        <form action="{{ Route::has('admissions.update') ? route('admissions.update', $app->id) : url('/admissions/' . $app->id) }}" method="POST">
+                            @csrf @method('PUT')
+
+                            <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-700">
+                                <div>
+                                    <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                                        <i class="fa-solid fa-pen-to-square text-indigo-500 mr-2"></i> Application Review
+                                    </h3>
+                                    <p class="text-xs text-slate-400 mt-0.5">
+                                        Tracking ID: <strong class="text-indigo-600 dark:text-indigo-400 font-mono">{{ $app->tracking_id }}</strong> | Submitted: {{ $app->created_at->format('d M Y, h:i A') }}
+                                    </p>
+                                </div>
+                                <button type="button" @click="activeModal = null" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+
+                            <div class="py-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
+                                
+                                {{-- LEFT: ALL DETAILS --}}
+                                <div class="lg:col-span-7 space-y-6 text-xs">
+                                    
+                                    {{-- Student Personal Info --}}
+                                    <div>
+                                        <h4 class="font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-3 pb-1 border-b border-slate-200 dark:border-slate-700/60 flex items-center">
+                                            <i class="fa-solid fa-user mr-1.5"></i> 1. Student Personal Information
+                                        </h4>
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <span class="block text-[10px] font-bold uppercase text-slate-400">Full Name</span>
+                                                <span class="font-bold text-slate-800 dark:text-slate-100 uppercase">{{ $app->student_name }}</span>
+                                            </div>
+                                            <div>
+                                                <span class="block text-[10px] font-bold uppercase text-slate-400">National ID / Birth Cert</span>
+                                                <span class="font-mono font-bold text-slate-800 dark:text-slate-100">{{ $app->identity_number }}</span>
+                                            </div>
+                                            <div>
+                                                <span class="block text-[10px] font-bold uppercase text-slate-400">Applied Grade</span>
+                                                <span class="font-bold text-indigo-600 dark:text-indigo-400">{{ $app->applied_grade }}</span>
+                                            </div>
+                                            <div>
+                                                <span class="block text-[10px] font-bold uppercase text-slate-400">Date of Birth</span>
+                                                <span class="font-semibold text-slate-800 dark:text-slate-100">
+                                                    {{ \Carbon\Carbon::parse($app->date_of_birth)->format('d F Y') }} ({{ \Carbon\Carbon::parse($app->date_of_birth)->age }} yrs)
+                                                </span>
+                                            </div>
+                                            <div class="col-span-2">
+                                                <span class="block text-[10px] font-bold uppercase text-slate-400">Residential Address</span>
+                                                <span class="font-semibold text-slate-800 dark:text-slate-100">{{ $app->address ?? 'Not Provided' }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {{-- Guardian Info --}}
+                                    <div>
+                                        <h4 class="font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-3 pb-1 border-b border-slate-200 dark:border-slate-700/60 flex items-center">
+                                            <i class="fa-solid fa-users mr-1.5"></i> 2. Guardian Information
+                                        </h4>
+                                        <div class="grid grid-cols-3 gap-3">
+                                            <div>
+                                                <span class="block text-[10px] font-bold uppercase text-slate-400">Guardian Name</span>
+                                                <span class="font-semibold text-slate-800 dark:text-slate-100">{{ $app->guardian_name }}</span>
+                                            </div>
+                                            <div>
+                                                <span class="block text-[10px] font-bold uppercase text-slate-400">Phone Number</span>
+                                                <span class="font-mono font-semibold text-slate-800 dark:text-slate-100">{{ $app->guardian_phone }}</span>
+                                            </div>
+                                            <div>
+                                                <span class="block text-[10px] font-bold uppercase text-slate-400">Email Address</span>
+                                                <span class="font-semibold text-slate-800 dark:text-slate-100">{{ $app->guardian_email ?? 'Not Provided' }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {{-- Academic History --}}
+                                    <div>
+                                        <h4 class="font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-3 pb-1 border-b border-slate-200 dark:border-slate-700/60 flex items-center">
+                                            <i class="fa-solid fa-graduation-cap mr-1.5"></i> 3. Academic & Disciplinary History
+                                        </h4>
+                                        <div class="grid grid-cols-2 gap-3 mb-2">
+                                            <div>
+                                                <span class="block text-[10px] font-bold uppercase text-slate-400">Previous School Attended</span>
+                                                <span class="font-semibold text-slate-800 dark:text-slate-100">{{ $app->previous_school ?? 'Not Provided' }}</span>
+                                            </div>
+                                            <div>
+                                                <span class="block text-[10px] font-bold uppercase text-slate-400">Subjects Passed / Results</span>
+                                                <span class="font-semibold text-slate-800 dark:text-slate-100">{{ $app->subjects_passed ?? 'Not Provided' }}</span>
+                                            </div>
+                                        </div>
+                                        @if($app->academic_history)
+                                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 leading-relaxed">
+                                                {{ $app->academic_history }}
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    {{-- Attachments --}}
+                                    <div>
+                                        <h4 class="font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-3 pb-1 border-b border-slate-200 dark:border-slate-700/60 flex items-center">
+                                            <i class="fa-solid fa-paperclip mr-1.5"></i> 4. Uploaded Documents
+                                        </h4>
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <span class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Results / Report Book</span>
+                                                @if($app->results_file)
+                                                    <a href="{{ asset($app->results_file) }}" target="_blank" 
+                                                       class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 hover:border-indigo-500 font-bold text-indigo-600 dark:text-indigo-400 flex items-center transition-colors">
+                                                        <i class="fa-solid fa-file-pdf text-rose-500 text-lg mr-2"></i> View Results Document
+                                                    </a>
+                                                @else
+                                                    <span class="text-slate-400 italic">No Results Uploaded</span>
+                                                @endif
+                                            </div>
+                                            <div>
+                                                <span class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Recommendation Letter</span>
+                                                @if($app->recommendation_letter)
+                                                    <a href="{{ asset($app->recommendation_letter) }}" target="_blank" 
+                                                       class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 hover:border-indigo-500 font-bold text-indigo-600 dark:text-indigo-400 flex items-center transition-colors">
+                                                        <i class="fa-solid fa-file-lines text-indigo-500 text-lg mr-2"></i> View Recommendation Letter
+                                                    </a>
+                                                @else
+                                                    <span class="text-slate-400 italic">No Recommendation Provided</span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                {{-- RIGHT: DECISION FORM --}}
+                                <div class="lg:col-span-5 bg-slate-50 dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-4">
+                                    <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                                        <i class="fa-solid fa-gavel text-amber-500 mr-2"></i> Admissions Decision
+                                    </h3>
+
+                                    <div>
+                                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">Update Application Status</label>
+                                        <select name="status" class="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                            <option value="pending" {{ $app->status == 'pending' ? 'selected' : '' }}>⏳ Pending Review</option>
+                                            <option value="approved" {{ $app->status == 'approved' ? 'selected' : '' }}>✅ Approve Admission</option>
+                                            <option value="declined" {{ $app->status == 'declined' ? 'selected' : '' }}>❌ Decline / Reject Application</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">Admin Remarks / Feedback</label>
+                                        <p class="text-[11px] text-slate-400 mb-2">Visible to parent on tracking portal and official letter.</p>
+                                        <textarea name="admin_remarks" rows="5" placeholder="Enter reason for decision or instructions for enrollment..."
+                                                  class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed">{{ $app->admin_remarks }}</textarea>
+                                    </div>
+
+                                    <button type="submit" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center">
+                                        <i class="fa-solid fa-floppy-disk mr-2"></i> SAVE DECISION
+                                    </button>
+                                </div>
+
                             </div>
                         </form>
                     </div>
                 </div>
+            </div>
+        @endforeach
 
-                @if(session('success'))
-                    <div class="alert alert-success alert-dismissible" style="border-radius: 8px; box-shadow: 0 4px 10px rgba(16,185,129,0.2);">
-                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-                        <h4 style="font-weight: 700; margin-bottom: 0;"><i class="icon fa fa-check-circle"></i> {{ session('success') }}</h4>
-                    </div>
-                @endif
-
-                <!-- 3. DATA TABLE -->
-                <div class="box">
-                    <div class="box-header with-border">
-                        <h3 class="box-title"><i class="fa fa-list-ul text-blue"></i> Applicant Registry</h3>
-                    </div>
-                    <div class="box-body table-responsive no-padding">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th style="width: 140px;">Tracking ID</th>
-                                    <th>Student Details</th>
-                                    <th>Grade</th>
-                                    <th>Contact</th>
-                                    <th>Status</th>
-                                    <th class="text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($admissions as $app)
-                                <tr>
-                                    <td>
-                                        <span class="label" style="background: #e2e8f0; color: #475569; font-family: monospace; font-size: 13px; padding: 6px 10px;">{{ $app->tracking_id }}</span>
-                                    </td>
-                                    <td>
-                                        <span style="font-weight: 700; color: #1e293b; font-size: 15px;">{{ strtoupper($app->student_name) }}</span><br>
-                                        <small style="color: #64748b; font-weight: 600;"><i class="fa fa-id-card-o"></i> {{ $app->identity_number }}</small>
-                                    </td>
-                                    <td><span class="label" style="background: #3b82f6; font-size: 12px; padding: 5px 10px;">{{ $app->applied_grade }}</span></td>
-                                    <td>
-                                        <span style="font-weight: 600; color: #334155;">{{ $app->guardian_name }}</span><br>
-                                        <small style="color: #64748b;"><i class="fa fa-phone"></i> {{ $app->guardian_phone }}</small>
-                                    </td>
-                                    <td>
-                                        @php
-                                            $bg = match($app->status) {
-                                                'approved' => '#10b981',
-                                                'declined', 'rejected' => '#ef4444',
-                                                default => '#f59e0b',
-                                            };
-                                        @endphp
-                                        <span class="status-badge" style="background-color: {{ $bg }}; color: #fff;">
-                                            {{ strtoupper($app->status) }}
-                                        </span>
-                                    </td>
-                                    <td class="text-right">
-                                        <button class="btn btn-default btn-sm" style="border-radius: 6px; font-weight: 600; box-shadow: 0 2px 5px rgba(0,0,0,0.05);" data-toggle="modal" data-target="#modal-{{ $app->id }}">
-                                            <i class="fa fa-search-plus text-blue"></i> REVIEW
-                                        </button>
-                                    </td>
-                                </tr>
-
-                                <!-- 4. REVIEW MODAL (Updated to show ALL fields) -->
-                                <div class="modal fade" id="modal-{{ $app->id }}">
-                                    <div class="modal-dialog modal-lg" style="width: 85%; max-width: 1000px;">
-                                        <div class="modal-content">
-                                            <form action="{{ route('admissions.update', $app->id) }}" method="POST">
-                                                @csrf @method('PUT')
-                                                
-                                                <div class="modal-header modal-header-custom">
-                                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="opacity: 1;"><span aria-hidden="true" style="font-size: 28px; color: #94a3b8;">&times;</span></button>
-                                                    <h4 class="modal-title"><i class="fa fa-edit text-blue"></i> Application Review</h4>
-                                                    <p style="margin: 5px 0 0 0; color: #64748b; font-size: 14px;">Tracking ID: <strong>{{ $app->tracking_id }}</strong> | Submitted: {{ $app->created_at->format('d M Y, h:i A') }}</p>
-                                                </div>
-                                                
-                                                <div class="modal-body">
-                                                    <div class="row">
-                                                        <!-- LEFT COLUMN: ALL DATA -->
-                                                        <div class="col-md-8" style="padding-right: 30px;">
-                                                            
-                                                            <div class="section-title"><i class="fa fa-user"></i> 1. Student Personal Information</div>
-                                                            <div class="row">
-                                                                <div class="col-sm-6">
-                                                                    <span class="info-label">Full Name</span>
-                                                                    <span class="data-value" style="text-transform: uppercase;">{{ $app->student_name }}</span>
-                                                                    
-                                                                    <span class="info-label">National ID / Birth Cert</span>
-                                                                    <span class="data-value">{{ $app->identity_number }}</span>
-                                                                    
-                                                                    <span class="info-label">Applied Grade</span>
-                                                                    <span class="data-value"><span class="label" style="background: #3b82f6;">{{ $app->applied_grade }}</span></span>
-                                                                </div>
-                                                                <div class="col-sm-6">
-                                                                    <span class="info-label">Date of Birth</span>
-                                                                    <span class="data-value">{{ \Carbon\Carbon::parse($app->date_of_birth)->format('d F Y') }} ({{ \Carbon\Carbon::parse($app->date_of_birth)->age }} yrs)</span>
-                                                                    
-                                                                    <span class="info-label">Residential Address</span>
-                                                                    <span class="data-value">{{ $app->address ?? 'Not Provided' }}</span>
-                                                                </div>
-                                                            </div>
-
-                                                            <div class="section-title"><i class="fa fa-users"></i> 2. Guardian Information</div>
-                                                            <div class="row">
-                                                                <div class="col-sm-4">
-                                                                    <span class="info-label">Guardian Name</span>
-                                                                    <span class="data-value">{{ $app->guardian_name }}</span>
-                                                                </div>
-                                                                <div class="col-sm-4">
-                                                                    <span class="info-label">Phone Number</span>
-                                                                    <span class="data-value">{{ $app->guardian_phone }}</span>
-                                                                </div>
-                                                                <div class="col-sm-4">
-                                                                    <span class="info-label">Email Address</span>
-                                                                    <span class="data-value">{{ $app->guardian_email ?? 'Not Provided' }}</span>
-                                                                </div>
-                                                            </div>
-
-                                                            <div class="section-title"><i class="fa fa-graduation-cap"></i> 3. Academic & Disciplinary History</div>
-                                                            <div class="row">
-                                                                <div class="col-sm-6">
-                                                                    <span class="info-label">Previous School Attended</span>
-                                                                    <span class="data-value">{{ $app->previous_school ?? 'Not Provided' }}</span>
-                                                                </div>
-                                                                <div class="col-sm-6">
-                                                                    <span class="info-label">Subjects Passed / Results Summary</span>
-                                                                    <span class="data-value">{{ $app->subjects_passed ?? 'Not Provided' }}</span>
-                                                                </div>
-                                                            </div>
-                                                            @if($app->academic_history)
-                                                            <span class="info-label">Academic / Disciplinary Context</span>
-                                                            <div class="data-value block-text">{{ $app->academic_history }}</div>
-                                                            @endif
-
-                                                            <div class="section-title"><i class="fa fa-paperclip"></i> 4. Uploaded Documents</div>
-                                                            <div class="row">
-                                                                <div class="col-sm-6">
-                                                                    <span class="info-label">Results / Report Book</span>
-                                                                    @if($app->results_file)
-                                                                        <!-- DIRECT URL ASSET LINK -->
-                                                                        <a href="{{ asset($app->results_file) }}" target="_blank" class="doc-btn">
-                                                                            <i class="fa fa-file-pdf-o text-red"></i> View Results Document
-                                                                        </a>
-                                                                    @else
-                                                                        <span class="data-value text-muted">No Results Uploaded</span>
-                                                                    @endif
-                                                                </div>
-                                                                <div class="col-sm-6">
-                                                                    <span class="info-label">Recommendation Letter</span>
-                                                                    @if($app->recommendation_letter)
-                                                                        <!-- DIRECT URL ASSET LINK -->
-                                                                        <a href="{{ asset($app->recommendation_letter) }}" target="_blank" class="doc-btn">
-                                                                            <i class="fa fa-file-text-o text-blue"></i> View Recommendation Letter
-                                                                        </a>
-                                                                    @else
-                                                                        <span class="data-value text-muted">No Recommendation Letter Provided</span>
-                                                                    @endif
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <!-- RIGHT COLUMN: DECISION FORM -->
-                                                        <div class="col-md-4" style="background: #f8fafc; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0;">
-                                                            <h3 style="font-weight: 800; color: #1e293b; margin-top: 0; margin-bottom: 20px; font-size: 20px;"><i class="fa fa-gavel text-orange"></i> Admissions Decision</h3>
-                                                            
-                                                            <div class="form-group" style="margin-bottom: 20px;">
-                                                                <label style="color: #475569; font-weight: 700;">Update Application Status</label>
-                                                                <select name="status" class="form-control" style="height: 45px; font-weight: 600; font-size: 15px;">
-                                                                    <option value="pending" {{ $app->status == 'pending' ? 'selected' : '' }}>⏳ Pending Review</option>
-                                                                    <option value="approved" {{ $app->status == 'approved' ? 'selected' : '' }}>✅ Approve Admission</option>
-                                                                    <option value="declined" {{ $app->status == 'declined' ? 'selected' : '' }}>❌ Decline / Reject Application</option>
-                                                                </select>
-                                                            </div>
-                                                            
-                                                            <div class="form-group" style="margin-bottom: 25px;">
-                                                                <label style="color: #475569; font-weight: 700;">Admin Remarks / Feedback</label>
-                                                                <p style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">This will be visible to the parent on their tracking portal and official letter.</p>
-                                                                <textarea name="admin_remarks" class="form-control" rows="6" placeholder="Enter reason for decision or instructions for enrollment...">{{ $app->admin_remarks }}</textarea>
-                                                            </div>
-                                                            
-                                                            <button type="submit" class="btn btn-primary btn-block btn-lg" style="border-radius: 8px; font-weight: 800; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #fff; border: none; box-shadow: 0 4px 15px rgba(59,130,246,0.3); padding: 15px;">
-                                                                <i class="fa fa-save"></i> SAVE DECISION
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                                @empty
-                                <tr>
-                                    <td colspan="6" class="text-center" style="padding: 60px 20px;">
-                                        <div style="width: 80px; height: 80px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
-                                            <i class="fa fa-inbox" style="font-size: 35px; color: #94a3b8;"></i>
-                                        </div>
-                                        <h4 style="font-weight: 700; color: #475569;">No Applications Found</h4>
-                                        <p style="color: #94a3b8;">There are no records matching your current search or filters.</p>
-                                    </td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    @if($admissions->hasPages())
-                        <div class="box-footer" style="background: #fff; border-radius: 0 0 12px 12px; border-top: 1px solid #f1f5f9;">
-                            <div class="pull-right">
-                                {!! $admissions->appends(request()->query())->links() !!}
-                            </div>
-                        </div>
-                    @endif
-                </div>
-
-            </section>
-        </div>
-
-        @include('layouts.footer')
     </div>
-</body>
-</html>
+@endsection

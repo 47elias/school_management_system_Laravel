@@ -1,179 +1,148 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Exam Report | {{ $exam->subject?->subject_name ?? 'Subject' }}</title>
-    @include('components.adminlte')
-    @include('components.scripts')
-    <style>
-        @media print {
-            .no-print, .main-sidebar, .main-header, .main-footer { display: none !important; }
-            .content-wrapper { margin-left: 0 !important; padding-top: 0 !important; }
-            .box { border: none !important; }
-            .table-bordered > thead > tr > th,
-            .table-bordered > tbody > tr > td { border: 1px solid #000 !important; }
-        }
-        .report-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px; }
-        .school-logo { font-size: 28px; font-weight: bold; margin-bottom: 0; }
-        .report-title { font-size: 18px; letter-spacing: 2px; margin-top: 5px; color: #555; }
-        .stats-card { background: #f4f4f4; padding: 15px; border-radius: 5px; text-align: center; }
-        .stats-val { display: block; font-size: 20px; font-weight: bold; color: #3c8dbc; }
-        .signature-row { margin-top: 50px; padding: 20px; }
-        .sig-box { border-top: 1px solid #000; text-align: center; padding-top: 5px; width: 200px; display: inline-block; margin: 0 40px; }
-    </style>
-</head>
-<body class="hold-transition skin-blue sidebar-mini">
-    <div class="wrapper">
-        @include('layouts.topbar')
-        @include('layouts.sidebar')
+{{-- resources/views/exams/report.blade.php --}}
+@extends('layouts.admin.app')
 
-        <div class="content-wrapper">
-            <section class="content-header no-print">
-                <h1>
-                    Class Performance
-                    <small>Official Subject Report</small>
-                </h1>
-                <ol class="breadcrumb">
-                    <li><a href="{{ route('exams.index') }}"><i class="fa fa-dashboard"></i> Exams</a></li>
-                    <li class="active">Subject Report</li>
-                </ol>
-            </section>
+@section('title', 'Exam Report | ' . ($exam->subject?->subject_name ?? 'Subject'))
 
-            <section class="content">
-                <div class="box box-solid">
-                    <div class="box-body">
-                        {{-- Official Header --}}
-                        <div class="report-header">
-                            <h1 class="school-logo">{{ env('SCHOOL_NAME', 'ACADEMIC INSTITUTION') }}</h1>
-                            <p class="report-title">SUBJECT PERFORMANCE REPORT</p>
-                            <div class="row">
-                                <div class="col-xs-12">
-                                    <strong>Term:</strong> {{ $exam->term?->term_name ?? 'N/A' }} |
-                                    <strong>Subject:</strong> {{ $exam->subject?->subject_name }} |
-                                    <strong>Exam:</strong> {{ $exam->exam_name }} |
-                                    <strong>Grade:</strong> {{ $grade }} |
-                                    <strong>Date:</strong> {{ date('d M, Y') }}
-                                </div>
-                            </div>
-                        </div>
+@section('header')
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full no-print">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Class Performance</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Official Subject Report</p>
+        </div>
+        <div class="mt-4 sm:mt-0 flex items-center space-x-2.5">
+            <button onclick="window.print()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm">
+                <i class="fa-solid fa-print mr-2"></i> Print Official Report
+            </button>
+            <a href="{{ Route::has('exams.index') ? route('exams.index') : url('/exams') }}" class="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-200 dark:border-slate-700">
+                <i class="fa-solid fa-arrow-left mr-2"></i> Back to Exams
+            </a>
+        </div>
+    </div>
+@endsection
 
-                        {{-- Action Buttons --}}
-                        <div class="row no-print" style="margin-bottom: 20px;">
-                            <div class="col-xs-12 text-center">
-                                <button class="btn btn-success btn-flat" onclick="window.print()">
-                                    <i class="fa fa-print"></i> PRINT OFFICIAL REPORT
-                                </button>
-                                <a href="{{ route('exams.index') }}" class="btn btn-default btn-flat" style="margin-left: 10px;">
-                                    <i class="fa fa-arrow-left"></i> BACK TO EXAMS
-                                </a>
-                            </div>
-                        </div>
+@section('content')
+    <div class="space-y-6">
 
-                        {{-- Statistics Summary --}}
-                        <div class="row" style="margin-bottom: 30px;">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 p-6 transition-colors">
+            
+            {{-- Official Header --}}
+            <div class="text-center border-b border-slate-200 dark:border-slate-700 pb-6 mb-6">
+                <h1 class="text-2xl font-black uppercase text-slate-900 dark:text-white tracking-wide">{{ env('SCHOOL_NAME', 'ACADEMIC INSTITUTION') }}</h1>
+                <p class="text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mt-1">SUBJECT PERFORMANCE REPORT</p>
+                <p class="text-xs text-slate-600 dark:text-slate-300 mt-2 font-medium">
+                    <strong>Term:</strong> {{ $exam->term?->term_name ?? 'N/A' }} |
+                    <strong>Subject:</strong> {{ $exam->subject?->subject_name }} |
+                    <strong>Exam:</strong> {{ $exam->exam_name }} |
+                    <strong>Grade:</strong> {{ $grade }} |
+                    <strong>Date:</strong> {{ date('d M, Y') }}
+                </p>
+            </div>
+
+            {{-- Statistics Summary --}}
+            @php
+                $allScores = $students->map(fn($s) => $s->marks->firstWhere('exam_id', $exam->id)->score ?? 0);
+                $avg = $allScores->count() > 0 ? $allScores->avg() : 0;
+                $max = $allScores->count() > 0 ? $allScores->max() : 0;
+                $min = $allScores->count() > 0 ? $allScores->min() : 0;
+            @endphp
+            
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-center">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Average Score</span>
+                    <span class="text-xl font-extrabold text-indigo-600 dark:text-indigo-400 mt-1 block">{{ number_format($avg, 1) }}%</span>
+                </div>
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-center">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Highest Score</span>
+                    <span class="text-xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1 block">{{ $max }}%</span>
+                </div>
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-center">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Lowest Score</span>
+                    <span class="text-xl font-extrabold text-rose-600 dark:text-rose-400 mt-1 block">{{ $min }}%</span>
+                </div>
+            </div>
+
+            {{-- Ranking Table --}}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700/60 text-xs">
+                    <thead class="bg-slate-50 dark:bg-slate-800/80">
+                        <tr>
+                            <th scope="col" class="px-6 py-3.5 text-center font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-16">Rank</th>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Student Name</th>
+                            <th scope="col" class="px-6 py-3.5 text-center font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Score (%)</th>
+                            <th scope="col" class="px-6 py-3.5 text-center font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Grade</th>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Teacher's Comment</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700/60">
+                        @php
+                            $sortedStudents = $students->sortByDesc(function($s) use ($exam) {
+                                return $s->marks->firstWhere('exam_id', $exam->id)->score ?? -1;
+                            });
+                            $currentRank = 0;
+                            $lastScore = null;
+                            $displayRank = 0;
+                        @endphp
+
+                        @foreach($sortedStudents as $student)
                             @php
-                                $allScores = $students->map(fn($s) => $s->marks->firstWhere('exam_id', $exam->id)->score ?? 0);
-                                $avg = $allScores->count() > 0 ? $allScores->avg() : 0;
-                                $max = $allScores->count() > 0 ? $allScores->max() : 0;
-                                $min = $allScores->count() > 0 ? $allScores->min() : 0;
+                                $mark = $student->marks->firstWhere('exam_id', $exam->id);
+                                $score = $mark ? $mark->score : 0;
+
+                                $currentRank++;
+                                if ($score !== $lastScore) {
+                                    $displayRank = $currentRank;
+                                }
+                                $lastScore = $score;
+
+                                $gradeLetter = $mark ? \App\Models\Mark::getGrade($score) : 'U';
                             @endphp
-                            <div class="col-xs-4">
-                                <div class="stats-card">
-                                    <span class="text-muted small uppercase">Average Score</span>
-                                    <span class="stats-val">{{ number_format($avg, 1) }}%</span>
-                                </div>
-                            </div>
-                            <div class="col-xs-4">
-                                <div class="stats-card">
-                                    <span class="text-muted small uppercase">Highest Score</span>
-                                    <span class="stats-val">{{ $max }}%</span>
-                                </div>
-                            </div>
-                            <div class="col-xs-4">
-                                <div class="stats-card">
-                                    <span class="text-muted small uppercase">Lowest Score</span>
-                                    <span class="stats-val">{{ $min }}%</span>
-                                </div>
-                            </div>
-                        </div>
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                                <td class="px-6 py-4 text-center font-bold text-slate-700 dark:text-slate-300">{{ $displayRank }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap font-bold text-slate-800 dark:text-slate-100">
+                                    {{ strtoupper($student->surname) }}, {{ $student->name }}
+                                </td>
+                                <td class="px-6 py-4 text-center font-mono font-bold text-slate-900 dark:text-white">
+                                    {{ $mark ? number_format($mark->score, 0) : '0' }}
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    @if(in_array($gradeLetter, ['A', 'B']))
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">{{ $gradeLetter }}</span>
+                                    @elseif($gradeLetter == 'C')
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800/50">{{ $gradeLetter }}</span>
+                                    @elseif(in_array($gradeLetter, ['D', 'E']))
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50">{{ $gradeLetter }}</span>
+                                    @else
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50">{{ $gradeLetter }}</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs">
+                                    {{ $mark->teacher_comment ?? '---' }}
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
 
-                        {{-- Ranking Table --}}
-                        <table class="table table-bordered table-striped">
-                            <thead>
-                                <tr style="background-color: #f9f9f9 !important;">
-                                    <th style="width: 60px" class="text-center">Rank</th>
-                                    <th>Student Name</th>
-                                    <th class="text-center" style="width: 100px;">Score (%)</th>
-                                    <th class="text-center" style="width: 80px;">Grade</th>
-                                    <th>Teacher's Comment</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @php
-                                    $sortedStudents = $students->sortByDesc(function($s) use ($exam) {
-                                        return $s->marks->firstWhere('exam_id', $exam->id)->score ?? -1;
-                                    });
-                                    $currentRank = 0;
-                                    $lastScore = null;
-                                    $displayRank = 0;
-                                @endphp
-
-                                @foreach($sortedStudents as $student)
-                                    @php
-                                        $mark = $student->marks->firstWhere('exam_id', $exam->id);
-                                        $score = $mark ? $mark->score : 0;
-
-                                        // Tie-ranking logic
-                                        $currentRank++;
-                                        if ($score !== $lastScore) {
-                                            $displayRank = $currentRank;
-                                        }
-                                        $lastScore = $score;
-
-                                        $gradeLetter = $mark ? \App\Models\Mark::getGrade($score) : 'U';
-
-                                        $labelColor = 'default';
-                                        if(in_array($gradeLetter, ['A', 'B'])) $labelColor = 'success';
-                                        elseif($gradeLetter == 'C') $labelColor = 'primary';
-                                        elseif(in_array($gradeLetter, ['D', 'E'])) $labelColor = 'warning';
-                                        elseif($gradeLetter == 'U') $labelColor = 'danger';
-                                    @endphp
-                                    <tr>
-                                        <td class="text-center"><b>{{ $displayRank }}</b></td>
-                                        <td>{{ strtoupper($student->surname) }}, {{ $student->name }}</td>
-                                        <td class="text-center font-bold">
-                                            {{ $mark ? number_format($mark->score, 0) : '0' }}
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="label label-{{ $labelColor }}">{{ $gradeLetter }}</span>
-                                        </td>
-                                        <td class="small">{{ $mark->teacher_comment ?? '---' }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-
-                        {{-- Signature Section (Visible in Print) --}}
-                        <div class="row signature-row">
-                            <div class="col-xs-12 text-center">
-                                <div class="sig-box">
-                                    <strong>Class Teacher</strong><br>
-                                    <small>Signature & Date</small>
-                                </div>
-                                <div class="sig-box">
-                                    <strong>Head of Department</strong><br>
-                                    <small>Signature & Date</small>
-                                </div>
-                                <div class="sig-box">
-                                    <strong>School Stamp</strong><br>
-                                    <small>Official Seal</small>
-                                </div>
-                            </div>
-                        </div>
+            {{-- Signature Section --}}
+            <div class="mt-16 pt-8 border-t border-slate-200 dark:border-slate-700">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center text-xs font-bold text-slate-700 dark:text-slate-300">
+                    <div>
+                        <div class="border-t border-slate-400 dark:border-slate-600 pt-2 w-48 mx-auto">Class Teacher</div>
+                        <span class="text-[10px] text-slate-400 block mt-0.5">Signature & Date</span>
+                    </div>
+                    <div>
+                        <div class="border-t border-slate-400 dark:border-slate-600 pt-2 w-48 mx-auto">Head of Department</div>
+                        <span class="text-[10px] text-slate-400 block mt-0.5">Signature & Date</span>
+                    </div>
+                    <div>
+                        <div class="border-t border-slate-400 dark:border-slate-600 pt-2 w-48 mx-auto">School Stamp</div>
+                        <span class="text-[10px] text-slate-400 block mt-0.5">Official Seal</span>
                     </div>
                 </div>
-            </section>
+            </div>
+
         </div>
-        @include('layouts.footer')
+
     </div>
-</body>
-</html>
+@endsection

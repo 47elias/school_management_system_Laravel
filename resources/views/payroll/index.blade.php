@@ -1,312 +1,304 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>Payroll Management | {{ env('SCHOOL_ACRONYM') }}</title>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{{-- resources/views/payroll/index.blade.php --}}
+@extends('layouts.admin.app')
 
-    @include('components.adminlte')
-    
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic">
+@section('title', 'Staff Payroll | ' . env('SCHOOL_ACRONYM', 'SMS'))
 
-    <!-- Scoped Modern UI Updates (Will not affect AdminLTE Footer/Layout) -->
-    <style>
-        /* Modern Gradient Cards */
-        .content .info-box-modern { border-radius: 12px; padding: 25px 20px; color: #fff; position: relative; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.08); transition: transform 0.3s ease; margin-bottom: 20px; }
-        .content .info-box-modern:hover { transform: translateY(-5px); }
-        .bg-gradient-blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
-        .bg-gradient-red { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
-        .content .info-box-modern .inner h3 { font-size: 36px; font-weight: 800; margin: 0 0 5px 0; letter-spacing: 1px; }
-        .content .info-box-modern .inner p { font-size: 15px; margin: 0; font-weight: 600; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px; }
-        .content .info-box-modern .icon { position: absolute; right: 20px; top: 20px; font-size: 55px; opacity: 0.2; }
-
-        /* Modern Box Styling */
-        .content .box { border-radius: 12px; border-top: none; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 25px; overflow: hidden; background: #ffffff; }
-        .content .box-header { border-bottom: 1px solid #f1f5f9; padding: 20px 25px; background: #fff; }
-        .content .box-title { font-weight: 800 !important; color: #1e293b; font-size: 18px; }
-        
-        /* Form Inputs & Select2 Override */
-        .content .form-group label { font-weight: 700; color: #475569; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-        .content .form-control { border-radius: 8px; border: 1px solid #cbd5e1; box-shadow: none; padding: 10px 15px; height: auto; font-size: 15px; transition: all 0.3s ease; }
-        .content .form-control:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
-        .content .input-group-addon { border-radius: 8px 0 0 8px; border-color: #cbd5e1; background: #f8fafc; color: #64748b; }
-        
-        /* Select2 Modernization */
-        .select2-container--default .select2-selection--single { border-radius: 8px; border: 1px solid #cbd5e1; height: 43px; padding: 6px 15px; }
-        .select2-container--default .select2-selection--single .select2-selection__arrow { height: 41px; }
-        
-        /* Primary Button */
-        .content .btn-primary { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border: none; border-radius: 8px; font-weight: 700; padding: 12px 20px; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 15px rgba(59,130,246,0.3); }
-        .content .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(59,130,246,0.4); }
-        
-        /* Table overrides */
-        .content .table > tbody > tr > td { vertical-align: middle !important; padding: 16px 20px; border-top: 1px solid #f1f5f9; font-size: 15px; color: #334155; }
-        .content .table > thead > tr > th { border-bottom: 2px solid #e2e8f0; color: #64748b; font-weight: 700; padding: 16px 20px; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; background: #f8fafc; }
-        .content .table-hover > tbody > tr:hover { background-color: #f8fafc; }
-
-        /* Custom Form Elements */
-        .content .form-section-title { font-size: 14px; font-weight: 700; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 20px; margin-top: 25px; }
-        .content .form-section-title:first-child { margin-top: 0; }
-        
-        .content .net-preview-box { background: #f8fafc; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; margin-top: 20px; margin-bottom: 20px; }
-        .content .net-preview-box .text-xl { font-size: 28px; font-weight: 900; }
-        .content .text-blue-main { color: #2563eb; }
-        .content .text-red-main { color: #dc2626; }
-    </style>
-</head>
-<body class="hold-transition skin-blue sidebar-mini">
-    <div class="wrapper">
-        @include('layouts.topbar')
-        @include('layouts.sidebar')
-
-        <div class="content-wrapper">
-            <section class="content-header" style="padding-bottom: 15px;">
-                <h1 style="font-weight: 800; color: #1e293b; font-size: 28px;">
-                    Staff Payroll
-                    <small style="color: #64748b; font-weight: 600; font-size: 14px;">Finance Control & Disbursement</small>
-                </h1>
-            </section>
-
-            <section class="content">
-
-                {{-- Financial Summary Row --}}
-                <div class="row">
-                    <div class="col-md-6 col-sm-6">
-                        <div class="info-box-modern bg-gradient-red">
-                            <div class="inner">
-                                <h3>${{ number_format($totalExpenses, 2) }}</h3>
-                                <p>Total Salaries Paid</p>
-                            </div>
-                            <div class="icon"><i class="fa fa-money"></i></div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-sm-6">
-                        <div class="info-box-modern bg-gradient-blue">
-                            <div class="inner">
-                                <h3>${{ number_format($schoolBalance, 2) }}</h3>
-                                <p>Available Fund Balance</p>
-                            </div>
-                            <div class="icon"><i class="fa fa-briefcase"></i></div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Flash Messages --}}
-                @if(session('success'))
-                    <div class="alert alert-success alert-dismissible" style="border-radius: 8px; box-shadow: 0 4px 10px rgba(16,185,129,0.2);">
-                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-                        <h4 style="font-weight: 700; margin-bottom: 0;"><i class="icon fa fa-check-circle"></i> {{ session('success') }}</h4>
-                    </div>
-                @endif
-
-                <div class="row">
-                    {{-- Left Side: New Entry Form --}}
-                    <div class="col-md-4">
-                        <div class="box">
-                            <div class="box-header with-border">
-                                <h3 class="box-title"><i class="fa fa-plus-circle text-blue"></i> Process New Payment</h3>
-                            </div>
-                            <form action="{{ route('payroll.store') }}" method="POST" id="payrollForm">
-                                @csrf
-                                <div class="box-body" style="padding: 25px;">
-                                    <div class="form-section-title"><i class="fa fa-user"></i> 1. Staff Details</div>
-                                    
-                                    <div class="form-group">
-                                        <label>Select Staff Member</label>
-                                        <select name="user_id" id="teacher_id" class="form-control select2" style="width: 100%;" required>
-                                            <option value="">-- Search Teacher/Staff --</option>
-                                            @foreach($teachers as $teacher)
-                                                <option value="{{ $teacher->id }}"
-                                                        data-salary="{{ $teacher->base_salary }}"
-                                                        data-empno="{{ $teacher->employee_number }}">
-                                                    {{ $teacher->name }} ({{ $teacher->employee_number ?? 'No ID' }})
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label>Pay Period (Month/Year)</label>
-                                        <div class="input-group">
-                                            <span class="input-group-addon"><i class="fa fa-calendar-check-o"></i></span>
-                                            <input type="text" name="pay_period" class="form-control" placeholder="e.g. February 2026" required>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-section-title"><i class="fa fa-calculator"></i> 2. Salary Breakdown</div>
-                                    
-                                    <div class="form-group">
-                                        <label>Base Salary</label>
-                                        <div class="input-group">
-                                            <span class="input-group-addon"><i class="fa fa-usd text-blue"></i></span>
-                                            <input type="number" name="base_salary" id="base_salary" class="form-control" step="0.01" placeholder="0.00" required>
-                                        </div>
-                                    </div>
-
-                                    <div class="row">
-                                        <div class="col-xs-6">
-                                            <div class="form-group">
-                                                <label style="color: #10b981;">Allowances (+)</label>
-                                                <input type="number" name="allowances" id="allowances" class="form-control" value="0.00" step="0.01">
-                                            </div>
-                                        </div>
-                                        <div class="col-xs-6">
-                                            <div class="form-group">
-                                                <label style="color: #ef4444;">Deductions (-)</label>
-                                                <input type="number" name="deductions" id="deductions" class="form-control" value="0.00" step="0.01">
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="net-preview-box">
-                                        <div class="row" style="display: flex; align-items: center;">
-                                            <div class="col-xs-6">
-                                                <span style="font-weight: 700; color: #475569; text-transform: uppercase; font-size: 13px; letter-spacing: 0.5px;">Calculated Net:</span>
-                                            </div>
-                                            <div class="col-xs-6 text-right">
-                                                <span id="net_preview" class="text-xl text-blue-main">$0.00</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-section-title"><i class="fa fa-info-circle"></i> 3. Disbursement Info</div>
-                                    
-                                    <div class="form-group">
-                                        <label>Date of Payment</label>
-                                        <div class="input-group">
-                                            <span class="input-group-addon"><i class="fa fa-clock-o"></i></span>
-                                            <input type="date" name="payment_date" class="form-control" value="{{ date('Y-m-d') }}" required>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group" style="margin-bottom: 0;">
-                                        <label>Internal Remarks</label>
-                                        <textarea name="remarks" class="form-control" rows="2" placeholder="Bank transfer, cash, etc."></textarea>
-                                    </div>
-                                </div>
-                                <div class="box-footer" style="padding: 20px 25px; background: #f8fafc; border-top: 1px solid #f1f5f9;">
-                                    <button type="submit" class="btn btn-primary btn-block btn-lg">
-                                        <i class="fa fa-file-text-o"></i> GENERATE PAYSLIP
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-
-                    {{-- Right Side: History --}}
-                    <div class="col-md-8">
-                        <div class="box">
-                            <div class="box-header with-border">
-                                <h3 class="box-title"><i class="fa fa-history text-blue"></i> Recent Transactions</h3>
-                            </div>
-                            <div class="box-body no-padding table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 120px;">Date</th>
-                                            <th>Staff Information</th>
-                                            <th>Period</th>
-                                            <th>Net Salary</th>
-                                            <th class="text-right" style="width: 120px;">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse($payslips as $p)
-                                        <tr>
-                                            <td>
-                                                <span style="color: #64748b; font-weight: 600;">
-                                                    {{ \Carbon\Carbon::parse($p->payment_date)->format('d M Y') }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div style="font-weight: 700; color: #1e293b; font-size: 15px;">{{ $p->user->name }}</div>
-                                                <small style="color: #64748b; font-weight: 600;"><i class="fa fa-id-card-o"></i> {{ $p->user->employee_number ?? 'No ID' }}</small>
-                                            </td>
-                                            <td>
-                                                <span class="label" style="background: #e2e8f0; color: #475569; font-size: 13px; padding: 5px 10px;">{{ $p->pay_period }}</span>
-                                            </td>
-                                            <td>
-                                                <strong style="font-size: 16px; color: #10b981;">${{ number_format($p->net_salary, 2) }}</strong>
-                                            </td>
-                                            <td class="text-right">
-                                                <a href="{{ route('payroll.print', $p->id) }}" target="_blank" class="btn btn-sm" style="background: #f1f5f9; color: #3b82f6; border-radius: 6px; margin-right: 5px;" title="Print">
-                                                    <i class="fa fa-print"></i>
-                                                </a>
-                                                <form action="{{ route('payroll.destroy', $p->id) }}" method="POST" style="display:inline;">
-                                                    @csrf @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm" style="background: #fef2f2; color: #ef4444; border-radius: 6px;" onclick="return confirm('Delete this payroll record?');" title="Delete">
-                                                        <i class="fa fa-trash"></i>
-                                                    </button>
-                                                </form>
-                                            </td>
-                                        </tr>
-                                        @empty
-                                        <tr>
-                                            <td colspan="5" class="text-center" style="padding: 60px 20px;">
-                                                <div style="width: 80px; height: 80px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
-                                                    <i class="fa fa-file-text-o" style="font-size: 35px; color: #94a3b8;"></i>
-                                                </div>
-                                                <h4 style="font-weight: 700; color: #475569;">No Payroll Records Found</h4>
-                                                <p style="color: #94a3b8;">Select a staff member and generate their first payslip.</p>
-                                            </td>
-                                        </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-                            @if($payslips->hasPages())
-                            <div class="box-footer" style="background: #fff; border-radius: 0 0 12px 12px; border-top: 1px solid #f1f5f9;">
-                                <div class="pull-right">
-                                    {{ $payslips->links() }}
-                                </div>
-                            </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </section>
+@section('header')
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Staff Payroll</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Finance control, salary processing & disbursement records</p>
         </div>
-        
-        @include('layouts.footer')
     </div>
+@endsection
 
-    @include('components.scripts')
-
-    <script>
-        $(document).ready(function() {
-            // Initialize Select2 (Assuming it's included in your components.scripts)
-            if ($.fn.select2) {
-                $('.select2').select2({
-                    placeholder: "-- Search Staff Member --",
-                    allowClear: true
-                });
+@section('content')
+    <div x-data="{
+            baseSalary: 0,
+            allowances: 0,
+            deductions: 0,
+            get netSalary() {
+                let base = parseFloat(this.baseSalary) || 0;
+                let allow = parseFloat(this.allowances) || 0;
+                let ded = parseFloat(this.deductions) || 0;
+                return (base + allow - ded).toFixed(2);
+            },
+            onStaffChange(event) {
+                const selectedOption = event.target.options[event.target.selectedIndex];
+                const salary = selectedOption.getAttribute('data-salary');
+                this.baseSalary = salary ? parseFloat(salary) : 0;
             }
+         }" 
+         class="space-y-6">
 
-            function calculateNet() {
-                let base = parseFloat($('#base_salary').val()) || 0;
-                let allowances = parseFloat($('#allowances').val()) || 0;
-                let deductions = parseFloat($('#deductions').val()) || 0;
-                let net = (base + allowances) - deductions;
+        {{-- Financial Summary Row --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            
+            {{-- Total Salaries Paid --}}
+            <div class="bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl p-6 text-white shadow-sm relative overflow-hidden">
+                <div class="relative z-10">
+                    <span class="text-xs font-bold uppercase tracking-wider opacity-80 block">Total Salaries Paid</span>
+                    <h3 class="text-3xl font-black mt-2 font-mono tracking-tight">${{ number_format($totalExpenses, 2) }}</h3>
+                </div>
+                <i class="fa-solid fa-money-bill-wave absolute right-4 bottom-2 text-6xl opacity-15"></i>
+            </div>
 
-                $('#net_preview').text('$' + net.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+            {{-- Available Fund Balance --}}
+            <div class="bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl p-6 text-white shadow-sm relative overflow-hidden">
+                <div class="relative z-10">
+                    <span class="text-xs font-bold uppercase tracking-wider opacity-80 block">Available Fund Balance</span>
+                    <h3 class="text-3xl font-black mt-2 font-mono tracking-tight">${{ number_format($schoolBalance, 2) }}</h3>
+                </div>
+                <i class="fa-solid fa-briefcase absolute right-4 bottom-2 text-6xl opacity-15"></i>
+            </div>
 
-                if(net < 0) {
-                    $('#net_preview').addClass('text-red-main').removeClass('text-blue-main');
-                } else {
-                    $('#net_preview').addClass('text-blue-main').removeClass('text-red-main');
-                }
-            }
+        </div>
 
-            $('#teacher_id').on('change', function() {
-                const selected = $(this).find(':selected');
-                const salary = selected.data('salary');
-                $('#base_salary').val(salary ? parseFloat(salary).toFixed(2) : '0.00');
-                calculateNet();
-            });
+        {{-- Flash Messages --}}
+        @if(session('success'))
+            <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-200 flex items-center justify-between shadow-sm">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-circle-check text-emerald-600 dark:text-emerald-400 text-lg"></i>
+                    <p class="text-xs font-medium">{{ session('success') }}</p>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-200">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+        @endif
 
-            $('input[type="number"]').on('input', calculateNet);
-        });
-    </script>
-</body>
-</html>
+        @if($errors->any())
+            <div class="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 text-rose-800 dark:text-rose-200 shadow-sm space-y-2">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-triangle-exclamation text-rose-600 dark:text-rose-400 text-lg"></i>
+                        <h4 class="text-xs font-bold uppercase tracking-wider">Please correct the form errors:</h4>
+                    </div>
+                    <button type="button" onclick="this.parentElement.parentElement.remove()" class="text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-200">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
+                <ul class="list-disc list-inside text-xs font-medium space-y-1 pl-2">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        {{-- Main Layout Grid --}}
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            {{-- Left Side: New Entry Form --}}
+            <div class="lg:col-span-5">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
+                    <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/80">
+                        <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                            <i class="fa-solid fa-circle-plus text-indigo-500 mr-2.5"></i> Process New Payment
+                        </h3>
+                    </div>
+
+                    <form action="{{ Route::has('payroll.store') ? route('payroll.store') : url('/payroll') }}" method="POST" id="payrollForm" class="p-6 space-y-5">
+                        @csrf
+
+                        {{-- Section 1: Staff Details --}}
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-3 pb-1 border-b border-slate-200 dark:border-slate-700/60 flex items-center">
+                                <i class="fa-solid fa-user mr-2"></i> 1. Staff Details
+                            </h4>
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="teacher_id" class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+                                        Select Staff Member <span class="text-rose-500">*</span>
+                                    </label>
+                                    <select name="user_id" id="teacher_id" @change="onStaffChange($event)" required 
+                                            class="w-full px-3.5 py-2.5 text-xs font-semibold rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                        <option value="">-- Search Teacher / Staff --</option>
+                                        @foreach($teachers as $teacher)
+                                            <option value="{{ $teacher->id }}"
+                                                    data-salary="{{ $teacher->base_salary }}"
+                                                    data-empno="{{ $teacher->employee_number }}">
+                                                {{ $teacher->name }} ({{ $teacher->employee_number ?? 'No ID' }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+                                        Pay Period (Month/Year) <span class="text-rose-500">*</span>
+                                    </label>
+                                    <div class="relative rounded-xl">
+                                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                            <i class="fa-regular fa-calendar-check"></i>
+                                        </div>
+                                        <input type="text" name="pay_period" placeholder="e.g. February 2026" required
+                                               class="w-full pl-10 pr-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Section 2: Salary Breakdown --}}
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-3 pb-1 border-b border-slate-200 dark:border-slate-700/60 flex items-center">
+                                <i class="fa-solid fa-calculator mr-2"></i> 2. Salary Breakdown
+                            </h4>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+                                        Base Salary <span class="text-rose-500">*</span>
+                                    </label>
+                                    <div class="relative rounded-xl">
+                                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 font-bold">
+                                            $
+                                        </div>
+                                        <input type="number" name="base_salary" id="base_salary" step="0.01" x-model="baseSalary" required placeholder="0.00"
+                                               class="w-full pl-8 pr-3.5 py-2.5 text-xs font-mono font-bold rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1.5">
+                                            Allowances (+)
+                                        </label>
+                                        <input type="number" name="allowances" id="allowances" step="0.01" x-model="allowances" placeholder="0.00"
+                                               class="w-full px-3.5 py-2.5 text-xs font-mono font-bold rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-emerald-600 dark:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 mb-1.5">
+                                            Deductions (-)
+                                        </label>
+                                        <input type="number" name="deductions" id="deductions" step="0.01" x-model="deductions" placeholder="0.00"
+                                               class="w-full px-3.5 py-2.5 text-xs font-mono font-bold rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-rose-600 dark:text-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-500">
+                                    </div>
+                                </div>
+
+                                {{-- Net Preview Box --}}
+                                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
+                                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Calculated Net:</span>
+                                    <span class="text-2xl font-black font-mono"
+                                          :class="parseFloat(netSalary) < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-indigo-600 dark:text-indigo-400'">
+                                        $<span x-text="netSalary">0.00</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Section 3: Disbursement Info --}}
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-3 pb-1 border-b border-slate-200 dark:border-slate-700/60 flex items-center">
+                                <i class="fa-solid fa-circle-info mr-2"></i> 3. Disbursement Info
+                            </h4>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+                                        Date of Payment <span class="text-rose-500">*</span>
+                                    </label>
+                                    <input type="date" name="payment_date" value="{{ date('Y-m-d') }}" required
+                                           class="w-full px-3.5 py-2.5 text-xs font-medium rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+                                        Internal Remarks
+                                    </label>
+                                    <textarea name="remarks" rows="2" placeholder="Bank transfer, cash, check reference, etc."
+                                              class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-2">
+                            <button type="submit" 
+                                    class="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-sm flex items-center justify-center">
+                                <i class="fa-solid fa-file-invoice mr-2"></i> GENERATE PAYSLIP
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {{-- Right Side: History Table --}}
+            <div class="lg:col-span-7">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
+                    <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/80">
+                        <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                            <i class="fa-solid fa-clock-rotate-left text-indigo-500 mr-2.5"></i> Recent Transactions
+                        </h3>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700/60 text-xs">
+                            <thead class="bg-slate-50 dark:bg-slate-800/80">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                                    <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Staff Information</th>
+                                    <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Period</th>
+                                    <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Net Salary</th>
+                                    <th scope="col" class="px-6 py-3.5 text-right font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700/60">
+                                @forelse($payslips as $p)
+                                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap font-mono text-slate-500 dark:text-slate-400">
+                                        {{ \Carbon\Carbon::parse($p->payment_date)->format('d M Y') }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <strong class="text-xs font-bold text-slate-800 dark:text-slate-100 block">{{ $p->user->name ?? 'Staff Member' }}</strong>
+                                        <span class="text-[11px] font-mono text-slate-400 flex items-center mt-0.5">
+                                            <i class="fa-solid fa-id-card mr-1"></i> {{ $p->user->employee_number ?? 'No ID' }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
+                                            {{ $p->pay_period }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap font-mono font-black text-emerald-600 dark:text-emerald-400 text-sm">
+                                        ${{ number_format($p->net_salary, 2) }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right space-x-1">
+                                        <a href="{{ Route::has('payroll.print') ? route('payroll.print', $p->id) : url('/payroll/print/' . $p->id) }}" 
+                                           target="_blank" 
+                                           class="p-1.5 rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 inline-block transition-colors" 
+                                           title="Print Payslip">
+                                            <i class="fa-solid fa-print"></i>
+                                        </a>
+
+                                        <form action="{{ Route::has('payroll.destroy') ? route('payroll.destroy', $p->id) : url('/payroll/' . $p->id) }}" 
+                                              method="POST" onsubmit="return confirm('Delete this payroll record?');" class="inline-block">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="p-1.5 rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors" title="Delete">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="5" class="px-6 py-12 text-center text-slate-400">
+                                        <i class="fa-solid fa-file-invoice text-3xl text-slate-300 dark:text-slate-600 mb-2 block"></i>
+                                        <span class="font-bold text-sm block text-slate-700 dark:text-slate-300">No Payroll Records Found</span>
+                                        <span class="text-xs text-slate-400">Select a staff member on the left to generate their first payslip.</span>
+                                    </td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @if($payslips->hasPages())
+                        <div class="px-6 py-4 bg-slate-50/50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700/60">
+                            {{ $payslips->links() }}
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+@endsection

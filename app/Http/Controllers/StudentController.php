@@ -12,12 +12,45 @@ use App\Models\Mark;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use Exception;
 
 class StudentController extends Controller
 {
+    /**
+     * Display Directory / Student Management
+     * GET: /students or /students/manage
+     */
+    public function index()
+    {
+        $students = Student::with(['term', 'schoolClass'])->orderBy('surname', 'asc')->get();
+        return view('students.manage', compact('students'));
+    }
+
+    /**
+     * Display Full Student Profile
+     * GET: /students/{student}
+     */
+    public function show(Student $student)
+    {
+        $student->load(['term', 'schoolClass', 'payments', 'feeStructures']);
+        return view('students.show', compact('student'));
+    }
+
+    /**
+     * Return Student Profile Data for AJAX Modal Preview
+     * GET: /students/{id}/profile-data
+     */
+    public function showProfile($id)
+    {
+        try {
+            $student = Student::with(['term', 'schoolClass'])->findOrFail($id);
+            return view('students.profile_data', compact('student'));
+        } catch (Exception $e) {
+            return response('<div class="p-4 rounded-xl bg-rose-950/40 border border-rose-800/50 text-rose-300 text-xs font-semibold"><i class="fa-solid fa-circle-exclamation mr-2"></i> Error: Could not load student profile data.</div>', 500);
+        }
+    }
+
     /**
      * Display Enrollment Statistics
      * GET: /students/stats
@@ -48,6 +81,164 @@ class StudentController extends Controller
     }
 
     /**
+     * Show Student Registration Form
+     * GET: /students/create
+     */
+    public function create()
+    {
+        $classes = SchoolClass::orderBy('class_name', 'asc')->get();
+        $currentTerm = Term::where('is_current', true)->first() ?? Term::latest()->first();
+        $terms = Term::orderBy('id', 'desc')->get();
+
+        return view('students.create', compact('classes', 'currentTerm', 'terms'));
+    }
+
+    /**
+     * Store New Student Record
+     * POST: /students
+     */
+    public function store(Request $request)
+    {
+        $validatedData = $request->validate([
+            'name'              => 'required|string|max:255',
+            'surname'           => 'required|string|max:255',
+            'date_of_birth'     => 'required|date',
+            'gender'            => 'required|in:Male,Female',
+            'national_id'       => 'required|string|unique:students,national_id',
+            'grade'             => 'required|string',
+            'phone'             => 'required|string',
+            'emergency_contact' => 'nullable|string',
+            'address'           => 'nullable|string',
+            'term_id'           => 'required|exists:terms,id',
+        ]);
+
+        try {
+            return DB::transaction(function () use ($validatedData) {
+                $schoolClass = SchoolClass::where('class_name', $validatedData['grade'])->first();
+
+                // Generate Unique Student Number (e.g., STU20260001)
+                $studentCount = Student::count() + 1;
+                $prefix = env('SCHOOL_ACRONYM', 'STU');
+                $studentNumber = $prefix . date('Y') . str_pad($studentCount, 4, '0', STR_PAD_LEFT);
+
+                // Generate default email address
+                $generatedEmail = strtolower(substr($validatedData['name'], 0, 1) . $validatedData['surname']) . $studentCount . '@student.local';
+
+                $studentData = $validatedData;
+                $studentData['class_id'] = $schoolClass ? $schoolClass->id : null;
+                $studentData['status'] = 'active';
+                $studentData['enrollment_date'] = now();
+                $studentData['parent_contact'] = $validatedData['emergency_contact'];
+                $studentData['age'] = Carbon::parse($validatedData['date_of_birth'])->age;
+                
+                // Assign generated credentials
+                $studentData['student_number'] = $studentNumber;
+                $studentData['email'] = $generatedEmail;
+
+                $student = Student::create($studentData);
+
+                User::create([
+                    'name'        => $validatedData['name'] . ' ' . $validatedData['surname'],
+                    'email'       => $generatedEmail,
+                    'national_id' => $validatedData['national_id'],
+                    'ec_number'   => $validatedData['national_id'],
+                    'password'    => Hash::make(strtolower($validatedData['surname']) . '123'),
+                    'role'        => 'student',
+                    'base_salary' => 0,
+                ]);
+
+                return redirect()->route('students.index')
+                    ->with('success', "Registration successful: {$student->name} {$student->surname} (ID: {$studentNumber})");
+            });
+        } catch (Exception $e) {
+            return back()->withInput()->with('error', 'Error creating student: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Show Student Edit Form
+     * GET: /students/{id}/edit
+     */
+    public function edit($id)
+    {
+        $student = Student::findOrFail($id);
+        $classes = SchoolClass::orderBy('class_name', 'asc')->get();
+        $terms   = Term::orderBy('id', 'desc')->get();
+        return view('students.edit', compact('student', 'classes', 'terms'));
+    }
+
+    /**
+     * Update Student Record
+     * PUT/PATCH: /students/{id}
+     */
+    public function update(Request $request, $id)
+    {
+        $student = Student::findOrFail($id);
+        $oldNationalId = $student->national_id;
+
+        $validatedData = $request->validate([
+            'name'              => 'required|string|max:255',
+            'surname'           => 'required|string|max:255',
+            'date_of_birth'     => 'required|date',
+            'gender'            => 'required|in:Male,Female',
+            'national_id'       => 'required|string|unique:students,national_id,' . $student->id,
+            'grade'             => 'required|string',
+            'phone'             => 'required|string',
+            'emergency_contact' => 'nullable|string',
+            'status'            => 'required|in:active,inactive',
+            'address'           => 'nullable|string',
+            'term_id'           => 'required|exists:terms,id',
+        ]);
+
+        try {
+            DB::transaction(function () use ($student, $validatedData, $oldNationalId) {
+                $schoolClass = SchoolClass::where('class_name', $validatedData['grade'])->first();
+                $updateData = $validatedData;
+                $updateData['class_id'] = $schoolClass ? $schoolClass->id : $student->class_id;
+
+                $updateData['parent_contact'] = $validatedData['emergency_contact'];
+                $updateData['age'] = Carbon::parse($validatedData['date_of_birth'])->age;
+
+                $student->update($updateData);
+
+                User::where('national_id', $oldNationalId)
+                    ->where('role', 'student')
+                    ->update([
+                        'name'        => $validatedData['name'] . ' ' . $validatedData['surname'],
+                        'national_id' => $validatedData['national_id'],
+                        'ec_number'   => $validatedData['national_id']
+                    ]);
+            });
+
+            return redirect()->route('students.index')->with('success', 'Student profile updated successfully!');
+        } catch (Exception $e) {
+            return back()->withInput()->with('error', 'Update failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Delete Student Record
+     * DELETE: /students/{id}
+     */
+    public function destroy($id)
+    {
+        $student = Student::findOrFail($id);
+
+        try {
+            DB::transaction(function() use ($student) {
+                Payment::where('student_id', $student->id)->delete();
+                FeeStructure::where('student_id', $student->id)->delete();
+                User::where('national_id', $student->national_id)->where('role', 'student')->delete();
+                $student->delete();
+            });
+
+            return redirect()->route('students.index')->with('success', 'Student record deleted permanently.');
+        } catch (Exception $e) {
+            return redirect()->route('students.index')->with('error', 'Delete failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Show Student Promotion Form
      * GET: /students/promote
      */
@@ -60,7 +251,7 @@ class StudentController extends Controller
     }
 
     /**
-     * Process Bulk Student Promotion (Legacy single route method)
+     * Process Legacy Single Promotion
      * POST: /students/promote
      */
     public function promote(Request $request)
@@ -96,7 +287,85 @@ class StudentController extends Controller
     }
 
     /**
+     * Process Mass Promotion Matrix Form
+     * POST: /students/promote/mass
+     */
+    public function processMassPromotion(Request $request)
+    {
+        $request->validate([
+            'target_term_id' => 'required|exists:terms,id',
+            'promote'        => 'required|array',
+        ]);
+
+        $promotions = $request->input('promote');
+        $targetTermId = $request->input('target_term_id');
+        $totalTransitioned = 0;
+
+        try {
+            DB::transaction(function () use ($promotions, $targetTermId, &$totalTransitioned) {
+                $validMappings = [];
+                foreach ($promotions as $item) {
+                    if (isset($item['active']) && !empty($item['to_grade'])) {
+                        $fromGrade = $item['from_grade'];
+                        $toGrade = $item['to_grade'];
+
+                        if ($fromGrade === $toGrade && $toGrade !== 'Graduated') {
+                            continue;
+                        }
+
+                        $validMappings[$fromGrade] = $toGrade;
+                    }
+                }
+
+                if (empty($validMappings)) {
+                    throw new Exception("No valid class transitions were selected.");
+                }
+
+                $processedStudentIds = [];
+
+                foreach ($validMappings as $fromGrade => $toGrade) {
+                    $isGraduated = ($toGrade === 'Graduated');
+
+                    $studentIds = Student::where('grade', $fromGrade)
+                        ->where('status', 'active')
+                        ->whereNotIn('id', $processedStudentIds)
+                        ->pluck('id');
+
+                    if ($studentIds->isEmpty()) {
+                        continue;
+                    }
+
+                    $processedStudentIds = array_merge($processedStudentIds, $studentIds->toArray());
+
+                    $updateData = [
+                        'term_id' => $targetTermId,
+                        'status'  => $isGraduated ? 'Alumni' : 'active',
+                    ];
+
+                    if ($isGraduated) {
+                        $updateData['class_id'] = null;
+                        $updateData['grade'] = 'Alumni';
+                    } else {
+                        $updateData['grade'] = $toGrade;
+                        $destinationClass = SchoolClass::where('class_name', $toGrade)->first();
+                        $updateData['class_id'] = $destinationClass ? $destinationClass->id : null;
+                    }
+
+                    $affected = Student::whereIn('id', $studentIds)->update($updateData);
+                    $totalTransitioned += $affected;
+                }
+            });
+
+            return redirect()->route('students.promote')
+                ->with('success', "Success! {$totalTransitioned} student records have been successfully transitioned.");
+        } catch (Exception $e) {
+            return back()->with('error', 'Mass promotion failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Display Academic Performance
+     * GET: /students/{id}/performance
      */
     public function performance(Request $request, $id = null)
     {
@@ -135,131 +404,10 @@ class StudentController extends Controller
         return view('student.performance', compact('student', 'allTerms', 'displayTerm', 'termResults', 'average'));
     }
 
-    public function index()
-    {
-        $students = Student::orderBy('surname', 'asc')->get();
-        return view('students.manage', compact('students'));
-    }
-
-    public function create()
-    {
-        $classes = SchoolClass::all();
-        $currentTerm = Term::where('is_current', true)->first() ?? Term::latest()->first();
-        $terms = Term::orderBy('id', 'desc')->get();
-
-        return view('students.create', compact('classes', 'currentTerm', 'terms'));
-    }
-
-    public function store(Request $request)
-    {
-        $validatedData = $request->validate([
-            'name'              => 'required|string|max:255',
-            'surname'           => 'required|string|max:255',
-            'date_of_birth'     => 'required|date',
-            'gender'            => 'required|in:Male,Female',
-            'national_id'       => 'required|string|unique:students,national_id',
-            'grade'             => 'required|string',
-            'phone'             => 'required|string',
-            'emergency_contact' => 'nullable|string',
-            'address'           => 'nullable|string',
-            'term_id'           => 'required|exists:terms,id',
-        ]);
-
-        try {
-            return DB::transaction(function () use ($validatedData) {
-                $schoolClass = SchoolClass::where('class_name', $validatedData['grade'])->first();
-
-                // Generate Unique Student Number (e.g., STU20260001)
-                $studentCount = Student::count() + 1;
-                $studentNumber = env('SCHOOL_ACRONYM') . date('Y') . str_pad($studentCount, 4, '0', STR_PAD_LEFT);
-
-                // Generate a default email address based on name
-                $generatedEmail = strtolower(substr($validatedData['name'], 0, 1) . $validatedData['surname']) . $studentCount . '@student.local';
-
-                $studentData = $validatedData;
-                $studentData['class_id'] = $schoolClass ? $schoolClass->id : null;
-                $studentData['status'] = 'active';
-                $studentData['enrollment_date'] = now();
-                $studentData['parent_contact'] = $validatedData['emergency_contact'];
-                $studentData['age'] = Carbon::parse($validatedData['date_of_birth'])->age;
-                
-                // Assign generated values
-                $studentData['student_number'] = $studentNumber;
-                $studentData['email'] = $generatedEmail;
-
-                $student = Student::create($studentData);
-
-                User::create([
-                    'name'        => $validatedData['name'] . ' ' . $validatedData['surname'],
-                    'email'       => $generatedEmail,
-                    'national_id' => $validatedData['national_id'],
-                    'ec_number'   => $validatedData['national_id'],
-                    'password'    => Hash::make(strtolower($validatedData['surname']) . '123'),
-                    'role'        => 'student',
-                    'base_salary' => 0,
-                ]);
-
-                return redirect()->route('students.index')->with('success', "Registration successful: {$student->name} {$student->surname} (ID: {$studentNumber})");
-            });
-        } catch (Exception $e) {
-            return back()->withInput()->with('error', 'Error creating student: ' . $e->getMessage());
-        }
-    }
-
-    public function edit($id)
-    {
-        $student = Student::findOrFail($id);
-        $classes = SchoolClass::all();
-        $terms   = Term::orderBy('id', 'desc')->get();
-        return view('students.edit', compact('student', 'classes', 'terms'));
-    }
-
-    public function update(Request $request, $id)
-    {
-        $student = Student::findOrFail($id);
-        $oldNationalId = $student->national_id;
-
-        $validatedData = $request->validate([
-            'name'              => 'required|string|max:255',
-            'surname'           => 'required|string|max:255',
-            'date_of_birth'     => 'required|date',
-            'gender'            => 'required|in:Male,Female',
-            'national_id'       => 'required|string|unique:students,national_id,' . $student->id,
-            'grade'             => 'required|string',
-            'phone'             => 'required|string',
-            'emergency_contact' => 'nullable|string',
-            'status'            => 'required|in:active,inactive',
-            'address'           => 'nullable|string',
-            'term_id'           => 'required|exists:terms,id',
-        ]);
-
-        try {
-            DB::transaction(function () use ($student, $validatedData, $oldNationalId) {
-                $schoolClass = SchoolClass::where('class_name', $validatedData['grade'])->first();
-                $updateData = $validatedData;
-                $updateData['class_id'] = $schoolClass ? $schoolClass->id : $student->class_id;
-
-                // Maintain DB column consistency
-                $updateData['parent_contact'] = $validatedData['emergency_contact'];
-                $updateData['age'] = Carbon::parse($validatedData['date_of_birth'])->age;
-
-                $student->update($updateData);
-
-                User::where('national_id', $oldNationalId)
-                    ->where('role', 'student')
-                    ->update([
-                        'name'        => $validatedData['name'] . ' ' . $validatedData['surname'],
-                        'national_id' => $validatedData['national_id'],
-                        'ec_number'   => $validatedData['national_id']
-                    ]);
-            });
-
-            return redirect()->route('students.index')->with('success', 'Student profile updated successfully!');
-        } catch (Exception $e) {
-            return back()->withInput()->with('error', 'Update failed: ' . $e->getMessage());
-        }
-    }
-
+    /**
+     * Display Financial Summary & Fees
+     * GET: /students/{id}/financials
+     */
     public function financials(Request $request, $id)
     {
         $student = Student::with(['payments', 'term', 'class', 'feeStructures'])
@@ -321,230 +469,5 @@ class StudentController extends Controller
             }
         }
         return $totalOverdueArrears;
-    }
-
-    public function destroy($id)
-    {
-        $student = Student::findOrFail($id);
-
-        try {
-            DB::transaction(function() use ($student) {
-                Payment::where('student_id', $student->id)->delete();
-                FeeStructure::where('student_id', $student->id)->delete();
-                User::where('national_id', $student->national_id)->where('role', 'student')->delete();
-                $student->delete();
-            });
-
-            return redirect()->route('students.index')->with('success', 'Records deleted permanently.');
-        } catch (Exception $e) {
-            return redirect()->route('students.index')->with('error', 'Delete failed: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Process Mass Promotion Matrix Form Post safely without cascading loops
-     * POST: /students/promote/mass
-     */
-    public function processMassPromotion(Request $request)
-    {
-        $request->validate([
-            'target_term_id' => 'required|exists:terms,id',
-            'promote'        => 'required|array',
-        ]);
-
-        $promotions = $request->input('promote');
-        $targetTermId = $request->input('target_term_id');
-        $totalTransitioned = 0;
-
-        try {
-            DB::transaction(function () use ($promotions, $targetTermId, &$totalTransitioned) {
-                // Step 1: Filter out blank or unchecked rows
-                $validMappings = [];
-                foreach ($promotions as $item) {
-                    if (isset($item['active']) && !empty($item['to_grade']) && $item['to_grade'] !== '') {
-                        $fromGrade = $item['from_grade'];
-                        $toGrade = $item['to_grade'];
-
-                        if ($fromGrade === $toGrade && $toGrade !== 'Graduated') {
-                            continue;
-                        }
-
-                        $validMappings[$fromGrade] = $toGrade;
-                    }
-                }
-
-                if (empty($validMappings)) {
-                    throw new Exception("No valid class transitions were selected.");
-                }
-
-                // Keep track of IDs processed in this batch to prevent any cascading re-processing
-                $processedStudentIds = [];
-
-                // Step 2: Process each mapping rule independently
-                foreach ($validMappings as $fromGrade => $toGrade) {
-                    $isGraduated = ($toGrade === 'Graduated');
-
-                    // Fetch active students in this grade, strictly excluding anyone already moved in this batch
-                    $studentIds = Student::where('grade', $fromGrade)
-                        ->where('status', 'active')
-                        ->whereNotIn('id', $processedStudentIds)
-                        ->pluck('id');
-
-                    if ($studentIds->isEmpty()) {
-                        continue;
-                    }
-
-                    // Mark these specific student IDs as processed so they are never touched by subsequent rules
-                    $processedStudentIds = array_merge($processedStudentIds, $studentIds->toArray());
-
-                    // Define destination updates
-                    $updateData = [
-                        'term_id' => $targetTermId,
-                        'status'  => $isGraduated ? 'Alumni' : 'active',
-                    ];
-
-                    if ($isGraduated) {
-                        $updateData['class_id'] = null;
-                        $updateData['grade'] = 'Alumni';
-                    } else {
-                        $updateData['grade'] = $toGrade;
-                        
-                        $destinationClass = SchoolClass::where('class_name', $toGrade)->first();
-                        $updateData['class_id'] = $destinationClass ? $destinationClass->id : null;
-                    }
-
-                    // Execute batch update for this specific group using primary keys
-                    $affected = Student::whereIn('id', $studentIds)->update($updateData);
-                    $totalTransitioned += $affected;
-                }
-            });
-
-            return redirect()->route('students.promote')
-                ->with('success', "Success! {$totalTransitioned} student records have been successfully transitioned.");
-        } catch (Exception $e) {
-            return back()->with('error', 'Mass promotion failed: ' . $e->getMessage());
-        }
-    }
-    /**
-     * Show student profile data for Modal Popup (AJAX)
-     * Includes Gender-specific avatars and improved UI
-     */
-    public function showProfile($id)
-    {
-        try {
-            $student = Student::findOrFail($id);
-            $fullName = $student->name . " " . $student->surname;
-
-            $avatarColor = ($student->gender == 'Male') ? '3c8dbc' : 'e83e8c';
-            $avatarUrl = "https://ui-avatars.com/api/?name=" . urlencode($fullName) . "&background={$avatarColor}&color=fff&size=128";
-
-            $dob = $student->date_of_birth
-                ? Carbon::parse($student->date_of_birth)->format('d M, Y')
-                : 'Not Set';
-
-            return "
-            <div class='box-body box-profile'>
-                <div class='text-center' style='margin-bottom: 15px;'>
-                    <img class='profile-user-img img-responsive img-circle'
-                         src='{$avatarUrl}'
-                         alt='User profile picture'
-                         style='width: 100px; height: 100px; border: 3px solid #{$avatarColor}; padding: 3px;'>
-
-                    <h3 class='profile-username' style='margin-top: 10px; font-weight: bold; color: #333;'>
-                        {$student->surname}, {$student->name}
-                    </h3>
-                    <p class='text-muted'>
-                        <span class='label label-default' style='font-family: monospace;'>{$student->student_number}</span>
-                    </p>
-                </div>
-
-                <ul class='list-group list-group-unbordered'>
-                    <li class='list-group-item'>
-                        <i class='fa fa-id-card text-blue'></i> <b>National ID</b>
-                        <span class='pull-right text-bold'>".($student->national_id ?? 'N/A')."</span>
-                    </li>
-                    <li class='list-group-item'>
-                        <i class='fa fa-graduation-cap text-blue'></i> <b>Level</b>
-                        <span class='pull-right label label-primary'>{$student->grade}</span>
-                    </li>
-                    <li class='list-group-item'>
-                        <i class='fa fa-venus-mars text-blue'></i> <b>Gender</b>
-                        <span class='pull-right'>{$student->gender}</span>
-                    </li>
-                    <li class='list-group-item'>
-                        <i class='fa fa-calendar text-blue'></i> <b>Date of Birth</b>
-                        <span class='pull-right'>{$dob}</span>
-                    </li>
-                    <li class='list-group-item'>
-                        <i class='fa fa-phone text-blue'></i> <b>Student Phone</b>
-                        <span class='pull-right'>{$student->phone}</span>
-                    </li>
-                    <li class='list-group-item'>
-                        <i class='fa fa-users text-blue'></i> <b>Guardian Contact</b>
-                        <span class='pull-right text-bold'>".($student->parent_contact ?? $student->emergency_contact ?? 'N/A')."</span>
-                    </li>
-                </ul>
-
-                <div style='margin-top: 15px; padding: 10px; background: #f4f4f4; border-radius: 5px; border-left: 4px solid #{$avatarColor};'>
-                    <strong style='color: #555;'><i class='fa fa-map-marker margin-r-5'></i> Residential Address</strong>
-                    <p class='text-muted' style='margin: 5px 0 0 20px;'>
-                        ".($student->address ?? 'No residential address provided.')."
-                    </p>
-                </div>
-
-                <div class='text-center' style='margin-top: 15px;'>
-                    <span class='label " . ($student->status == 'active' ? 'label-success' : 'label-danger') . "' style='padding: 5px 15px; text-transform: uppercase;'>
-                        <i class='fa " . ($student->status == 'active' ? 'fa-check-circle' : 'fa-times-circle') . "'></i>
-                        {$student->status}
-                    </span>
-                </div>
-            </div>";
-        } catch (Exception $e) {
-            return "<div class='alert alert-danger'>
-                        <i class='icon fa fa-ban'></i> <b>Error:</b> Could not retrieve student profile data.
-                    </div>";
-        }
-    }
-
-    /**
-     * View the biometric enrollment interface for a student.
-     */
-    public function enrollFaceView($id)
-    {
-        $student = Student::findOrFail($id);
-        return view('students.enroll_face', compact('student'));
-    }
-
-    /**
-     * Process and store the captured biometric face data.
-     */
-    public function storeFace(Request $request, $id)
-    {
-        $request->validate(['face_image' => 'required|string']);
-
-        $student = Student::findOrFail($id);
-        $imageData = $request->face_image;
-
-        $imageData = str_replace(['data:image/jpeg;base64,', 'data:image/png;base64,'], '', $imageData);
-        $imageData = str_replace(' ', '+', $imageData);
-
-        $fileName = 'face_' . $student->id . '_' . time() . '.jpg';
-        $path = 'biometrics/' . $fileName;
-
-        Storage::disk('public')->put($path, base64_decode($imageData));
-        $student->update(['face_path' => $path]);
-
-        return response()->json(['success' => true, 'path' => $path]);
-    }
-
-    public function getFace($id)
-    {
-        $student = Student::findOrFail($id);
-
-        if ($student->face_path && Storage::disk('public')->exists($student->face_path)) {
-            return response()->file(storage_path('app/public/' . $student->face_path));
-        }
-
-        return response()->file(public_path('img/default-avatar.png'));
     }
 }

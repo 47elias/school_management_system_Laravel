@@ -1,397 +1,289 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Financial Profile | {{ env('SCHOOL_ACRONYM') }}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+{{-- resources/views/fees/show.blade.php --}}
+@extends('layouts.admin.app')
 
-    {{-- AdminLTE CSS & Dependencies --}}
-    @include('components.adminlte')
+@section('title', 'Financial Statement | ' . $student->name . ' ' . $student->surname)
 
-    <style>
-        :root {
-            --grad-blue: linear-gradient(45deg, #0073b7, #00c0ef);
-            --grad-green: linear-gradient(45deg, #00a65a, #2ecc71);
-            --grad-red: linear-gradient(45deg, #dd4b39, #ed5565);
-            --grad-orange: linear-gradient(45deg, #f39c12, #ffcc33);
-        }
+@section('header')
+    @php
+        $displayTerm = $term;
+        $totalExpected = (float) $student->expected_total;
+        $carriedForward = (float) ($student->carried_forward ?? 0);
+        $currentTermFees = (float) ($termRawExpected ?? 0);
+        $totalPaid = (float) ($termPaid ?? 0);
+        $balance = (float) ($trueBalance ?? 0);
+        $hasCredit = $balance < 0;
+        $creditAmount = abs($balance);
+    @endphp
 
-        body { background-color: #f0f3f7 !important; font-family: 'Source Sans Pro', sans-serif; }
-
-        /* Modern Box Styling */
-        .box { 
-            border-radius: 12px; 
-            border: none; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
-            overflow: hidden;
-            margin-bottom: 20px;
-        }
-        .box-header { padding: 18px 20px; border-bottom: 1px solid #f8fafc; }
-        .box-title { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-
-        /* Profile Styling */
-        .bg-initials-circle {
-            width: 100px; height: 100px; line-height: 100px;
-            margin: 0 auto 15px; font-size: 35px; font-weight: bold;
-            color: #fff; background: var(--grad-blue);
-            border-radius: 50%; text-align: center;
-            box-shadow: 0 4px 12px rgba(0,115,183,0.3);
-        }
-        
-        .list-group-unbordered > .list-group-item {
-            border-left: none; border-right: none; border-radius: 0;
-            padding: 12px 0; border-bottom: 1px solid #f1f5f9;
-        }
-
-        .balance-box {
-            margin: 20px 0; padding: 25px 20px;
-            background: #fff; border: 1px solid #f1f5f9; 
-            border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);
-        }
-        .balance-box.overdue { background: #fff5f5; border-color: #ffe4e6; }
-        
-        .text-black { font-weight: 900; color: #1e293b; }
-        .text-bold { font-weight: bold; }
-
-        /* Table Vibrant */
-        .table-vibrant thead th {
-            background: #f8fafc; color: #64748b; text-transform: uppercase;
-            font-size: 11px; padding: 12px 10px; border-bottom: 2px solid #e2e8f0 !important;
-        }
-        .table-vibrant td { vertical-align: middle !important; padding: 12px 10px !important; }
-
-        /* Term Switcher Styling */
-        .term-selector-container {
-            display: inline-block; margin-left: 10px; vertical-align: middle;
-        }
-        .term-select-input {
-            height: 32px; padding: 2px 12px; font-size: 13px; font-weight: 600;
-            border-radius: 6px; border: 1px solid #cbd5e1; background: #fff;
-            color: #475569; cursor: pointer; outline: none;
-        }
-
-        /* Print Utilities */
-        @media print {
-            .no-print, .main-header, .main-sidebar, .main-footer, .btn, .term-selector-container { display: none !important; }
-            .content-wrapper { margin-left: 0 !important; padding: 0 !important; background: #fff !important; }
-            body { background: #fff !important; }
-            .box { border: 1px solid #ddd !important; box-shadow: none !important; margin-bottom: 10px; }
-            .col-md-4 { width: 35% !important; float: left !important; }
-            .col-md-8 { width: 65% !important; float: left !important; }
-            .print-header { display: block !important; }
-        }
-        .print-header { display: none; margin-bottom: 30px; }
-    </style>
-</head>
-<body class="hold-transition skin-blue sidebar-mini">
-    <div class="wrapper">
-        @include('layouts.layout_separator')
-
-        <div class="content-wrapper">
-
-            {{-- 1. DYNAMIC DATA PREPARATION --}}
-            @php
-                $displayTerm = $term; // Passed from Controller
-                
-                // Use the calculated totals dynamically from the controller/database
-                $totalExpected = (float) $student->expected_total;
-                $carriedForward = (float) ($student->carried_forward ?? 0);
-                $currentTermFees = (float) ($termRawExpected ?? 0);
-                
-                $totalPaid = (float) ($termPaid ?? 0);
-                $balance = (float) ($trueBalance ?? 0);
-                
-                // Credit/Advance Logic (Negative balance means they have credit)
-                $hasCredit = $balance < 0;
-                $creditAmount = abs($balance);
-            @endphp
-
-            {{-- Print-Only Header --}}
-            <div class="print-header">
-                <table style="width: 100%; border-bottom: 2px solid #333; padding-bottom: 10px;">
-                    <tr>
-                        <td>
-                            <h2 style="margin:0; font-weight:bold;">{{ env('SCHOOL_NAME') }}</h2>
-                            <p style="margin:0; font-size: 14px;">STATEMENT OF ACCOUNT - {{ strtoupper($displayTerm->term_name) }} ({{ $displayTerm->academic_year }})</p>
-                        </td>
-                        <td style="text-align: right;">
-                            <p style="margin:0;"><strong>Date:</strong> {{ date('d M Y') }}</p>
-                            <p style="margin:0;"><strong>ID:</strong> {{ $student->student_number }}</p>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-
-            {{-- Screen Header --}}
-            <section class="content-header no-print" style="padding: 25px 25px 15px 25px;">
-                <h1 style="display: flex; align-items: center; justify-content: space-between;">
-                    <div>
-                        Statement: <span class="text-primary text-bold" style="color: #0073b7;">{{ $displayTerm->term_name }} {{ $displayTerm->academic_year }}</span>
-                        @if($displayTerm->is_current)
-                            <small class="label bg-green-active" style="font-size: 10px; margin-left: 8px; border-radius: 4px; padding: 4px 8px;">CURRENT TERM</small>
-                        @endif
-
-                        <div class="term-selector-container">
-                            <form action="{{ request()->url() }}" method="GET" id="termSwitcherForm">
-                                <select name="term_id" class="term-select-input" onchange="document.getElementById('termSwitcherForm').submit()">
-                                    @foreach($allTerms as $t)
-                                        <option value="{{ $t->id }}" {{ $t->id == $displayTerm->id ? 'selected' : '' }}>
-                                            View: {{ $t->term_name }} {{ $t->academic_year }} {{ $t->is_current ? '(Current)' : '' }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </form>
-                        </div>
-                    </div>
-
-                    <div class="pull-right">
-                        <button onclick="window.print()" class="btn btn-default btn-sm text-bold" style="border-radius: 6px; margin-right: 5px;">
-                            <i class="fa fa-print"></i> PRINT
-                        </button>
-                        <a href="{{ route('fees.report') }}" class="btn btn-default btn-sm text-bold" style="border-radius: 6px;">
-                            <i class="fa fa-arrow-left"></i> EXIT
-                        </a>
-                    </div>
-                </h1>
-            </section>
-
-            <section class="content">
-                {{-- Flash Messages --}}
-                @if(session('success'))
-                    <div class="alert alert-success alert-dismissible no-print" style="border-radius: 8px; box-shadow: 0 4px 10px rgba(0,166,90,0.1);">
-                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-                        <i class="icon fa fa-check"></i> {{ session('success') }}
-                    </div>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full no-print">
+        <div>
+            <div class="flex items-center space-x-3">
+                <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Statement: {{ $displayTerm->term_name }} {{ $displayTerm->academic_year }}</h1>
+                @if($displayTerm->is_current)
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">CURRENT TERM</span>
                 @endif
-
-                <div class="row">
-                    {{-- Left Column: Summary Card --}}
-                    <div class="col-md-4">
-                        <div class="box box-primary" style="border-top: 4px solid #0073b7;">
-                            <div class="box-body box-profile" style="padding: 25px;">
-                                <div class="no-print">
-                                    <div class="bg-initials-circle">
-                                        {{ strtoupper(substr($student->name, 0, 1) . substr($student->surname, 0, 1)) }}
-                                    </div>
-                                </div>
-
-                                <h3 class="profile-username text-center text-bold" style="color: #1e293b;">{{ $student->name }} {{ $student->surname }}</h3>
-                                <p class="text-muted text-center" style="font-weight: 600;">{{ $student->student_number }} | Grade {{ $student->grade }}</p>
-
-                                <ul class="list-group list-group-unbordered" style="margin-top: 25px;">
-                                    <li class="list-group-item">
-                                        <b style="color: #64748b;">Arrears B/F</b> 
-                                        <span class="pull-right text-bold {{ $carriedForward > 0 ? 'text-red' : 'text-green' }}">${{ number_format($carriedForward, 2) }}</span>
-                                    </li>
-                                    <li class="list-group-item">
-                                        <b style="color: #64748b;">Term Fees (Charged)</b> 
-                                        <span class="pull-right text-bold">${{ number_format($currentTermFees, 2) }}</span>
-                                    </li>
-                                    <li class="list-group-item" style="background: #f8fafc; padding: 12px 10px; border-radius: 6px; margin-top: 8px;">
-                                        <b style="color: #1e293b;">Total Invoice</b> 
-                                        <span class="pull-right text-bold text-blue">${{ number_format($totalExpected, 2) }}</span>
-                                    </li>
-                                    <li class="list-group-item">
-                                        <b style="color: #64748b;">Total Paid (This Term)</b> 
-                                        <span class="pull-right text-bold text-green">${{ number_format($totalPaid, 2) }}</span>
-                                    </li>
-
-                                    @if($hasCredit)
-                                    <li class="list-group-item" style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 15px; margin-top: 10px;">
-                                        <b class="text-green"><i class="fa fa-star"></i> Advance / Credit</b>
-                                        <span class="pull-right text-bold text-green" style="font-size: 16px;">${{ number_format($creditAmount, 2) }}</span>
-                                        <div class="text-center no-print" style="margin-top: 15px;">
-                                            <button type="button" class="btn btn-sm btn-danger text-bold" style="border-radius: 6px; width: 100%;" data-toggle="modal" data-target="#deductModal">
-                                                <i class="fa fa-minus-circle"></i> WITHDRAW / DEDUCT
-                                            </button>
-                                        </div>
-                                    </li>
-                                    @endif
-                                </ul>
-
-                                <div class="balance-box text-center {{ $balance > 0 ? 'overdue' : '' }}">
-                                    <small class="text-uppercase text-muted" style="font-weight: 700; letter-spacing: 0.5px;">Total Outstanding Balance</small>
-                                    <h2 class="{{ $balance <= 0 ? 'text-green' : 'text-red' }} text-black" style="margin: 10px 0 15px 0; font-size: 32px;">
-                                        ${{ number_format($balance, 2) }}
-                                    </h2>
-                                    @if($balance <= 0)
-                                        <div class="label label-success" style="padding: 6px 12px; border-radius: 4px; font-size: 12px;"><i class="fa fa-check-circle"></i> ACCOUNT CLEARED</div>
-                                    @endif
-                                </div>
-
-                                <a href="{{ route('fees.create', ['student_id' => $student->id]) }}" class="btn btn-primary btn-block no-print text-bold" style="border-radius: 8px; padding: 12px; font-size: 14px; background: var(--grad-blue); border: none;">
-                                    <i class="fa fa-plus"></i> RECORD PAYMENT
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- Right Column: Statement of Account / Ledger --}}
-                    <div class="col-md-8">
-                        <div class="box box-info" style="border-top: 4px solid #00c0ef;">
-                            <div class="box-header">
-                                <h3 class="box-title" style="color: #475569;"><i class="fa fa-file-text-o"></i> Statement of Account</h3>
-                            </div>
-                            <div class="box-body no-padding">
-                                <div class="table-responsive">
-                                    <table class="table table-vibrant table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th>Date</th>
-                                                <th>Description / Details</th>
-                                                <th class="text-right">Charge (Dr)</th>
-                                                <th class="text-right">Payment (Cr)</th>
-                                                <th class="text-right">Balance</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @php
-                                                $runningBalance = 0;
-                                            @endphp
-
-                                            {{-- 1. Balance Brought Forward --}}
-                                            @if($carriedForward != 0)
-                                                @php $runningBalance += $carriedForward; @endphp
-                                                <tr>
-                                                    <td class="text-muted">-</td>
-                                                    <td class="text-bold" style="color: #1e293b;">
-                                                        Balance Brought Forward {{ $carriedForward < 0 ? '(Credit)' : '(Arrears)' }}
-                                                    </td>
-                                                    @if($carriedForward > 0)
-                                                        <td class="text-right text-red">${{ number_format($carriedForward, 2) }}</td>
-                                                        <td class="text-right">-</td>
-                                                    @else
-                                                        <td class="text-right">-</td>
-                                                        <td class="text-right text-green">${{ number_format(abs($carriedForward), 2) }}</td>
-                                                    @endif
-                                                    <td class="text-right text-bold">${{ number_format($runningBalance, 2) }}</td>
-                                                </tr>
-                                            @endif
-
-                                            {{-- 2. Term Fees Applied --}}
-                                            @if($currentTermFees > 0)
-                                                @php $runningBalance += $currentTermFees; @endphp
-                                                <tr>
-                                                    <td class="text-muted">{{ $displayTerm->created_at ? \Carbon\Carbon::parse($displayTerm->created_at)->format('d M Y') : 'Start of Term' }}</td>
-                                                    <td class="text-bold text-blue">Term Fees Charged ({{ $displayTerm->term_name }})</td>
-                                                    <td class="text-right text-red">${{ number_format($currentTermFees, 2) }}</td>
-                                                    <td class="text-right">-</td>
-                                                    <td class="text-right text-bold">${{ number_format($runningBalance, 2) }}</td>
-                                                </tr>
-                                            @endif
-
-                                            {{-- 3. Payments and Deductions (Chronological) --}}
-                                            {{-- NOTE: We are intentionally hiding 'Term Invoice' here so it doesn't print twice --}}
-                                            @forelse($student->payments->where('term_id', $displayTerm->id)->where('payment_method', '!=', 'Term Invoice')->sortBy('payment_date') as $payment)
-                                                @php $runningBalance -= $payment->amount_paid; @endphp
-                                                <tr>
-                                                    <td style="color: #475569;">{{ \Carbon\Carbon::parse($payment->payment_date)->format('d M Y') }}</td>
-                                                    <td>
-                                                        <span style="font-weight: 600; color: #1e293b;">
-                                                            {{ $payment->payment_method === 'Credit Withdrawal' ? 'Credit Withdrawal' : ($payment->amount_paid < 0 ? 'Adjustment / Reversal' : 'Payment') }} ({{ $payment->payment_method }})
-                                                        </span>
-                                                        @if($payment->reference_no || $payment->remarks)
-                                                            <br>
-                                                            <small class="text-muted">
-                                                                {{ $payment->reference_no ? 'Ref: ' . $payment->reference_no : '' }} 
-                                                                {{ $payment->remarks ? '- ' . $payment->remarks : '' }}
-                                                            </small>
-                                                        @endif
-                                                    </td>
-                                                    @if($payment->amount_paid < 0)
-                                                        {{-- It's a debit/reversal --}}
-                                                        <td class="text-right text-red">${{ number_format(abs($payment->amount_paid), 2) }}</td>
-                                                        <td class="text-right">-</td>
-                                                    @else
-                                                        {{-- It's a normal payment credit --}}
-                                                        <td class="text-right">-</td>
-                                                        <td class="text-right text-green">${{ number_format($payment->amount_paid, 2) }}</td>
-                                                    @endif
-                                                    <td class="text-right text-bold">${{ number_format($runningBalance, 2) }}</td>
-                                                </tr>
-                                            @empty
-                                                @if($currentTermFees == 0 && $carriedForward == 0)
-                                                <tr>
-                                                    <td colspan="5" class="text-center text-muted" style="padding: 40px;">
-                                                        <i class="fa fa-folder-open-o" style="font-size: 24px; color: #cbd5e1; display: block; margin-bottom: 10px;"></i>
-                                                        No financial activity recorded for this term.
-                                                    </td>
-                                                </tr>
-                                                @endif
-                                            @endforelse
-                                        </tbody>
-                                        <tfoot>
-                                            <tr style="background: #f8fafc;">
-                                                <td colspan="4" class="text-right text-bold" style="color: #1e293b; font-size: 13px;">CLOSING BALANCE:</td>
-                                                <td class="text-right text-bold {{ $runningBalance > 0 ? 'text-red' : 'text-green' }}" style="font-size: 16px;">
-                                                    ${{ number_format($runningBalance, 2) }}
-                                                </td>
-                                            </tr>
-                                        </tfoot>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Print Signature Block --}}
-                        <div class="print-header" style="margin-top: 60px;">
-                            <div class="row">
-                                <div class="col-xs-5">
-                                    <div style="border-top: 1px solid #000; padding-top: 5px; text-align: center;">
-                                        <strong>Bursar / Accounts</strong>
-                                    </div>
-                                </div>
-                                <div class="col-xs-2"></div>
-                                <div class="col-xs-5">
-                                    <div style="border-top: 1px solid #000; padding-top: 5px; text-align: center;">
-                                        <strong>Parent / Guardian</strong>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </section>
+            </div>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Account Ledger for {{ $student->name }} {{ $student->surname }} ({{ $student->student_number }})</p>
         </div>
 
-        {{-- Deduction Modal (No Print) --}}
-        @if($hasCredit)
-        <div class="modal fade no-print" id="deductModal" tabindex="-1" role="dialog">
-            <div class="modal-dialog modal-sm" role="document">
-                <form action="{{ route('fees.deduct_credit', $student->id) }}" method="POST">
-                    @csrf
-                    <div class="modal-content" style="border-radius: 12px; overflow: hidden; border: none;">
-                        <div class="modal-header" style="background: var(--grad-red); color: white;">
-                            <button type="button" class="close" data-dismiss="modal" style="color: white; opacity: 1;"><span>&times;</span></button>
-                            <h4 class="modal-title text-bold"><i class="fa fa-exclamation-triangle"></i> Deduct Credit</h4>
+        <div class="mt-4 sm:mt-0 flex items-center space-x-2.5">
+            <form action="{{ request()->url() }}" method="GET" class="inline-block">
+                <select name="term_id" onchange="this.form.submit()" 
+                        class="px-3 py-2 text-xs font-bold rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none">
+                    @foreach($allTerms as $t)
+                        <option value="{{ $t->id }}" {{ $t->id == $displayTerm->id ? 'selected' : '' }}>
+                            View: {{ $t->term_name }} {{ $t->academic_year }}
+                        </option>
+                    @endforeach
+                </select>
+            </form>
+
+            <button onclick="window.print()" class="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-200 dark:border-slate-700">
+                <i class="fa-solid fa-print mr-1.5"></i> Print
+            </button>
+
+            <a href="{{ Route::has('fees.report') ? route('fees.report') : url('/fees/report') }}" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold">
+                <i class="fa-solid fa-arrow-left mr-1.5"></i> Exit
+            </a>
+        </div>
+    </div>
+@endsection
+
+@section('content')
+    <div x-data="{ deductModalOpen: false }" class="space-y-6">
+
+        {{-- Printable Header --}}
+        <div class="hidden print:block border-b-2 border-slate-900 pb-4 mb-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-black uppercase text-slate-900">{{ env('SCHOOL_NAME', 'Mukahlera College') }}</h2>
+                    <p class="text-xs font-bold text-slate-700">STATEMENT OF ACCOUNT - {{ strtoupper($displayTerm->term_name) }} ({{ $displayTerm->academic_year }})</p>
+                </div>
+                <div class="text-right text-xs">
+                    <p><strong>Date:</strong> {{ date('d M Y') }}</p>
+                    <p><strong>ID:</strong> {{ $student->student_number }}</p>
+                </div>
+            </div>
+        </div>
+
+        @if(session('success'))
+            <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-200 flex items-center justify-between no-print">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-circle-check text-emerald-600 dark:text-emerald-400 text-lg"></i>
+                    <p class="text-xs font-medium">{{ session('success') }}</p>
+                </div>
+            </div>
+        @endif
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {{-- Left Column: Summary Card --}}
+            <div class="lg:col-span-4">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 p-6 space-y-6 transition-colors">
+                    
+                    <div class="text-center">
+                        <div class="w-20 h-20 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-2xl mx-auto shadow-md mb-3">
+                            {{ strtoupper(substr($student->name, 0, 1) . substr($student->surname, 0, 1)) }}
                         </div>
-                        <div class="modal-body" style="padding: 20px;">
-                            <input type="hidden" name="term_id" value="{{ $displayTerm->id }}">
-                            <div class="form-group">
-                                <label style="color: #475569;">Amount to Withdraw ($)</label>
-                                <input type="number" step="0.01" name="amount" max="{{ $creditAmount }}" class="form-control" placeholder="0.00" style="border-radius: 6px;" required>
-                                <p class="help-block small" style="color: #00a65a; font-weight: 600; margin-top: 8px;">Available Credit: ${{ number_format($creditAmount, 2) }}</p>
-                            </div>
-                            <div class="form-group">
-                                <label style="color: #475569;">Reason/Remarks</label>
-                                <textarea name="remarks" class="form-control" rows="2" placeholder="e.g. Refunded to parent" style="border-radius: 6px;"></textarea>
-                            </div>
-                        </div>
-                        <div class="modal-footer" style="border-top: 1px solid #f1f5f9;">
-                            <button type="button" class="btn btn-default pull-left text-bold" data-dismiss="modal" style="border-radius: 6px;">Cancel</button>
-                            <button type="submit" class="btn btn-danger text-bold" style="border-radius: 6px; background: var(--grad-red); border: none;">Confirm Deduction</button>
-                        </div>
+                        <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100">{{ $student->name }} {{ $student->surname }}</h3>
+                        <p class="text-xs text-slate-400 font-medium">{{ $student->student_number }} | Grade {{ $student->grade }}</p>
                     </div>
-                </form>
+
+                    <div class="divide-y divide-slate-100 dark:divide-slate-700/60 text-xs">
+                        <div class="py-2.5 flex justify-between">
+                            <span class="text-slate-500 dark:text-slate-400">Arrears B/F</span>
+                            <span class="font-bold {{ $carriedForward > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }}">${{ number_format($carriedForward, 2) }}</span>
+                        </div>
+                        <div class="py-2.5 flex justify-between">
+                            <span class="text-slate-500 dark:text-slate-400">Term Fees (Charged)</span>
+                            <span class="font-bold text-slate-800 dark:text-slate-100">${{ number_format($currentTermFees, 2) }}</span>
+                        </div>
+                        <div class="py-2.5 flex justify-between bg-slate-50 dark:bg-slate-900/50 px-3 rounded-lg font-bold">
+                            <span class="text-slate-800 dark:text-slate-200">Total Invoice</span>
+                            <span class="text-indigo-600 dark:text-indigo-400">${{ number_format($totalExpected, 2) }}</span>
+                        </div>
+                        <div class="py-2.5 flex justify-between">
+                            <span class="text-slate-500 dark:text-slate-400">Total Paid (This Term)</span>
+                            <span class="font-bold text-emerald-600 dark:text-emerald-400">${{ number_format($totalPaid, 2) }}</span>
+                        </div>
+
+                        @if($hasCredit)
+                        <div class="py-3 px-3 mt-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-200 space-y-2">
+                            <div class="flex justify-between items-center font-bold">
+                                <span><i class="fa-solid fa-star text-amber-500 mr-1"></i> Advance / Credit</span>
+                                <span class="text-sm">${{ number_format($creditAmount, 2) }}</span>
+                            </div>
+                            <button type="button" @click="deductModalOpen = true" class="w-full py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold no-print">
+                                Withdraw / Deduct Credit
+                            </button>
+                        </div>
+                        @endif
+                    </div>
+
+                    <div class="p-4 rounded-xl text-center border {{ $balance > 0 ? 'bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/40' : 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40' }}">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Outstanding Balance</span>
+                        <h2 class="text-3xl font-black mt-1 {{ $balance <= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}">
+                            ${{ number_format($balance, 2) }}
+                        </h2>
+                        @if($balance <= 0)
+                            <span class="inline-flex items-center px-2 py-0.5 mt-2 rounded text-[10px] font-bold bg-emerald-500 text-white">ACCOUNT CLEARED</span>
+                        @endif
+                    </div>
+
+                    <a href="{{ Route::has('fees.create') ? route('fees.create', ['student_id' => $student->id]) : url('/fees/create?student_id=' . $student->id) }}" 
+                       class="w-full inline-flex items-center justify-center px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold no-print transition-all shadow-sm">
+                        <i class="fa-solid fa-plus mr-2"></i> Record Payment
+                    </a>
+                </div>
+            </div>
+
+            {{-- Right Column: Statement of Account / Ledger --}}
+            <div class="lg:col-span-8">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
+                    <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/80">
+                        <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                            <i class="fa-solid fa-file-invoice-dollar text-indigo-500 mr-2.5"></i> Statement of Account
+                        </h3>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700/60 text-xs">
+                            <thead class="bg-slate-50 dark:bg-slate-800/80">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                                    <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Description</th>
+                                    <th scope="col" class="px-6 py-3.5 text-right font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Charge (Dr)</th>
+                                    <th scope="col" class="px-6 py-3.5 text-right font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Payment (Cr)</th>
+                                    <th scope="col" class="px-6 py-3.5 text-right font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700/60">
+                                @php $runningBalance = 0; @endphp
+
+                                @if($carriedForward != 0)
+                                    @php $runningBalance += $carriedForward; @endphp
+                                    <tr>
+                                        <td class="px-6 py-4 text-slate-400">-</td>
+                                        <td class="px-6 py-4 font-bold text-slate-800 dark:text-slate-100">
+                                            Balance Brought Forward {{ $carriedForward < 0 ? '(Credit)' : '(Arrears)' }}
+                                        </td>
+                                        @if($carriedForward > 0)
+                                            <td class="px-6 py-4 text-right text-rose-600 font-bold">${{ number_format($carriedForward, 2) }}</td>
+                                            <td class="px-6 py-4 text-right text-slate-400">-</td>
+                                        @else
+                                            <td class="px-6 py-4 text-right text-slate-400">-</td>
+                                            <td class="px-6 py-4 text-right text-emerald-600 font-bold">${{ number_format(abs($carriedForward), 2) }}</td>
+                                        @endif
+                                        <td class="px-6 py-4 text-right font-bold text-slate-800 dark:text-slate-100">${{ number_format($runningBalance, 2) }}</td>
+                                    </tr>
+                                @endif
+
+                                @if($currentTermFees > 0)
+                                    @php $runningBalance += $currentTermFees; @endphp
+                                    <tr>
+                                        <td class="px-6 py-4 text-slate-500 dark:text-slate-400">{{ $displayTerm->created_at ? \Carbon\Carbon::parse($displayTerm->created_at)->format('d M Y') : 'Start of Term' }}</td>
+                                        <td class="px-6 py-4 font-bold text-indigo-600 dark:text-indigo-400">Term Fees Charged ({{ $displayTerm->term_name }})</td>
+                                        <td class="px-6 py-4 text-right text-rose-600 font-bold">${{ number_format($currentTermFees, 2) }}</td>
+                                        <td class="px-6 py-4 text-right text-slate-400">-</td>
+                                        <td class="px-6 py-4 text-right font-bold text-slate-800 dark:text-slate-100">${{ number_format($runningBalance, 2) }}</td>
+                                    </tr>
+                                @endif
+
+                                @forelse($student->payments->where('term_id', $displayTerm->id)->where('payment_method', '!=', 'Term Invoice')->sortBy('payment_date') as $payment)
+                                    @php $runningBalance -= $payment->amount_paid; @endphp
+                                    <tr>
+                                        <td class="px-6 py-4 text-slate-500 dark:text-slate-400">{{ \Carbon\Carbon::parse($payment->payment_date)->format('d M Y') }}</td>
+                                        <td class="px-6 py-4">
+                                            <span class="font-bold text-slate-800 dark:text-slate-200">
+                                                {{ $payment->payment_method === 'Credit Withdrawal' ? 'Credit Withdrawal' : ($payment->amount_paid < 0 ? 'Adjustment / Reversal' : 'Payment') }} ({{ $payment->payment_method }})
+                                            </span>
+                                            @if($payment->reference_no || $payment->remarks)
+                                                <span class="block text-[11px] text-slate-400">
+                                                    {{ $payment->reference_no ? 'Ref: ' . $payment->reference_no : '' }} {{ $payment->remarks ? '- ' . $payment->remarks : '' }}
+                                                </span>
+                                            @endif
+                                        </td>
+                                        @if($payment->amount_paid < 0)
+                                            <td class="px-6 py-4 text-right text-rose-600 font-bold">${{ number_format(abs($payment->amount_paid), 2) }}</td>
+                                            <td class="px-6 py-4 text-right text-slate-400">-</td>
+                                        @else
+                                            <td class="px-6 py-4 text-right text-slate-400">-</td>
+                                            <td class="px-6 py-4 text-right text-emerald-600 font-bold">${{ number_format($payment->amount_paid, 2) }}</td>
+                                        @endif
+                                        <td class="px-6 py-4 text-right font-bold text-slate-800 dark:text-slate-100">${{ number_format($runningBalance, 2) }}</td>
+                                    </tr>
+                                @empty
+                                    @if($currentTermFees == 0 && $carriedForward == 0)
+                                    <tr>
+                                        <td colspan="5" class="px-6 py-12 text-center text-slate-400">
+                                            No financial activity recorded for this term.
+                                        </td>
+                                    </tr>
+                                    @endif
+                                @endforelse
+                            </tbody>
+                            <tfoot class="bg-slate-50 dark:bg-slate-800/80 font-bold border-t-2 border-slate-200 dark:border-slate-700">
+                                <tr>
+                                    <td colspan="4" class="px-6 py-4 text-right text-slate-800 dark:text-slate-100">CLOSING BALANCE:</td>
+                                    <td class="px-6 py-4 text-right font-black text-sm {{ $runningBalance > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }}">
+                                        ${{ number_format($runningBalance, 2) }}
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                {{-- Printable Signatures --}}
+                <div class="hidden print:block mt-16 pt-8 border-t border-slate-300">
+                    <div class="grid grid-cols-2 gap-12 text-center text-xs font-bold text-slate-800">
+                        <div class="border-t border-slate-800 pt-2">Bursar / Accounts</div>
+                        <div class="border-t border-slate-800 pt-2">Parent / Guardian</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Deduct Credit Modal --}}
+        @if($hasCredit)
+        <div x-show="deductModalOpen" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+            <div class="flex items-center justify-center min-h-screen px-4 text-center">
+                <div @click="deductModalOpen = false" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
+
+                <div class="inline-block w-full max-w-sm p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-slate-800 rounded-2xl shadow-xl z-10 border border-slate-200 dark:border-slate-700">
+                    <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center mb-4">
+                        <i class="fa-solid fa-triangle-exclamation text-rose-500 mr-2"></i> Deduct / Withdraw Credit
+                    </h3>
+
+                    <form action="{{ Route::has('fees.deduct_credit') ? route('fees.deduct_credit', $student->id) : url('/fees/deduct-credit/' . $student->id) }}" method="POST" class="space-y-4">
+                        @csrf
+                        <input type="hidden" name="term_id" value="{{ $displayTerm->id }}">
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Amount to Withdraw ($)</label>
+                            <input type="number" step="0.01" name="amount" max="{{ $creditAmount }}" required placeholder="0.00"
+                                   class="w-full px-3.5 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500">
+                            <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-1 block">Available Credit: ${{ number_format($creditAmount, 2) }}</span>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Reason / Remarks</label>
+                            <textarea name="remarks" rows="2" placeholder="e.g. Refunded to parent"
+                                      class="w-full px-3.5 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500"></textarea>
+                        </div>
+
+                        <div class="flex justify-end space-x-2 pt-2">
+                            <button type="button" @click="deductModalOpen = false" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold">
+                                Cancel
+                            </button>
+                            <button type="submit" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold">
+                                Confirm Deduction
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
         @endif
 
-        @include('layouts.footer')
     </div>
-
-    @include('components.scripts')
-</body>
-</html>
+@endsection

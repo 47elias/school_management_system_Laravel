@@ -1,235 +1,159 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>Class Timetable Management</title>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
-    @include('components.adminlte')
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.24/css/dataTables.bootstrap.min.css">
-    
-    <style>
-        :root {
-            --brand-primary: #3c8dbc;
-            --bg-light: #f4f6f9; /* Standard AdminLTE background */
-            --border-color: #d2d6de;
-        }
+{{-- resources/views/timetable/index.blade.php --}}
+@extends('layouts.admin.app')
 
-        html, body {
-            font-family: 'Inter', sans-serif !important;
-            background-color: var(--bg-light) !important;
-            height: 100vh !important;
-            overflow: hidden !important;
-            margin: 0;
-            padding: 0;
-        }
+@section('title', 'Class Timetable Management | ' . env('SCHOOL_ACRONYM', 'SMS'))
 
-        .wrapper {
-            height: 100vh !important;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden !important;
-        }
-
-        .content-wrapper {
-            background-color: var(--bg-light) !important;
-            flex: 1 1 auto !important;
-            height: calc(100vh - 50px) !important; /* Adjust for AdminLTE header height */
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
-            padding-bottom: 30px;
-        }
-
-        .table-vcenter td { 
-            vertical-align: middle !important; 
-            padding: 12px 14px !important; 
-        }
-
-        .box { 
-            border-radius: 4px; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
-            border-top: 3px solid var(--brand-primary); 
-            background: #fff;
-            margin-bottom: 20px;
-        }
-
-        .box-header { padding: 15px 20px; border-bottom: 1px solid #f4f4f4; }
-        .box-body { padding: 20px; }
-
-        #timetableTable { width: 100% !important; font-size: 13px; color: #444; }
-        
-        .dataTables_wrapper .dataTables_filter input,
-        .dataTables_wrapper .dataTables_length select {
-            border-radius: 4px; 
-            border: 1px solid #ccc; 
-            padding: 6px 12px; 
-            height: 34px;
-            font-size: 13px;
-            background: #fff;
-        }
-
-        .nowrap { white-space: nowrap; }
-
-        .btn-action { 
-            margin: 0 2px; 
-            border-radius: 4px !important; 
-            width: 32px !important; 
-            height: 32px !important; 
-            display: inline-flex; 
-            align-items: center; 
-            justify-content: center; 
-            background: #f4f4f4; 
-            border: 1px solid #ddd; 
-        }
-        .btn-action:hover { background: #e7e7e7; }
-
-        @media (max-width: 768px) {
-            .box-header { display: flex; flex-direction: column; gap: 10px; }
-            .box-header .box-tools { position: static; width: 100%; display: flex; gap: 6px; flex-wrap: wrap; }
-            .box-header .box-tools a, .box-header .box-tools button { flex: 1; text-align: center; }
-            .box-header .class-dropdown-container { width: 100%; margin-left: 0 !important; margin-top: 5px; }
-            .box-header .class-dropdown-container select { width: 100% !important; }
-        }
-    </style>
-</head>
-<body class="hold-transition skin-blue sidebar-mini fixed">
-    <div class="wrapper">
-        @include('layouts.topbar')
-        @include('layouts.sidebar')
-
-        <div class="content-wrapper">
-            <!-- Content Header (Page header) -->
-            <section class="content-header" style="padding: 15px 20px;">
-                <h1>
-                    <i class="fa fa-calendar text-blue"></i> Timetable Management
-                    <small>Class Schedules & Period Allocations</small>
-                </h1>
-                <ol class="breadcrumb">
-                    <li><a href="{{ route('dashboard') }}"><i class="fa fa-dashboard"></i> Home</a></li>
-                    <li class="active">Timetable</li>
-                </ol>
-            </section>
-
-            <!-- Main content -->
-            <section class="content" style="padding: 0 20px;">
-                @if(session('success'))
-                    <div class="alert alert-success alert-dismissible" style="border-radius: 4px;">
-                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-                        <h4><i class="icon fa fa-check"></i> Success!</h4>
-                        {{ session('success') }}
-                    </div>
-                @endif
-
-                @if(session('error'))
-                    <div class="alert alert-danger alert-dismissible" style="border-radius: 4px;">
-                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-                        <h4><i class="icon fa fa-ban"></i> Error!</h4>
-                        {{ session('error') }}
-                    </div>
-                @endif
-
-                <div class="box box-primary">
-                    <div class="box-header with-border">
-                        <h3 class="box-title" style="font-weight: 600;">Scheduled Slots Directory</h3>
-                        
-                        <!-- Quick Class Selector Dropdown -->
-                        <div class="class-dropdown-container" style="display: inline-block; margin-left: 20px;">
-                            <select id="classSelector" class="form-control input-sm" style="display: inline-block; width: 180px; border-radius: 4px; border: 1px solid #ccc; height: 32px; font-size: 13px;" onchange="if(this.value) window.location.href='/admin/timetable/class/' + this.value;">
-                                <option value="">-- Jump to Class View --</option>
-                                @foreach(\App\Models\SchoolClass::where('status', 'active')->get() as $class)
-                                    <option value="{{ $class->id }}">{{ $class->class_name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="box-tools pull-right" style="top: 10px;">
-                            <form action="{{ route('timetable.generate') }}" method="POST" style="display: inline-block;" onsubmit="return confirm('Warning: Generating a new automated timetable will clear and overwrite existing schedules. Proceed?');">
-                                @csrf
-                                <button type="submit" class="btn btn-success btn-sm btn-flat" style="font-weight: 600;">
-                                    <i class="fa fa-magic"></i> AUTO-GENERATE
-                                </button>
-                            </form>
-                            <a href="{{ route('timetable.create') }}" class="btn btn-primary btn-sm btn-flat" style="font-weight: 600;">
-                                <i class="fa fa-plus"></i> ADD SLOT
-                            </a>
-                        </div>
-                    </div>
-
-                    <div class="box-body">
-                        <div class="table-responsive">
-                            <table id="timetableTable" class="table table-bordered table-striped table-hover table-vcenter">
-                                <thead>
-                                    <tr style="background: #f4f4f4; color: #333; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">
-                                        <th>Class</th>
-                                        <th>Day</th>
-                                        <th>Time Slot</th>
-                                        <th>Subject</th>
-                                        <th>Teacher</th>
-                                        <th>Room</th>
-                                        <th class="text-center">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($timetables as $slot)
-                                    <tr>
-                                        <td>
-                                            @if($slot->class_id)
-                                                <a href="{{ route('timetable.show', $slot->class_id) }}" title="View Class Schedule">
-                                                    <span class="label label-primary" style="font-size: 11px; padding: 4px 8px; display: inline-block;">
-                                                        {{ $slot->schoolClass?->class_name ?? 'N/A' }} <i class="fa fa-external-link" style="margin-left: 3px; font-size: 9px;"></i>
-                                                    </span>
-                                                </a>
-                                            @else
-                                                <span class="label label-default" style="font-size: 11px; padding: 4px 8px;">N/A</span>
-                                            @endif
-                                        </td>
-                                        <td><strong>{{ $slot->day }}</strong></td>
-                                        <td class="nowrap"><i class="fa fa-clock-o text-muted"></i> {{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('H:i') }}</td>
-                                        <td>{{ $slot->subject?->subject_name ?? 'N/A' }}</td>
-                                        <td>{{ $slot->teacher?->name ?? 'Unassigned' }}</td>
-                                        <td><span class="label label-default" style="color: #333;">{{ $slot->room_number ?? 'N/A' }}</span></td>
-                                        <td class="text-center nowrap">
-                                            <div class="btn-group">
-                                                <a href="{{ route('timetable.edit', $slot->id) }}" class="btn btn-default btn-xs btn-action" title="Edit Slot"><i class="fa fa-edit text-blue"></i></a>
-                                                <button type="button" class="btn btn-default btn-xs btn-action delete-slot-btn" data-id="{{ $slot->id }}" title="Delete Slot"><i class="fa fa-trash text-red"></i></button>
-                                            </div>
-                                            <form id="delete-form-{{ $slot->id }}" action="{{ route('timetable.destroy', $slot->id) }}" method="POST" style="display:none;">@csrf @method('DELETE')</form>
-                                        </td>
-                                    </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </section>
+@section('header')
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Timetable Management</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Class Schedules & Period Allocations</p>
         </div>
-        
-        @include('layouts.footer')
+
+        <div class="flex flex-wrap items-center gap-3">
+            {{-- Jump to Class --}}
+            <select onchange="if(this.value) window.location.href='/admin/timetable/class/' + this.value;" 
+                    class="px-3 py-2 text-xs font-semibold rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
+                <option value="">-- Jump to Class View --</option>
+                @foreach(\App\Models\SchoolClass::where('status', 'active')->get() as $class)
+                    <option value="{{ $class->id }}">{{ $class->class_name }}</option>
+                @endforeach
+            </select>
+
+            <form action="{{ Route::has('timetable.generate') ? route('timetable.generate') : url('/timetable/generate') }}" 
+                  method="POST" class="inline-block"
+                  onsubmit="return confirm('Warning: Generating a new automated timetable will clear and overwrite existing schedules. Proceed?');">
+                @csrf
+                <button type="submit" 
+                        class="inline-flex items-center px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm">
+                    <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> AUTO-GENERATE
+                </button>
+            </form>
+
+            <a href="{{ Route::has('timetable.create') ? route('timetable.create') : url('/timetable/create') }}" 
+               class="inline-flex items-center px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm">
+                <i class="fa-solid fa-plus mr-2"></i> ADD SLOT
+            </a>
+        </div>
     </div>
+@endsection
 
-    @include('components.scripts')
-    <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            $('#timetableTable').DataTable({
-                "pageLength": 10,
-                "responsive": true,
-                "language": {
-                    "search": "Filter Slots:"
-                }
-            });
+@section('content')
+    <div x-data="{ search: '' }" class="space-y-6">
 
-            $('.delete-slot-btn').on('click', function() {
-                var id = $(this).data('id');
-                if(confirm("Are you sure you want to remove this timetable slot?")) {
-                    $('#delete-form-' + id).submit();
-                }
-            });
-        });
-    </script>
-</body>
-</html>
+        @if(session('success'))
+            <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-200 flex items-center justify-between shadow-sm">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-circle-check text-emerald-600 dark:text-emerald-400 text-lg"></i>
+                    <p class="text-xs font-medium">{{ session('success') }}</p>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-200">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 text-rose-800 dark:text-rose-200 flex items-center justify-between shadow-sm">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-circle-exclamation text-rose-600 dark:text-rose-400 text-lg"></i>
+                    <p class="text-xs font-medium">{{ session('error') }}</p>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-200">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+        @endif
+
+        {{-- Main Table Card --}}
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
+            <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                    <i class="fa-solid fa-calendar-days text-indigo-500 mr-2.5"></i> Scheduled Slots Directory
+                </h3>
+
+                <div class="w-full sm:w-64">
+                    <input type="text" x-model="search" placeholder="Filter timetable..." 
+                           class="w-full px-3.5 py-1.5 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700/60 text-xs">
+                    <thead class="bg-slate-50 dark:bg-slate-800/80">
+                        <tr>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Class</th>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Day</th>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Time Slot</th>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Subject / Break</th>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Teacher</th>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Room</th>
+                            <th scope="col" class="px-6 py-3.5 text-center font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700/60">
+                        @forelse($timetables ?? [] as $slot)
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if($slot->class_id)
+                                    <a href="{{ Route::has('timetable.show') ? route('timetable.show', $slot->class_id) : url('/timetable/class/' . $slot->class_id) }}" 
+                                       title="View Class Schedule"
+                                       class="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/50 hover:underline">
+                                        {{ $slot->schoolClass?->class_name ?? 'N/A' }} 
+                                        <i class="fa-solid fa-arrow-up-right-from-square ml-1.5 text-[9px]"></i>
+                                    </a>
+                                @else
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                                        Global / All
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap font-bold text-slate-800 dark:text-slate-100">
+                                {{ $slot->day }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap font-mono text-slate-600 dark:text-slate-300">
+                                <i class="fa-regular fa-clock text-slate-400 mr-1.5"></i>
+                                {{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('H:i') }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap font-semibold text-slate-800 dark:text-slate-100">
+                                {{ $slot->subject?->subject_name ?? $slot->special_type ?? 'N/A' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-slate-600 dark:text-slate-300">
+                                {{ $slot->teacher?->name ?? 'Unassigned' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-0.5 rounded font-mono font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                                    {{ $slot->room_number ?? 'N/A' }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center space-x-1">
+                                <a href="{{ Route::has('timetable.edit') ? route('timetable.edit', $slot->id) : url('/timetable/' . $slot->id . '/edit') }}" 
+                                   class="p-1.5 rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 inline-block transition-colors" 
+                                   title="Edit Slot">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </a>
+
+                                <form action="{{ Route::has('timetable.destroy') ? route('timetable.destroy', $slot->id) : url('/timetable/' . $slot->id) }}" 
+                                      method="POST" onsubmit="return confirm('Are you sure you want to remove this timetable slot?');" class="inline-block">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="p-1.5 rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors" title="Delete Slot">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="7" class="px-6 py-12 text-center text-slate-400">
+                                <i class="fa-solid fa-calendar-xmark text-3xl text-slate-300 dark:text-slate-600 mb-2 block"></i>
+                                No scheduled slots found. Click "Add Slot" or "Auto-Generate" to start.
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+@endsection
