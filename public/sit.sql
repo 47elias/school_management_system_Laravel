@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 06, 2026 at 08:49 PM
+-- Generation Time: Oct 17, 2026 at 03:07 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -41,6 +41,156 @@ CREATE TABLE `activity_log` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `activity_log`
+--
+
+INSERT INTO `activity_log` (`id`, `log_name`, `description`, `subject_type`, `event`, `subject_id`, `causer_type`, `causer_id`, `properties`, `batch_uuid`, `created_at`, `updated_at`) VALUES
+(1, 'default', 'User record has been created', 'App\\Models\\User', 'created', 34, 'App\\Models\\User', 5, '{\"attributes\":{\"name\":\"TATENDA MUKUNYADZE\",\"email\":\"tatenda@eac.ac.zw\",\"password\":\"$2y$12$LFeC6R5WCnsvLNXbcvxcpOAPM4K4OasIRA1Wlkf1cDCgecod91OkK\",\"role\":\"admin\",\"national_id\":\"Tatenda@123\",\"employee_id\":null,\"phone_number\":\"+263787247792\",\"ec_number\":\"1862\",\"base_salary\":\"0.00\",\"dob\":\"2004-09-21T00:00:00.000000Z\",\"bank_name\":null,\"bank_account_no\":null}}', NULL, '2026-10-05 09:00:05', '2026-10-05 09:00:05'),
+(2, 'default', 'User record has been updated', 'App\\Models\\User', 'updated', 34, 'App\\Models\\User', 5, '{\"attributes\":{\"password\":\"$2y$12$KALjjt.I7GL44i2LrjD2sOPqVv.wc\\/POT58GoDQXF\\/YE.a32lAIaK\"},\"old\":{\"password\":\"$2y$12$LFeC6R5WCnsvLNXbcvxcpOAPM4K4OasIRA1Wlkf1cDCgecod91OkK\"}}', NULL, '2026-10-05 09:01:32', '2026-10-05 09:01:32'),
+(3, 'default', 'User record has been created', 'App\\Models\\User', 'created', 35, 'App\\Models\\User', 5, '{\"attributes\":{\"name\":\"Tapiwanashe Manyara\",\"email\":\"tapiwanashemanyara079@gmail.com\",\"password\":\"$2y$12$5vmbeDJrUJHwA6qdhtrVXu0OkrdXIYNUhK93.Jmamc\\/TUyuFa21Ni\",\"role\":\"admin\",\"national_id\":\"1234567890A112\",\"employee_id\":null,\"phone_number\":\"0788243582\",\"ec_number\":\"1863\",\"base_salary\":\"0.00\",\"dob\":\"2001-01-01T00:00:00.000000Z\",\"bank_name\":null,\"bank_account_no\":null}}', NULL, '2026-10-05 09:06:30', '2026-10-05 09:06:30'),
+(4, 'default', 'User record has been created', 'App\\Models\\User', 'created', 36, 'App\\Models\\User', 5, '{\"attributes\":{\"name\":\"Christine Munaki\",\"email\":\"cmunanki@eac.ac.zw\",\"password\":\"$2y$12$E\\/bQsAo5lme\\/CNYL882Kw.Nqxx0HanjoBKvB8EV9jaMGg\\/V704.L.\",\"role\":\"admin\",\"national_id\":\"11223344\",\"employee_id\":null,\"phone_number\":\"+263789781392\",\"ec_number\":\"1864\",\"base_salary\":\"0.00\",\"dob\":\"2001-09-09T00:00:00.000000Z\",\"bank_name\":null,\"bank_account_no\":null}}', NULL, '2026-10-05 09:12:40', '2026-10-05 09:12:40'),
+(5, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 1, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":5,\"teacher_id\":13,\"day\":\"Monday\",\"start_time\":\"08:00:00\",\"end_time\":\"09:00:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:08', '2026-10-05 10:42:08'),
+(6, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 2, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":1,\"teacher_id\":12,\"day\":\"Monday\",\"start_time\":\"09:00:00\",\"end_time\":\"10:00:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:08', '2026-10-05 10:42:08'),
+(7, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 3, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":17,\"subject_id\":3,\"teacher_id\":13,\"day\":\"Monday\",\"start_time\":\"09:00:00\",\"end_time\":\"10:00:00\",\"room_number\":\"3\"}}', NULL, '2026-10-05 10:42:08', '2026-10-05 10:42:08'),
+(8, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 4, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":5,\"teacher_id\":12,\"day\":\"Monday\",\"start_time\":\"10:30:00\",\"end_time\":\"11:30:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:08', '2026-10-05 10:42:08'),
+(9, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 5, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":17,\"subject_id\":3,\"teacher_id\":13,\"day\":\"Monday\",\"start_time\":\"10:30:00\",\"end_time\":\"11:30:00\",\"room_number\":\"3\"}}', NULL, '2026-10-05 10:42:08', '2026-10-05 10:42:08'),
+(10, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 6, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":5,\"teacher_id\":13,\"day\":\"Monday\",\"start_time\":\"11:30:00\",\"end_time\":\"12:30:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:08', '2026-10-05 10:42:08'),
+(11, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 7, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":1,\"teacher_id\":12,\"day\":\"Monday\",\"start_time\":\"12:30:00\",\"end_time\":\"13:00:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:08', '2026-10-05 10:42:08'),
+(12, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 8, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":17,\"subject_id\":3,\"teacher_id\":13,\"day\":\"Monday\",\"start_time\":\"12:30:00\",\"end_time\":\"13:00:00\",\"room_number\":\"3\"}}', NULL, '2026-10-05 10:42:08', '2026-10-05 10:42:08'),
+(13, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 9, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":5,\"teacher_id\":12,\"day\":\"Monday\",\"start_time\":\"14:00:00\",\"end_time\":\"15:00:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:08', '2026-10-05 10:42:08'),
+(14, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 10, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":17,\"subject_id\":3,\"teacher_id\":13,\"day\":\"Monday\",\"start_time\":\"14:00:00\",\"end_time\":\"15:00:00\",\"room_number\":\"3\"}}', NULL, '2026-10-05 10:42:08', '2026-10-05 10:42:08'),
+(15, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 11, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":5,\"teacher_id\":13,\"day\":\"Monday\",\"start_time\":\"15:00:00\",\"end_time\":\"16:00:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:09', '2026-10-05 10:42:09'),
+(16, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 12, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":1,\"teacher_id\":12,\"day\":\"Tuesday\",\"start_time\":\"08:00:00\",\"end_time\":\"09:00:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:09', '2026-10-05 10:42:09'),
+(17, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 13, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":17,\"subject_id\":3,\"teacher_id\":13,\"day\":\"Tuesday\",\"start_time\":\"08:00:00\",\"end_time\":\"09:00:00\",\"room_number\":\"3\"}}', NULL, '2026-10-05 10:42:09', '2026-10-05 10:42:09'),
+(18, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 14, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":5,\"teacher_id\":12,\"day\":\"Tuesday\",\"start_time\":\"09:00:00\",\"end_time\":\"10:00:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:09', '2026-10-05 10:42:09'),
+(19, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 15, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":17,\"subject_id\":3,\"teacher_id\":13,\"day\":\"Tuesday\",\"start_time\":\"09:00:00\",\"end_time\":\"10:00:00\",\"room_number\":\"3\"}}', NULL, '2026-10-05 10:42:09', '2026-10-05 10:42:09'),
+(20, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 16, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":5,\"teacher_id\":13,\"day\":\"Tuesday\",\"start_time\":\"10:30:00\",\"end_time\":\"11:30:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:09', '2026-10-05 10:42:09'),
+(21, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 17, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":1,\"teacher_id\":12,\"day\":\"Tuesday\",\"start_time\":\"11:30:00\",\"end_time\":\"12:30:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:09', '2026-10-05 10:42:09'),
+(22, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 18, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":17,\"subject_id\":3,\"teacher_id\":13,\"day\":\"Tuesday\",\"start_time\":\"11:30:00\",\"end_time\":\"12:30:00\",\"room_number\":\"3\"}}', NULL, '2026-10-05 10:42:09', '2026-10-05 10:42:09'),
+(23, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 19, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":5,\"teacher_id\":12,\"day\":\"Tuesday\",\"start_time\":\"12:30:00\",\"end_time\":\"13:00:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:09', '2026-10-05 10:42:09'),
+(24, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 20, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":17,\"subject_id\":3,\"teacher_id\":13,\"day\":\"Tuesday\",\"start_time\":\"12:30:00\",\"end_time\":\"13:00:00\",\"room_number\":\"3\"}}', NULL, '2026-10-05 10:42:09', '2026-10-05 10:42:09'),
+(25, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 21, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":5,\"teacher_id\":13,\"day\":\"Tuesday\",\"start_time\":\"14:00:00\",\"end_time\":\"15:00:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:09', '2026-10-05 10:42:09'),
+(26, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 22, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":1,\"teacher_id\":12,\"day\":\"Tuesday\",\"start_time\":\"15:00:00\",\"end_time\":\"16:00:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:10', '2026-10-05 10:42:10'),
+(27, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 23, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":17,\"subject_id\":3,\"teacher_id\":13,\"day\":\"Tuesday\",\"start_time\":\"15:00:00\",\"end_time\":\"16:00:00\",\"room_number\":\"3\"}}', NULL, '2026-10-05 10:42:10', '2026-10-05 10:42:10'),
+(28, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 24, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":5,\"teacher_id\":12,\"day\":\"Wednesday\",\"start_time\":\"08:00:00\",\"end_time\":\"09:00:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:10', '2026-10-05 10:42:10'),
+(29, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 25, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":17,\"subject_id\":3,\"teacher_id\":13,\"day\":\"Wednesday\",\"start_time\":\"08:00:00\",\"end_time\":\"09:00:00\",\"room_number\":\"3\"}}', NULL, '2026-10-05 10:42:10', '2026-10-05 10:42:10'),
+(30, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 26, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":5,\"teacher_id\":13,\"day\":\"Wednesday\",\"start_time\":\"09:00:00\",\"end_time\":\"10:00:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:10', '2026-10-05 10:42:10'),
+(31, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 27, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":1,\"teacher_id\":12,\"day\":\"Wednesday\",\"start_time\":\"10:30:00\",\"end_time\":\"11:30:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:10', '2026-10-05 10:42:10'),
+(32, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 28, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":17,\"subject_id\":3,\"teacher_id\":13,\"day\":\"Wednesday\",\"start_time\":\"10:30:00\",\"end_time\":\"11:30:00\",\"room_number\":\"3\"}}', NULL, '2026-10-05 10:42:10', '2026-10-05 10:42:10'),
+(33, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 29, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":5,\"teacher_id\":12,\"day\":\"Wednesday\",\"start_time\":\"11:30:00\",\"end_time\":\"12:30:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:10', '2026-10-05 10:42:10'),
+(34, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 30, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":17,\"subject_id\":3,\"teacher_id\":13,\"day\":\"Wednesday\",\"start_time\":\"11:30:00\",\"end_time\":\"12:30:00\",\"room_number\":\"3\"}}', NULL, '2026-10-05 10:42:10', '2026-10-05 10:42:10'),
+(35, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 31, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":5,\"teacher_id\":13,\"day\":\"Wednesday\",\"start_time\":\"12:30:00\",\"end_time\":\"13:00:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:10', '2026-10-05 10:42:10'),
+(36, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 32, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":1,\"teacher_id\":12,\"day\":\"Wednesday\",\"start_time\":\"14:00:00\",\"end_time\":\"15:00:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:10', '2026-10-05 10:42:10'),
+(37, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 33, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":17,\"subject_id\":3,\"teacher_id\":13,\"day\":\"Wednesday\",\"start_time\":\"14:00:00\",\"end_time\":\"15:00:00\",\"room_number\":\"3\"}}', NULL, '2026-10-05 10:42:10', '2026-10-05 10:42:10'),
+(38, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 34, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":5,\"teacher_id\":12,\"day\":\"Wednesday\",\"start_time\":\"15:00:00\",\"end_time\":\"16:00:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:10', '2026-10-05 10:42:10'),
+(39, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 35, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":17,\"subject_id\":3,\"teacher_id\":13,\"day\":\"Wednesday\",\"start_time\":\"15:00:00\",\"end_time\":\"16:00:00\",\"room_number\":\"3\"}}', NULL, '2026-10-05 10:42:10', '2026-10-05 10:42:10'),
+(40, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 36, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":5,\"teacher_id\":13,\"day\":\"Thursday\",\"start_time\":\"08:00:00\",\"end_time\":\"09:00:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:11', '2026-10-05 10:42:11'),
+(41, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 37, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":1,\"teacher_id\":12,\"day\":\"Thursday\",\"start_time\":\"09:00:00\",\"end_time\":\"10:00:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:11', '2026-10-05 10:42:11'),
+(42, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 38, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":17,\"subject_id\":3,\"teacher_id\":13,\"day\":\"Thursday\",\"start_time\":\"09:00:00\",\"end_time\":\"10:00:00\",\"room_number\":\"3\"}}', NULL, '2026-10-05 10:42:11', '2026-10-05 10:42:11'),
+(43, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 39, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":5,\"teacher_id\":12,\"day\":\"Thursday\",\"start_time\":\"10:30:00\",\"end_time\":\"11:30:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:11', '2026-10-05 10:42:11'),
+(44, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 40, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":17,\"subject_id\":3,\"teacher_id\":13,\"day\":\"Thursday\",\"start_time\":\"10:30:00\",\"end_time\":\"11:30:00\",\"room_number\":\"3\"}}', NULL, '2026-10-05 10:42:11', '2026-10-05 10:42:11'),
+(45, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 41, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":5,\"teacher_id\":13,\"day\":\"Thursday\",\"start_time\":\"11:30:00\",\"end_time\":\"12:30:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:11', '2026-10-05 10:42:11'),
+(46, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 42, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":1,\"teacher_id\":12,\"day\":\"Thursday\",\"start_time\":\"12:30:00\",\"end_time\":\"13:00:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:11', '2026-10-05 10:42:11'),
+(47, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 43, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":17,\"subject_id\":3,\"teacher_id\":13,\"day\":\"Thursday\",\"start_time\":\"12:30:00\",\"end_time\":\"13:00:00\",\"room_number\":\"3\"}}', NULL, '2026-10-05 10:42:11', '2026-10-05 10:42:11'),
+(48, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 44, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":5,\"teacher_id\":12,\"day\":\"Thursday\",\"start_time\":\"14:00:00\",\"end_time\":\"15:00:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:11', '2026-10-05 10:42:11'),
+(49, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 45, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":17,\"subject_id\":3,\"teacher_id\":13,\"day\":\"Thursday\",\"start_time\":\"14:00:00\",\"end_time\":\"15:00:00\",\"room_number\":\"3\"}}', NULL, '2026-10-05 10:42:11', '2026-10-05 10:42:11'),
+(50, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 46, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":5,\"teacher_id\":13,\"day\":\"Thursday\",\"start_time\":\"15:00:00\",\"end_time\":\"16:00:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:11', '2026-10-05 10:42:11'),
+(51, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 47, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":1,\"teacher_id\":12,\"day\":\"Friday\",\"start_time\":\"08:00:00\",\"end_time\":\"09:00:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:11', '2026-10-05 10:42:11'),
+(52, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 48, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":17,\"subject_id\":3,\"teacher_id\":13,\"day\":\"Friday\",\"start_time\":\"08:00:00\",\"end_time\":\"09:00:00\",\"room_number\":\"3\"}}', NULL, '2026-10-05 10:42:12', '2026-10-05 10:42:12'),
+(53, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 49, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":5,\"teacher_id\":12,\"day\":\"Friday\",\"start_time\":\"09:00:00\",\"end_time\":\"10:00:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:12', '2026-10-05 10:42:12'),
+(54, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 50, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":17,\"subject_id\":3,\"teacher_id\":13,\"day\":\"Friday\",\"start_time\":\"09:00:00\",\"end_time\":\"10:00:00\",\"room_number\":\"3\"}}', NULL, '2026-10-05 10:42:12', '2026-10-05 10:42:12'),
+(55, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 51, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":5,\"teacher_id\":13,\"day\":\"Friday\",\"start_time\":\"10:30:00\",\"end_time\":\"11:30:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:12', '2026-10-05 10:42:12'),
+(56, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 52, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":1,\"teacher_id\":12,\"day\":\"Friday\",\"start_time\":\"11:30:00\",\"end_time\":\"12:30:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:12', '2026-10-05 10:42:12'),
+(57, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 53, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":17,\"subject_id\":3,\"teacher_id\":13,\"day\":\"Friday\",\"start_time\":\"11:30:00\",\"end_time\":\"12:30:00\",\"room_number\":\"3\"}}', NULL, '2026-10-05 10:42:12', '2026-10-05 10:42:12'),
+(58, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 54, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":5,\"teacher_id\":12,\"day\":\"Friday\",\"start_time\":\"12:30:00\",\"end_time\":\"13:00:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:12', '2026-10-05 10:42:12'),
+(59, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 55, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":17,\"subject_id\":3,\"teacher_id\":13,\"day\":\"Friday\",\"start_time\":\"12:30:00\",\"end_time\":\"13:00:00\",\"room_number\":\"3\"}}', NULL, '2026-10-05 10:42:12', '2026-10-05 10:42:12'),
+(60, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 56, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":5,\"teacher_id\":13,\"day\":\"Friday\",\"start_time\":\"14:00:00\",\"end_time\":\"15:00:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:12', '2026-10-05 10:42:12'),
+(61, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 57, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":15,\"subject_id\":1,\"teacher_id\":12,\"day\":\"Friday\",\"start_time\":\"15:00:00\",\"end_time\":\"16:00:00\",\"room_number\":\"1\"}}', NULL, '2026-10-05 10:42:12', '2026-10-05 10:42:12'),
+(62, 'default', 'Timetable record has been created', 'App\\Models\\Timetable', 'created', 58, 'App\\Models\\User', 5, '{\"attributes\":{\"class_id\":17,\"subject_id\":3,\"teacher_id\":13,\"day\":\"Friday\",\"start_time\":\"15:00:00\",\"end_time\":\"16:00:00\",\"room_number\":\"3\"}}', NULL, '2026-10-05 10:42:12', '2026-10-05 10:42:12'),
+(63, 'default', 'Payslip record has been created', 'App\\Models\\Payslip', 'created', 12, 'App\\Models\\User', 5, '{\"attributes\":{\"user_id\":36,\"pay_period\":\"October 2026\",\"base_salary\":\"150.00\",\"allowances\":\"20.00\",\"deductions\":\"14.83\",\"net_salary\":\"155.17\",\"payment_date\":\"2026-10-10\",\"remarks\":null}}', NULL, '2026-10-10 16:32:26', '2026-10-10 16:32:26'),
+(64, 'default', 'deleted', 'App\\Models\\Student', 'deleted', 177, 'App\\Models\\User', 5, '{\"old\":{\"student_number\":\"EAC260177\",\"name\":\"Munashe\",\"surname\":\"Mbaimbai\",\"balance\":0,\"date_of_birth\":\"2007-12-01T00:00:00.000000Z\",\"gender\":\"Male\",\"national_id\":\"112233445566778899P77\",\"grade\":\"Form 1\",\"address\":\"2011 kambuzuma road aspingdel\",\"parent_contact\":\"Mr Moyo 0787247792 Parent\",\"email\":\"eac260177@eac.cac.zw\",\"phone\":\"+263787950406\",\"enrollment_date\":\"2026-09-04T00:00:00.000000Z\",\"status\":\"active\",\"emergency_contact\":\"Mr Moyo 0787247792 Parent\",\"password\":\"$2y$12$ro2535Tv8sJ2zy1KBvrJp.rCq\\/XIUnEoVoqJTB\\/gfiySBNo51NVsu\",\"face_path\":null,\"term_id\":3,\"enrollment_status\":\"active\",\"class_id\":15,\"face_descriptor\":null}}', NULL, '2026-10-15 08:02:03', '2026-10-15 08:02:03'),
+(65, 'default', 'Exam record has been created', 'App\\Models\\Exam', 'created', 16, 'App\\Models\\User', 5, '{\"attributes\":{\"exam_name\":\"Paper 1\",\"term_id\":3,\"subject_id\":1,\"exam_date\":\"2026-10-15T00:00:00.000000Z\",\"status\":\"pending\"}}', NULL, '2026-10-15 11:07:20', '2026-10-15 11:07:20'),
+(66, 'default', 'updated', 'App\\Models\\Student', 'updated', 176, 'App\\Models\\User', 5, '{\"attributes\":{\"grade\":\"Form 1 A\",\"class_id\":18},\"old\":{\"grade\":\"Graduated\",\"class_id\":null}}', NULL, '2026-10-16 10:56:29', '2026-10-16 10:56:29'),
+(67, 'default', 'updated', 'App\\Models\\Student', 'updated', 176, 'App\\Models\\User', 5, '{\"attributes\":{\"status\":\"active\"},\"old\":{\"status\":\"inactive\"}}', NULL, '2026-10-16 10:56:45', '2026-10-16 10:56:45'),
+(68, 'default', 'updated', 'App\\Models\\Student', 'updated', 178, 'App\\Models\\User', 5, '{\"attributes\":{\"grade\":\"Form 1 B\",\"class_id\":19},\"old\":{\"grade\":\"Form 1\",\"class_id\":15}}', NULL, '2026-10-16 10:57:10', '2026-10-16 10:57:10'),
+(69, 'default', 'updated', 'App\\Models\\Student', 'updated', 175, 'App\\Models\\User', 5, '{\"attributes\":{\"grade\":\"Form 1 C\",\"class_id\":20},\"old\":{\"grade\":\"Form 1\",\"class_id\":15}}', NULL, '2026-10-16 10:57:30', '2026-10-16 10:57:30'),
+(70, 'default', 'updated', 'App\\Models\\Student', 'updated', 178, 'App\\Models\\User', 5, '{\"attributes\":{\"grade\":\"Form 1 A\",\"status\":\"active\",\"class_id\":18},\"old\":{\"grade\":\"Graduated\",\"status\":\"inactive\",\"class_id\":null}}', NULL, '2026-10-16 11:02:07', '2026-10-16 11:02:07'),
+(71, 'default', 'updated', 'App\\Models\\Student', 'updated', 175, 'App\\Models\\User', 5, '{\"attributes\":{\"grade\":\"Form 1 B\",\"status\":\"active\",\"class_id\":19},\"old\":{\"grade\":\"Graduated\",\"status\":\"inactive\",\"class_id\":null}}', NULL, '2026-10-16 11:02:19', '2026-10-16 11:02:19'),
+(72, 'default', 'updated', 'App\\Models\\Student', 'updated', 176, 'App\\Models\\User', 5, '{\"attributes\":{\"grade\":\"Form 1 C\",\"status\":\"active\",\"class_id\":20},\"old\":{\"grade\":\"Graduated\",\"status\":\"inactive\",\"class_id\":null}}', NULL, '2026-10-16 11:02:37', '2026-10-16 11:02:37'),
+(73, 'default', 'Fee Structure record has been deleted', 'App\\Models\\FeeStructure', 'deleted', 78, 'App\\Models\\User', 5, '{\"old\":{\"fee_name\":\"School Fees\",\"amount\":\"150.00\",\"grade\":\"Form 2\",\"term_id\":3,\"student_id\":null}}', NULL, '2026-10-17 07:45:57', '2026-10-17 07:45:57'),
+(74, 'default', 'created', 'App\\Models\\Student', 'created', 179, 'App\\Models\\User', 5, '{\"attributes\":{\"student_number\":\"EAC260179\",\"name\":\"Sarah\",\"surname\":\"Corner\",\"balance\":0,\"date_of_birth\":\"2009-01-24T00:00:00.000000Z\",\"gender\":\"Female\",\"national_id\":\"12121212D121\",\"grade\":\"Form 1 A\",\"address\":\"3094 Budiriro 2\\r\\nOnline\",\"parent_contact\":\"Musa Elias Mukahlera\",\"email\":\"eac260179@eac.cac.zw\",\"phone\":\"+263787247792\",\"enrollment_date\":\"2026-10-17T00:00:00.000000Z\",\"status\":\"active\",\"emergency_contact\":\"Musa Elias Mukahlera\",\"password\":\"$2y$12$wHh.9pLit8zWPtSR2uZ6oej.ienBOGGsW3NysYEpc5wVNXVFP2zlO\",\"face_path\":null,\"term_id\":3,\"enrollment_status\":\"active\",\"class_id\":18,\"face_descriptor\":null}}', NULL, '2026-10-17 07:49:10', '2026-10-17 07:49:10'),
+(75, 'default', 'User record has been created', 'App\\Models\\User', 'created', 37, 'App\\Models\\User', 5, '{\"attributes\":{\"name\":\"Sarah Corner\",\"email\":\"scorner4@student.local\",\"password\":\"$2y$12$RNPpzMENjbH3kgKnqIaZquOMlbrs1CAuemrYxCA1D4tvP4Kvwo.LO\",\"role\":\"student\",\"national_id\":\"12121212D121\",\"employee_id\":null,\"phone_number\":null,\"ec_number\":\"12121212D121\",\"base_salary\":\"0.00\",\"dob\":null,\"bank_name\":null,\"bank_account_no\":null}}', NULL, '2026-10-17 07:49:11', '2026-10-17 07:49:11'),
+(76, 'default', 'Fee Structure record has been deleted', 'App\\Models\\FeeStructure', 'deleted', 77, 'App\\Models\\User', 5, '{\"old\":{\"fee_name\":\"School Fees\",\"amount\":\"150.00\",\"grade\":\"Form 1\",\"term_id\":3,\"student_id\":null}}', NULL, '2026-10-17 07:54:01', '2026-10-17 07:54:01'),
+(77, 'default', 'Subject Assignment record has been deleted', 'App\\Models\\SubjectAssignment', 'deleted', 4, 'App\\Models\\User', 5, '{\"old\":{\"teacher_id\":13,\"subject_id\":5,\"class_id\":15,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 08:38:18', '2026-10-17 08:38:18'),
+(78, 'default', 'Subject Assignment record has been deleted', 'App\\Models\\SubjectAssignment', 'deleted', 3, 'App\\Models\\User', 5, '{\"old\":{\"teacher_id\":13,\"subject_id\":3,\"class_id\":17,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 08:38:27', '2026-10-17 08:38:27'),
+(79, 'default', 'Subject Assignment record has been deleted', 'App\\Models\\SubjectAssignment', 'deleted', 2, 'App\\Models\\User', 5, '{\"old\":{\"teacher_id\":12,\"subject_id\":5,\"class_id\":15,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 08:38:40', '2026-10-17 08:38:40'),
+(80, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 5, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":7,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:09:37', '2026-10-17 10:09:37'),
+(81, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 6, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":7,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:09:49', '2026-10-17 10:09:49'),
+(82, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 7, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":7,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:27:23', '2026-10-17 10:27:23'),
+(83, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 8, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":8,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:27:23', '2026-10-17 10:27:23'),
+(84, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 9, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":9,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:27:23', '2026-10-17 10:27:23'),
+(85, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 10, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":10,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:27:23', '2026-10-17 10:27:23'),
+(86, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 11, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":11,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:27:24', '2026-10-17 10:27:24'),
+(87, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 12, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":12,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:27:24', '2026-10-17 10:27:24'),
+(88, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 13, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":13,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:27:24', '2026-10-17 10:27:24'),
+(89, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 14, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":14,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:27:24', '2026-10-17 10:27:24'),
+(90, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 15, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":15,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:27:24', '2026-10-17 10:27:24'),
+(91, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 16, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":16,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:27:24', '2026-10-17 10:27:24'),
+(92, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 17, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":17,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:27:24', '2026-10-17 10:27:24'),
+(93, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 18, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":7,\"class_id\":18,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:27:42', '2026-10-17 10:27:42'),
+(94, 'default', 'Subject Assignment record has been deleted', 'App\\Models\\SubjectAssignment', 'deleted', 18, 'App\\Models\\User', 5, '{\"old\":{\"teacher_id\":null,\"subject_id\":7,\"class_id\":18,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:27:53', '2026-10-17 10:27:53'),
+(95, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 19, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":7,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:28:02', '2026-10-17 10:28:02'),
+(96, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 20, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":8,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:28:02', '2026-10-17 10:28:02'),
+(97, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 21, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":9,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:28:02', '2026-10-17 10:28:02'),
+(98, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 22, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":10,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:28:02', '2026-10-17 10:28:02'),
+(99, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 23, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":11,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:28:02', '2026-10-17 10:28:02'),
+(100, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 24, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":12,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:28:02', '2026-10-17 10:28:02'),
+(101, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 25, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":13,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:28:03', '2026-10-17 10:28:03'),
+(102, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 26, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":14,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:28:03', '2026-10-17 10:28:03'),
+(103, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 27, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":15,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:28:03', '2026-10-17 10:28:03'),
+(104, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 28, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":16,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:28:03', '2026-10-17 10:28:03'),
+(105, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 29, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":17,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:28:03', '2026-10-17 10:28:03'),
+(106, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 30, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":7,\"class_id\":15,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:28:29', '2026-10-17 10:28:29'),
+(107, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 31, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":8,\"class_id\":15,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:28:29', '2026-10-17 10:28:29'),
+(108, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 32, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":9,\"class_id\":15,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:28:30', '2026-10-17 10:28:30'),
+(109, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 33, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":10,\"class_id\":15,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:28:30', '2026-10-17 10:28:30'),
+(110, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 34, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":11,\"class_id\":15,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:28:30', '2026-10-17 10:28:30'),
+(111, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 35, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":12,\"class_id\":15,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:28:30', '2026-10-17 10:28:30'),
+(112, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 36, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":13,\"class_id\":15,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:28:30', '2026-10-17 10:28:30'),
+(113, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 37, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":14,\"class_id\":15,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:28:30', '2026-10-17 10:28:30'),
+(114, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 38, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":15,\"class_id\":15,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:28:30', '2026-10-17 10:28:30'),
+(115, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 39, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":16,\"class_id\":15,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:28:30', '2026-10-17 10:28:30'),
+(116, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 40, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":17,\"class_id\":15,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:28:30', '2026-10-17 10:28:30'),
+(117, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 41, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":7,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:30:18', '2026-10-17 10:30:18'),
+(118, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 42, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":8,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:30:18', '2026-10-17 10:30:18'),
+(119, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 43, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":9,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:30:19', '2026-10-17 10:30:19'),
+(120, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 44, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":10,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:30:19', '2026-10-17 10:30:19'),
+(121, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 45, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":11,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:30:19', '2026-10-17 10:30:19'),
+(122, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 46, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":12,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:30:19', '2026-10-17 10:30:19'),
+(123, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 47, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":13,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:30:19', '2026-10-17 10:30:19'),
+(124, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 48, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":14,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:30:19', '2026-10-17 10:30:19'),
+(125, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 49, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":15,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:30:19', '2026-10-17 10:30:19'),
+(126, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 50, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":16,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:30:19', '2026-10-17 10:30:19'),
+(127, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 51, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null,\"subject_id\":17,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:30:19', '2026-10-17 10:30:19'),
+(128, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 52, 'App\\Models\\User', 5, '{\"attributes\":{\"grade\":\"Form 1\",\"teacher_id\":null,\"subject_id\":7,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:34:46', '2026-10-17 10:34:46'),
+(129, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 53, 'App\\Models\\User', 5, '{\"attributes\":{\"grade\":\"Form 1\",\"teacher_id\":null,\"subject_id\":8,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:34:46', '2026-10-17 10:34:46'),
+(130, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 54, 'App\\Models\\User', 5, '{\"attributes\":{\"grade\":\"Form 1\",\"teacher_id\":null,\"subject_id\":9,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:34:46', '2026-10-17 10:34:46'),
+(131, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 55, 'App\\Models\\User', 5, '{\"attributes\":{\"grade\":\"Form 1\",\"teacher_id\":null,\"subject_id\":10,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:34:46', '2026-10-17 10:34:46'),
+(132, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 56, 'App\\Models\\User', 5, '{\"attributes\":{\"grade\":\"Form 1\",\"teacher_id\":null,\"subject_id\":11,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:34:46', '2026-10-17 10:34:46'),
+(133, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 57, 'App\\Models\\User', 5, '{\"attributes\":{\"grade\":\"Form 1\",\"teacher_id\":null,\"subject_id\":12,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:34:46', '2026-10-17 10:34:46'),
+(134, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 58, 'App\\Models\\User', 5, '{\"attributes\":{\"grade\":\"Form 1\",\"teacher_id\":null,\"subject_id\":13,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:34:46', '2026-10-17 10:34:46'),
+(135, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 59, 'App\\Models\\User', 5, '{\"attributes\":{\"grade\":\"Form 1\",\"teacher_id\":null,\"subject_id\":14,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:34:47', '2026-10-17 10:34:47'),
+(136, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 60, 'App\\Models\\User', 5, '{\"attributes\":{\"grade\":\"Form 1\",\"teacher_id\":null,\"subject_id\":15,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:34:47', '2026-10-17 10:34:47'),
+(137, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 61, 'App\\Models\\User', 5, '{\"attributes\":{\"grade\":\"Form 1\",\"teacher_id\":null,\"subject_id\":16,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:34:47', '2026-10-17 10:34:47'),
+(138, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 62, 'App\\Models\\User', 5, '{\"attributes\":{\"grade\":\"Form 1\",\"teacher_id\":null,\"subject_id\":17,\"class_id\":null,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:34:47', '2026-10-17 10:34:47'),
+(139, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 63, 'App\\Models\\User', 5, '{\"attributes\":{\"grade\":null,\"teacher_id\":null,\"subject_id\":7,\"class_id\":22,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:35:45', '2026-10-17 10:35:45'),
+(140, 'default', 'Subject Assignment record has been deleted', 'App\\Models\\SubjectAssignment', 'deleted', 63, 'App\\Models\\User', 5, '{\"old\":{\"grade\":null,\"teacher_id\":null,\"subject_id\":7,\"class_id\":22,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 10:36:04', '2026-10-17 10:36:04'),
+(141, 'default', 'Subject Assignment record has been updated', 'App\\Models\\SubjectAssignment', 'updated', 52, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":13},\"old\":{\"teacher_id\":null}}', NULL, '2026-10-17 10:58:12', '2026-10-17 10:58:12'),
+(142, 'default', 'Subject Assignment record has been updated', 'App\\Models\\SubjectAssignment', 'updated', 52, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null},\"old\":{\"teacher_id\":13}}', NULL, '2026-10-17 11:02:45', '2026-10-17 11:02:45'),
+(143, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 64, 'App\\Models\\User', 5, '{\"attributes\":{\"grade\":null,\"teacher_id\":13,\"subject_id\":15,\"class_id\":18,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 11:03:23', '2026-10-17 11:03:23'),
+(144, 'default', 'Subject Assignment record has been updated', 'App\\Models\\SubjectAssignment', 'updated', 52, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":13},\"old\":{\"teacher_id\":null}}', NULL, '2026-10-17 11:03:57', '2026-10-17 11:03:57');
 
 -- --------------------------------------------------------
 
@@ -99,6 +249,22 @@ INSERT INTO `admissions` (`id`, `tracking_id`, `identity_number`, `student_name`
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `announcements`
+--
+
+CREATE TABLE `announcements` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `content` longtext NOT NULL,
+  `priority` varchar(255) NOT NULL DEFAULT 'normal',
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `cache`
 --
 
@@ -113,7 +279,7 @@ CREATE TABLE `cache` (
 --
 
 INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
-('elias-academy-college-portal-cache-spatie.permission.cache', 'a:3:{s:5:\"alias\";a:3:{s:1:\"a\";s:2:\"id\";s:1:\"b\";s:4:\"name\";s:1:\"c\";s:10:\"guard_name\";}s:11:\"permissions\";a:10:{i:0;a:3:{s:1:\"a\";i:1;s:1:\"b\";s:10:\"admissions\";s:1:\"c\";s:3:\"web\";}i:1;a:3:{s:1:\"a\";i:2;s:1:\"b\";s:12:\"manage-users\";s:1:\"c\";s:3:\"web\";}i:2;a:3:{s:1:\"a\";i:3;s:1:\"b\";s:21:\"roles_and_permissions\";s:1:\"c\";s:3:\"web\";}i:3;a:3:{s:1:\"a\";i:4;s:1:\"b\";s:18:\"student_management\";s:1:\"c\";s:3:\"web\";}i:4;a:3:{s:1:\"a\";i:6;s:1:\"b\";s:11:\"manage-fees\";s:1:\"c\";s:3:\"web\";}i:5;a:3:{s:1:\"a\";i:7;s:1:\"b\";s:15:\"term_management\";s:1:\"c\";s:3:\"web\";}i:6;a:3:{s:1:\"a\";i:8;s:1:\"b\";s:7:\"payroll\";s:1:\"c\";s:3:\"web\";}i:7;a:3:{s:1:\"a\";i:9;s:1:\"b\";s:16:\"manage-inventory\";s:1:\"c\";s:3:\"web\";}i:8;a:3:{s:1:\"a\";i:10;s:1:\"b\";s:14:\"manage-payroll\";s:1:\"c\";s:3:\"web\";}i:9;a:3:{s:1:\"a\";i:11;s:1:\"b\";s:15:\"manage-expenses\";s:1:\"c\";s:3:\"web\";}}s:5:\"roles\";a:0:{}}', 1788805584);
+('elias-academy-college-portal-cache-spatie.permission.cache', 'a:3:{s:5:\"alias\";a:3:{s:1:\"a\";s:2:\"id\";s:1:\"b\";s:4:\"name\";s:1:\"c\";s:10:\"guard_name\";}s:11:\"permissions\";a:14:{i:0;a:3:{s:1:\"a\";i:1;s:1:\"b\";s:10:\"admissions\";s:1:\"c\";s:3:\"web\";}i:1;a:3:{s:1:\"a\";i:2;s:1:\"b\";s:12:\"manage-users\";s:1:\"c\";s:3:\"web\";}i:2;a:3:{s:1:\"a\";i:3;s:1:\"b\";s:21:\"roles_and_permissions\";s:1:\"c\";s:3:\"web\";}i:3;a:3:{s:1:\"a\";i:4;s:1:\"b\";s:18:\"student_management\";s:1:\"c\";s:3:\"web\";}i:4;a:3:{s:1:\"a\";i:6;s:1:\"b\";s:11:\"manage-fees\";s:1:\"c\";s:3:\"web\";}i:5;a:3:{s:1:\"a\";i:7;s:1:\"b\";s:15:\"term_management\";s:1:\"c\";s:3:\"web\";}i:6;a:3:{s:1:\"a\";i:8;s:1:\"b\";s:7:\"payroll\";s:1:\"c\";s:3:\"web\";}i:7;a:3:{s:1:\"a\";i:9;s:1:\"b\";s:16:\"manage-inventory\";s:1:\"c\";s:3:\"web\";}i:8;a:3:{s:1:\"a\";i:10;s:1:\"b\";s:14:\"manage-payroll\";s:1:\"c\";s:3:\"web\";}i:9;a:3:{s:1:\"a\";i:11;s:1:\"b\";s:15:\"manage-expenses\";s:1:\"c\";s:3:\"web\";}i:10;a:3:{s:1:\"a\";i:12;s:1:\"b\";s:10:\"audit-logs\";s:1:\"c\";s:3:\"web\";}i:11;a:3:{s:1:\"a\";i:13;s:1:\"b\";s:16:\"exams_management\";s:1:\"c\";s:3:\"web\";}i:12;a:3:{s:1:\"a\";i:14;s:1:\"b\";s:21:\"activities_management\";s:1:\"c\";s:3:\"web\";}i:13;a:3:{s:1:\"a\";i:15;s:1:\"b\";s:16:\"promote-students\";s:1:\"c\";s:3:\"web\";}}s:5:\"roles\";a:0:{}}', 1792242421);
 
 -- --------------------------------------------------------
 
@@ -162,19 +328,6 @@ CREATE TABLE `class_subject` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `class_subject`
---
-
-INSERT INTO `class_subject` (`id`, `school_class_id`, `subject_id`, `created_at`, `updated_at`) VALUES
-(4, 15, 1, NULL, NULL),
-(5, 15, 2, NULL, NULL),
-(6, 16, 1, NULL, NULL),
-(7, 15, 3, NULL, NULL),
-(8, 15, 4, NULL, NULL),
-(9, 15, 5, NULL, NULL),
-(10, 15, 6, NULL, NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -193,6 +346,13 @@ CREATE TABLE `exams` (
   `subject_assignment_id` bigint(20) UNSIGNED DEFAULT NULL,
   `class_id` bigint(20) UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `exams`
+--
+
+INSERT INTO `exams` (`id`, `exam_name`, `term_id`, `subject_id`, `exam_date`, `status`, `created_at`, `updated_at`, `subject_assignment_id`, `class_id`) VALUES
+(16, 'Paper 1', 3, 1, '2026-10-15', 'pending', '2026-10-15 11:07:20', '2026-10-15 11:07:20', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -283,9 +443,7 @@ INSERT INTO `fee_structures` (`id`, `fee_name`, `amount`, `grade`, `term_id`, `c
 (73, 'Transportation', 10.00, 'Form 1', 2, '2026-09-03 11:37:53', '2026-09-03 11:37:53', NULL),
 (74, 'Transportation', 10.00, 'Form 2', 2, '2026-09-03 11:37:53', '2026-09-03 11:37:53', NULL),
 (75, 'SDC', 10.00, 'Form 1', 2, '2026-09-03 11:38:12', '2026-09-03 11:38:12', NULL),
-(76, 'SDC', 10.00, 'Form 2', 2, '2026-09-03 11:38:13', '2026-09-03 11:38:13', NULL),
-(77, 'School Fees', 150.00, 'Form 1', 3, '2026-09-03 11:47:31', '2026-09-03 11:47:31', NULL),
-(78, 'School Fees', 150.00, 'Form 2', 3, '2026-09-03 11:47:31', '2026-09-03 11:47:31', NULL);
+(76, 'SDC', 10.00, 'Form 2', 2, '2026-09-03 11:38:13', '2026-09-03 11:38:13', NULL);
 
 -- --------------------------------------------------------
 
@@ -309,6 +467,55 @@ CREATE TABLE `fee_transactions` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `grade_levels`
+--
+
+CREATE TABLE `grade_levels` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `level_order` int(11) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `grade_levels`
+--
+
+INSERT INTO `grade_levels` (`id`, `name`, `level_order`, `created_at`, `updated_at`) VALUES
+(8, 'Form 1', 1, '2026-10-16 09:59:41', '2026-10-16 09:59:41'),
+(9, 'Form 2', 2, '2026-10-16 10:02:06', '2026-10-16 10:02:06');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `grade_scales`
+--
+
+CREATE TABLE `grade_scales` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `grade` varchar(255) NOT NULL,
+  `min_score` decimal(5,2) NOT NULL,
+  `max_score` decimal(5,2) NOT NULL,
+  `remark` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `grade_scales`
+--
+
+INSERT INTO `grade_scales` (`id`, `grade`, `min_score`, `max_score`, `remark`, `created_at`, `updated_at`) VALUES
+(1, 'A', 80.00, 100.00, 'Distinction', '2026-10-16 09:09:17', '2026-10-16 09:09:17'),
+(2, 'B', 70.00, 79.99, 'Merit', '2026-10-16 09:09:17', '2026-10-16 09:09:17'),
+(3, 'C', 60.00, 69.99, 'Credit', '2026-10-16 09:09:17', '2026-10-16 09:09:17'),
+(4, 'D', 50.00, 59.99, 'Pass', '2026-10-16 09:09:17', '2026-10-16 09:09:17'),
+(5, 'F', 0.00, 49.99, 'Fail', '2026-10-16 09:09:17', '2026-10-16 09:09:17');
 
 -- --------------------------------------------------------
 
@@ -486,7 +693,13 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (59, '2026_08_25_125946_create_activity_log_table', 44),
 (60, '2026_08_25_125947_add_event_column_to_activity_log_table', 44),
 (61, '2026_08_25_125948_add_batch_uuid_column_to_activity_log_table', 44),
-(62, '2026_09_06_160914_create_permission_tables', 45);
+(62, '2026_09_06_160914_create_permission_tables', 45),
+(63, '2026_09_21_100652_create_newsletters_table', 46),
+(64, '2026_09_21_101030_create_announcements_table', 46),
+(65, '2026_10_16_100249_create_grade_scales_table', 47),
+(66, '2026_10_16_113813_create_grade_levels_and_update_classes', 48),
+(67, '2026_10_17_115156_create_subject_combinations_table', 49),
+(68, '2026_10_17_115244_create_subject_combination_subject_table', 49);
 
 -- --------------------------------------------------------
 
@@ -506,15 +719,42 @@ CREATE TABLE `model_has_permissions` (
 
 INSERT INTO `model_has_permissions` (`permission_id`, `model_type`, `model_id`) VALUES
 (1, 'App\\Models\\User', 5),
+(1, 'App\\Models\\User', 34),
+(1, 'App\\Models\\User', 35),
+(1, 'App\\Models\\User', 36),
 (2, 'App\\Models\\User', 5),
+(2, 'App\\Models\\User', 36),
 (3, 'App\\Models\\User', 5),
+(3, 'App\\Models\\User', 36),
 (4, 'App\\Models\\User', 5),
+(4, 'App\\Models\\User', 34),
+(4, 'App\\Models\\User', 35),
+(4, 'App\\Models\\User', 36),
 (6, 'App\\Models\\User', 5),
+(6, 'App\\Models\\User', 34),
+(6, 'App\\Models\\User', 35),
+(6, 'App\\Models\\User', 36),
 (7, 'App\\Models\\User', 5),
+(7, 'App\\Models\\User', 35),
+(7, 'App\\Models\\User', 36),
 (8, 'App\\Models\\User', 5),
+(8, 'App\\Models\\User', 35),
+(8, 'App\\Models\\User', 36),
 (9, 'App\\Models\\User', 5),
+(9, 'App\\Models\\User', 35),
+(9, 'App\\Models\\User', 36),
 (10, 'App\\Models\\User', 5),
-(11, 'App\\Models\\User', 5);
+(10, 'App\\Models\\User', 34),
+(10, 'App\\Models\\User', 35),
+(10, 'App\\Models\\User', 36),
+(11, 'App\\Models\\User', 5),
+(11, 'App\\Models\\User', 34),
+(11, 'App\\Models\\User', 35),
+(11, 'App\\Models\\User', 36),
+(12, 'App\\Models\\User', 5),
+(13, 'App\\Models\\User', 5),
+(14, 'App\\Models\\User', 5),
+(15, 'App\\Models\\User', 5);
 
 -- --------------------------------------------------------
 
@@ -534,10 +774,33 @@ CREATE TABLE `model_has_roles` (
 
 INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (1, 'App\\Models\\User', 5),
+(1, 'App\\Models\\User', 34),
+(1, 'App\\Models\\User', 35),
+(1, 'App\\Models\\User', 36),
 (2, 'App\\Models\\User', 21),
 (3, 'App\\Models\\User', 12),
 (3, 'App\\Models\\User', 13),
-(4, 'App\\Models\\User', 5);
+(4, 'App\\Models\\User', 35),
+(4, 'App\\Models\\User', 36),
+(5, 'App\\Models\\User', 34),
+(9, 'App\\Models\\User', 35);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `newsletters`
+--
+
+CREATE TABLE `newsletters` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `subject` varchar(255) NOT NULL,
+  `content` longtext NOT NULL,
+  `target_audience` varchar(255) NOT NULL DEFAULT 'all',
+  `sent_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -578,16 +841,12 @@ CREATE TABLE `payments` (
 INSERT INTO `payments` (`id`, `student_id`, `term_id`, `amount_paid`, `payment_date`, `payment_method`, `reference_no`, `received_by`, `remarks`, `created_at`, `updated_at`) VALUES
 (77, 175, 2, -150.00, '2026-09-04', 'Term Invoice', 'INV-2-175', NULL, 'Term Fees Charged (Term 1)', '2026-09-04 08:03:12', '2026-09-04 08:03:12'),
 (78, 176, 2, -150.00, '2026-09-04', 'Term Invoice', 'INV-2-176', NULL, 'Term Fees Charged (Term 1)', '2026-09-04 08:03:12', '2026-09-04 08:03:12'),
-(79, 177, 2, -150.00, '2026-09-04', 'Term Invoice', 'INV-2-177', NULL, 'Term Fees Charged (Term 1)', '2026-09-04 08:03:12', '2026-09-04 08:03:12'),
 (80, 178, 2, -150.00, '2026-09-04', 'Term Invoice', 'INV-2-178', NULL, 'Term Fees Charged (Term 1)', '2026-09-04 08:03:12', '2026-09-04 08:03:12'),
 (81, 175, 3, 150.06, '2026-09-04', 'Cash', 'RC1230', NULL, 'School Fees', '2026-09-04 08:21:04', '2026-09-04 08:21:04'),
 (82, 176, 2, 160.00, '2026-09-04', 'Cash', 'RC1231', NULL, '12341234', '2026-09-04 08:22:41', '2026-09-04 08:22:41'),
-(83, 177, 3, 150.46, '2026-09-04', 'Cash', 'qweqe1', NULL, 'fees', '2026-09-04 08:23:29', '2026-09-04 08:23:29'),
 (84, 178, 3, 299.82, '2026-09-04', 'Card', 'TXN-1234', NULL, '12341234', '2026-09-04 08:23:58', '2026-09-04 08:23:58'),
-(85, 177, 3, 150.15, '2026-09-04', 'Cash', 'TXN-1234', NULL, '11223344', '2026-09-04 08:27:21', '2026-09-04 08:27:21'),
 (86, 175, 3, -150.00, '2026-09-04', 'Term Invoice', 'INV-3-175', NULL, 'Term Fees Charged (Term 2)', '2026-09-04 08:28:14', '2026-09-04 08:28:14'),
 (87, 176, 3, -150.00, '2026-09-04', 'Term Invoice', 'INV-3-176', NULL, 'Term Fees Charged (Term 2)', '2026-09-04 08:28:14', '2026-09-04 08:28:14'),
-(88, 177, 3, -150.00, '2026-09-04', 'Term Invoice', 'INV-3-177', NULL, 'Term Fees Charged (Term 2)', '2026-09-04 08:28:14', '2026-09-04 08:28:14'),
 (89, 178, 3, -150.00, '2026-09-04', 'Term Invoice', 'INV-3-178', NULL, 'Term Fees Charged (Term 2)', '2026-09-04 08:28:14', '2026-09-04 08:28:14'),
 (90, 175, 3, 150.00, '2026-09-04', 'Cash', 'TXN-1234', NULL, '123123', '2026-09-04 08:30:37', '2026-09-04 08:30:37'),
 (91, 176, 3, 150.00, '2026-09-04', 'Cash', NULL, NULL, NULL, '2026-09-04 08:31:47', '2026-09-04 08:31:47'),
@@ -596,9 +855,6 @@ INSERT INTO `payments` (`id`, `student_id`, `term_id`, `amount_paid`, `payment_d
 (94, 178, 3, -599.82, '2026-09-04', 'Credit Withdrawal', 'WD-6A9A9F35BDBC5', NULL, 'Refund to Parent', '2026-09-04 08:36:37', '2026-09-04 08:36:37'),
 (95, 178, 3, 0.01, '2026-09-04', 'Cash', NULL, NULL, NULL, '2026-09-04 08:37:42', '2026-09-04 08:37:42'),
 (96, 175, 2, 150.00, '2026-09-04', 'Cash', '123', NULL, '123', '2026-09-04 08:39:56', '2026-09-04 08:39:56'),
-(97, 177, 3, 150.00, '2026-09-04', 'Cash', 'querty123', NULL, 'keyboard Investments', '2026-09-04 08:42:24', '2026-09-04 08:42:24'),
-(98, 177, 3, -150.00, '2026-09-04', 'Credit Withdrawal', 'WD-6A9AA0BF8E652', NULL, 'SDK error (Reservsal Transaction)', '2026-09-04 08:43:11', '2026-09-04 08:43:11'),
-(99, 177, 2, 150.00, '2026-09-04', 'Cash', 'querty123', NULL, '123123', '2026-09-04 08:43:43', '2026-09-04 08:43:43'),
 (100, 178, 3, 150.00, '2026-09-04', 'Cash', 'querty123', NULL, 'grrwwgfwg', '2026-09-04 08:44:46', '2026-09-04 08:44:46'),
 (101, 176, 3, 69.79, '2026-09-04', 'Cash', 'owvnwv', NULL, NULL, '2026-09-04 08:47:21', '2026-09-04 08:47:21'),
 (102, 176, 2, 69.79, '2026-09-04', 'Cash', 'owvnwv', NULL, NULL, '2026-09-04 08:47:41', '2026-09-04 08:47:41');
@@ -628,7 +884,8 @@ CREATE TABLE `payslips` (
 --
 
 INSERT INTO `payslips` (`id`, `user_id`, `pay_period`, `base_salary`, `allowances`, `deductions`, `net_salary`, `payment_date`, `remarks`, `created_at`, `updated_at`) VALUES
-(11, 5, 'September', 299.66, 60.00, 2.86, 356.80, '2026-09-06', 'bank', '2026-09-06 12:20:36', '2026-09-06 12:20:36');
+(11, 5, 'September', 299.66, 60.00, 2.86, 356.80, '2026-09-06', 'bank', '2026-09-06 12:20:36', '2026-09-06 12:20:36'),
+(12, 36, 'October 2026', 150.00, 20.00, 14.83, 155.17, '2026-10-10', NULL, '2026-10-10 16:32:26', '2026-10-10 16:32:26');
 
 -- --------------------------------------------------------
 
@@ -658,7 +915,11 @@ INSERT INTO `permissions` (`id`, `name`, `guard_name`, `created_at`, `updated_at
 (8, 'payroll', 'web', '2026-09-06 16:19:22', '2026-09-06 16:19:22'),
 (9, 'manage-inventory', 'web', '2026-09-06 16:20:42', '2026-09-06 16:20:42'),
 (10, 'manage-payroll', 'web', '2026-09-06 16:20:53', '2026-09-06 16:20:53'),
-(11, 'manage-expenses', 'web', '2026-09-06 16:21:07', '2026-09-06 16:21:07');
+(11, 'manage-expenses', 'web', '2026-09-06 16:21:07', '2026-09-06 16:21:07'),
+(12, 'audit-logs', 'web', '2026-10-05 12:17:03', '2026-10-05 12:17:03'),
+(13, 'exams_management', 'web', '2026-10-15 10:59:17', '2026-10-15 10:59:17'),
+(14, 'activities_management', 'web', '2026-10-15 11:23:12', '2026-10-15 11:23:12'),
+(15, 'promote-students', 'web', '2026-10-16 11:07:00', '2026-10-16 11:07:00');
 
 -- --------------------------------------------------------
 
@@ -709,7 +970,9 @@ CREATE TABLE `role_has_permissions` (
 
 CREATE TABLE `school_classes` (
   `id` bigint(20) UNSIGNED NOT NULL,
+  `grade_level_id` bigint(20) UNSIGNED DEFAULT NULL,
   `class_name` varchar(255) NOT NULL,
+  `stream` varchar(255) DEFAULT NULL,
   `class_code` varchar(255) NOT NULL,
   `room_number` varchar(255) DEFAULT NULL,
   `capacity` int(11) NOT NULL DEFAULT 100,
@@ -723,10 +986,17 @@ CREATE TABLE `school_classes` (
 -- Dumping data for table `school_classes`
 --
 
-INSERT INTO `school_classes` (`id`, `class_name`, `class_code`, `room_number`, `capacity`, `teacher_id`, `status`, `created_at`, `updated_at`) VALUES
-(15, 'Form 1', 'F1', '1', 40, 12, 'active', '2026-02-06 09:31:42', '2026-07-07 13:36:37'),
-(16, 'Form 2', 'F2', '2', 60, NULL, 'active', '2026-02-06 09:52:40', '2026-02-06 09:52:40'),
-(17, 'Form 3', 'F3', '3', 80, 13, 'active', '2026-02-11 07:52:36', '2026-02-11 10:42:04');
+INSERT INTO `school_classes` (`id`, `grade_level_id`, `class_name`, `stream`, `class_code`, `room_number`, `capacity`, `teacher_id`, `status`, `created_at`, `updated_at`) VALUES
+(15, NULL, 'Form 1', NULL, 'F1', '1', 40, 12, 'active', '2026-02-06 09:31:42', '2026-07-07 13:36:37'),
+(16, NULL, 'Form 2', NULL, 'F2', '2', 60, NULL, 'active', '2026-02-06 09:52:40', '2026-02-06 09:52:40'),
+(17, NULL, 'Form 3', NULL, 'F3', '3', 80, 13, 'active', '2026-02-11 07:52:36', '2026-02-11 10:42:04'),
+(18, 8, 'Form 1 A', 'A', 'FORM1A', NULL, 40, 13, 'active', '2026-10-16 09:59:58', '2026-10-16 09:59:58'),
+(19, 8, 'Form 1 B', 'B', 'FORM1B', NULL, 40, 12, 'active', '2026-10-16 10:00:50', '2026-10-16 10:00:50'),
+(20, 8, 'Form 1 C', 'C', 'FORM1C', NULL, 40, NULL, 'active', '2026-10-16 10:01:18', '2026-10-16 10:01:18'),
+(21, 9, 'Form 2 A', 'A', 'FORM2A', NULL, 40, NULL, 'active', '2026-10-16 10:02:22', '2026-10-16 10:02:22'),
+(22, 9, 'Form 2 B', 'B', 'FORM2B', NULL, 40, NULL, 'active', '2026-10-16 10:02:31', '2026-10-16 10:02:31'),
+(23, 9, 'Form 2 C', 'C', 'FORM2C', NULL, 40, NULL, 'active', '2026-10-16 10:02:41', '2026-10-16 10:02:41'),
+(24, 8, 'Form 1 D', 'D', 'FORM1D', NULL, 40, NULL, 'active', '2026-10-17 10:22:08', '2026-10-17 10:22:08');
 
 -- --------------------------------------------------------
 
@@ -748,9 +1018,7 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('tJxlqp5Zn9ZR72jxmpdVZDnddxE8OLw7xrGgdM21', 5, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoieVdmdGZRa1h6QjE0UmVpVFpaQWMyWG1kNFl1cDc5VlZwMnRBZHRhNiI7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6NDI6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9hZG1pbmlzdHJhdGlvbi9yb2xlcyI7czo1OiJyb3V0ZSI7czoxMToicm9sZXMuaW5kZXgiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX1zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aTo1O30=', 1788720355),
-('YBicOVfGCaIU6JPsgTrAEbscdl95UB6cSs9KdR9y', 21, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiVVhKYmRVNmRpZmZkOGd4NjQ3a1VVNVZrVFd6QWNHdU84bElJSnYyWCI7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6NDI6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9yZWNlcHRpb25pc3QvY2xhc3NlcyI7czo1OiJyb3V0ZSI7czoyNjoicmVjZXB0aW9uaXN0LmNsYXNzZXMuaW5kZXgiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX1zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aToyMTt9', 1788718277),
-('YcuYNkijcyHZ0Z6ezLmJDnkSnYmq8oknKjFuYrTN', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiWGRVS29ES3BvdkdHY0d4N1BOYzU1eFNFb1ZnRGhpeGhVWHcwZkxMeSI7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6MjE6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMCI7czo1OiJyb3V0ZSI7czo1OiJsb2dpbiI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1788718263);
+('20E5Dvk5LEWhnewg9ELpHlQyNxwJsaUFa9qm0gAl', 5, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'YTo2OntzOjY6Il90b2tlbiI7czo0MDoiZXFreXhXbnhLOERUQmE4NmZNQ0NDQkJQRUZySXRRcVZVSW1KcFBBbiI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czozODoiaHR0cDovLzEyNy4wLjAuMTo4MDAwL3BheXJvbGwvcHJpbnQvMTIiO31zOjk6Il9wcmV2aW91cyI7YToyOntzOjM6InVybCI7czo0NzoiaHR0cDovLzEyNy4wLjAuMTo4MDAwL3N1YmplY3RzL2FsbG9jYXRlLWNsYXNzZXMiO3M6NToicm91dGUiO3M6MjU6InN1YmplY3RzLmFsbG9jYXRlX2NsYXNzZXMiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX1zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aTo1O3M6MTc6InBhc3N3b3JkX2hhc2hfd2ViIjtzOjY0OiJlOTc2YTFjZWI2YTFlNDBiNGY0YTUwNzVlMTE5NzY1MDU1MTA0NzU4MjhiZjBiZTc4Y2RjZDI3NDRiMDk4ODVjIjt9', 1792242283);
 
 -- --------------------------------------------------------
 
@@ -805,10 +1073,10 @@ CREATE TABLE `students` (
 --
 
 INSERT INTO `students` (`id`, `class_id`, `term_id`, `student_number`, `name`, `surname`, `date_of_birth`, `gender`, `national_id`, `grade`, `enrollment_status`, `address`, `parent_contact`, `email`, `phone`, `enrollment_date`, `enrollment_term_id`, `status`, `photo_path`, `emergency_contact`, `password`, `created_at`, `updated_at`, `remember_token`, `balance`, `face_path`, `face_descriptor`) VALUES
-(175, 15, 2, 'EAC260001', 'Musa Elias', 'Mukahlera', '2004-09-24', 'Male', '222042235E22', 'Form 1', 'active', '3094 Budiriro 2\r\nOnline', 'Musa Elias Mukahlera', 'eac260001@eac.cac.zw', '+263787247792', '2026-09-03', NULL, 'active', NULL, 'Musa Elias Mukahlera', '$2y$12$pnV2tIL3Y3ogDAJp5xLsz.J53kr8EWBeaYJLeSIyxG0kbP/ZrRilm', '2026-09-03 11:30:25', '2026-09-03 11:30:25', NULL, 0.00, NULL, NULL),
-(176, 16, 2, 'EAC260176', 'Hamamunashe', 'Tirekerwi', '2001-01-01', 'Male', '12121212D12', 'Form 2', 'active', '3094 Budiriro 2\r\nOnline', 'Musa Elias Mukahlera', 'eac260176@eac.cac.zw', '+263787247792', '2026-09-03', NULL, 'active', NULL, 'Musa Elias Mukahlera', '$2y$12$w7JioqHbY.aUUDG3q5mS2ONOD2p..d4Z430g2bvDp7a0his3wXQMO', '2026-09-03 11:33:57', '2026-09-03 11:33:57', NULL, 0.00, NULL, NULL),
-(177, 15, 3, 'EAC260177', 'Munashe', 'Mbaimbai', '2007-12-01', 'Male', '112233445566778899P77', 'Form 1', 'active', '2011 kambuzuma road aspingdel', 'Mr Moyo 0787247792 Parent', 'eac260177@eac.cac.zw', '+263787950406', '2026-09-04', NULL, 'active', NULL, 'Mr Moyo 0787247792 Parent', '$2y$12$ro2535Tv8sJ2zy1KBvrJp.rCq/XIUnEoVoqJTB/gfiySBNo51NVsu', '2026-09-04 06:57:35', '2026-09-04 06:57:35', NULL, 0.00, NULL, NULL),
-(178, 15, 3, 'EAC260178', 'John', 'Doe', '2007-12-01', 'Male', '18621122Q11', 'Form 1', 'active', 'Somewhere in Mars', 'Mr Moyo 0787247792 Parent', 'eac260178@eac.cac.zw', '+263112233445566', '2026-09-04', NULL, 'active', NULL, 'Mr Moyo 0787247792 Parent', '$2y$12$wXrUt0embMCGVbEG26nKfuQvI7qpJn80t5uP/Uo3F7/XLmSNUq2py', '2026-09-04 07:01:00', '2026-09-04 07:01:00', NULL, 0.00, NULL, NULL);
+(175, 22, 3, 'EAC260001', 'Musa Elias', 'Mukahlera', '2004-09-24', 'Male', '222042235E22', 'Form 2 B', 'active', '3094 Budiriro 2\r\nOnline', 'Musa Elias Mukahlera', 'eac260001@eac.cac.zw', '+263787247792', '2026-09-03', NULL, 'active', NULL, 'Musa Elias Mukahlera', '$2y$12$pnV2tIL3Y3ogDAJp5xLsz.J53kr8EWBeaYJLeSIyxG0kbP/ZrRilm', '2026-09-03 11:30:25', '2026-10-16 11:02:49', NULL, 0.00, NULL, NULL),
+(176, 23, 3, 'EAC260176', 'Hamamunashe', 'Tirekerwi', '2001-01-01', 'Male', '12121212D12', 'Form 2 C', 'active', '3094 Budiriro 2\r\nOnline', 'Musa Elias Mukahlera', 'eac260176@eac.cac.zw', '+263787247792', '2026-09-03', NULL, 'active', NULL, 'Musa Elias Mukahlera', '$2y$12$w7JioqHbY.aUUDG3q5mS2ONOD2p..d4Z430g2bvDp7a0his3wXQMO', '2026-09-03 11:33:57', '2026-10-16 11:02:49', NULL, 0.00, NULL, NULL),
+(178, 21, 3, 'EAC260178', 'John', 'Doe', '2007-12-01', 'Male', '18621122Q11', 'Form 2 A', 'active', 'Somewhere in Mars', 'Mr Moyo 0787247792 Parent', 'eac260178@eac.cac.zw', '+263112233445566', '2026-09-04', NULL, 'active', NULL, 'Mr Moyo 0787247792 Parent', '$2y$12$wXrUt0embMCGVbEG26nKfuQvI7qpJn80t5uP/Uo3F7/XLmSNUq2py', '2026-09-04 07:01:00', '2026-10-16 11:02:49', NULL, 0.00, NULL, NULL),
+(179, 18, 3, 'EAC260179', 'Sarah', 'Corner', '2009-01-24', 'Female', '12121212D121', 'Form 1 A', 'active', '3094 Budiriro 2\r\nOnline', 'Musa Elias Mukahlera', 'eac260179@eac.cac.zw', '+263787247792', '2026-10-17', NULL, 'active', NULL, 'Musa Elias Mukahlera', '$2y$12$wHh.9pLit8zWPtSR2uZ6oej.ienBOGGsW3NysYEpc5wVNXVFP2zlO', '2026-10-17 07:49:10', '2026-10-17 07:49:10', NULL, 0.00, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -831,12 +1099,17 @@ CREATE TABLE `subjects` (
 --
 
 INSERT INTO `subjects` (`id`, `subject_name`, `subject_code`, `type`, `pass_mark`, `created_at`, `updated_at`) VALUES
-(1, 'Mathematics', 'Math_Ordinary', 'Core', 50, '2026-01-04 11:55:45', '2026-01-04 11:55:45'),
-(2, 'English', 'ENG', 'Core', 50, '2026-01-05 17:21:01', '2026-01-05 17:21:01'),
-(3, 'Computer Science', 'CS01', 'Practical', 50, '2026-02-09 14:16:25', '2026-02-09 14:16:25'),
-(4, 'Combined Science', 'scie101', 'Core', 50, '2026-02-09 14:16:53', '2026-02-09 14:16:53'),
-(5, 'Physics', 'SCIE102', 'Core', 50, '2026-02-09 14:17:13', '2026-02-09 14:17:13'),
-(6, 'BIOLOGY', 'SCIE103', 'Core', 50, '2026-02-09 14:17:30', '2026-02-09 14:17:30');
+(7, 'MATHEMATICS', 'MATHS', 'Core', 50, '2026-10-17 09:24:54', '2026-10-17 09:24:54'),
+(8, 'COMBINED SCIENCE', 'SCIE', 'Core', 50, '2026-10-17 09:25:14', '2026-10-17 09:25:14'),
+(9, 'ENGLISH LANGUAGE', 'ENG', 'Core', 50, '2026-10-17 09:25:29', '2026-10-17 09:25:29'),
+(10, 'SHONA LANGUAGE', 'SHONA', 'Core', 50, '2026-10-17 09:25:48', '2026-10-17 09:25:48'),
+(11, 'GEOGRAPHY', 'GEO', 'Core', 50, '2026-10-17 09:26:06', '2026-10-17 09:26:06'),
+(12, 'HISTORY', 'HIST', 'Core', 50, '2026-10-17 09:26:32', '2026-10-17 09:26:32'),
+(13, 'PHYSICS', 'SCIE103', 'Core', 50, '2026-10-17 09:29:09', '2026-10-17 09:29:09'),
+(14, 'BIOLOGY', 'SCIE101', 'Core', 50, '2026-10-17 09:29:26', '2026-10-17 09:29:26'),
+(15, 'CHEMISTRY', 'SCIE102', 'Core', 50, '2026-10-17 09:29:44', '2026-10-17 09:29:44'),
+(16, 'AGRICULTURE', 'AGRIC', 'Practical', 50, '2026-10-17 09:56:30', '2026-10-17 09:56:30'),
+(17, 'COMPUTER SCIENCE', 'COMP_SCIE', 'Core', 50, '2026-10-17 09:58:53', '2026-10-17 09:58:53');
 
 -- --------------------------------------------------------
 
@@ -846,9 +1119,10 @@ INSERT INTO `subjects` (`id`, `subject_name`, `subject_code`, `type`, `pass_mark
 
 CREATE TABLE `subject_assignments` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `teacher_id` bigint(20) UNSIGNED NOT NULL,
+  `grade` varchar(255) DEFAULT NULL,
+  `teacher_id` bigint(20) UNSIGNED DEFAULT NULL,
   `subject_id` bigint(20) UNSIGNED NOT NULL,
-  `class_id` bigint(20) UNSIGNED NOT NULL,
+  `class_id` bigint(20) UNSIGNED DEFAULT NULL,
   `academic_year` varchar(255) NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
@@ -858,11 +1132,55 @@ CREATE TABLE `subject_assignments` (
 -- Dumping data for table `subject_assignments`
 --
 
-INSERT INTO `subject_assignments` (`id`, `teacher_id`, `subject_id`, `class_id`, `academic_year`, `created_at`, `updated_at`) VALUES
-(1, 12, 1, 15, '2026', '2026-02-09 14:12:15', '2026-02-09 14:12:15'),
-(2, 12, 5, 15, '2026', '2026-02-11 07:01:07', '2026-02-11 07:01:07'),
-(3, 13, 3, 17, '2026', '2026-02-11 08:25:39', '2026-02-11 08:25:39'),
-(4, 13, 5, 15, '2026', '2026-02-11 09:43:47', '2026-02-11 09:43:47');
+INSERT INTO `subject_assignments` (`id`, `grade`, `teacher_id`, `subject_id`, `class_id`, `academic_year`, `created_at`, `updated_at`) VALUES
+(52, 'Form 1', 13, 7, NULL, '2026', '2026-10-17 10:34:46', '2026-10-17 11:03:57'),
+(53, 'Form 1', NULL, 8, NULL, '2026', '2026-10-17 10:34:46', '2026-10-17 10:34:46'),
+(54, 'Form 1', NULL, 9, NULL, '2026', '2026-10-17 10:34:46', '2026-10-17 10:34:46'),
+(55, 'Form 1', NULL, 10, NULL, '2026', '2026-10-17 10:34:46', '2026-10-17 10:34:46'),
+(56, 'Form 1', NULL, 11, NULL, '2026', '2026-10-17 10:34:46', '2026-10-17 10:34:46'),
+(57, 'Form 1', NULL, 12, NULL, '2026', '2026-10-17 10:34:46', '2026-10-17 10:34:46'),
+(58, 'Form 1', NULL, 13, NULL, '2026', '2026-10-17 10:34:46', '2026-10-17 10:34:46'),
+(59, 'Form 1', NULL, 14, NULL, '2026', '2026-10-17 10:34:47', '2026-10-17 10:34:47'),
+(60, 'Form 1', NULL, 15, NULL, '2026', '2026-10-17 10:34:47', '2026-10-17 10:34:47'),
+(61, 'Form 1', NULL, 16, NULL, '2026', '2026-10-17 10:34:47', '2026-10-17 10:34:47'),
+(62, 'Form 1', NULL, 17, NULL, '2026', '2026-10-17 10:34:47', '2026-10-17 10:34:47'),
+(64, NULL, 13, 15, 18, '2026', '2026-10-17 11:03:23', '2026-10-17 11:03:23');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `subject_combinations`
+--
+
+CREATE TABLE `subject_combinations` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `code` varchar(255) DEFAULT NULL,
+  `grade` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `subject_combinations`
+--
+
+INSERT INTO `subject_combinations` (`id`, `name`, `code`, `grade`, `created_at`, `updated_at`) VALUES
+(1, 'test', 'mpc', NULL, '2026-10-17 09:59:32', '2026-10-17 09:59:32');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `subject_combination_subject`
+--
+
+CREATE TABLE `subject_combination_subject` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `subject_combination_id` bigint(20) UNSIGNED NOT NULL,
+  `subject_id` bigint(20) UNSIGNED NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -948,10 +1266,13 @@ INSERT INTO `users` (`id`, `dob`, `employee_id`, `name`, `email`, `national_id`,
 (16, NULL, NULL, 'Sailas Benza', 'st20266885@school.com', NULL, 0.00, 'student', NULL, NULL, '$2y$12$uzW4ZGUxSwdg2sUMkriSLeYbmHdLo8XB0lZZzF9fhSl310p3QYkpi', NULL, '2026-02-12 16:15:20', '2026-02-12 16:15:20', NULL, NULL, NULL),
 (17, NULL, NULL, 'Neville Mupasa', 'st20261705@school.com', NULL, 0.00, 'student', NULL, NULL, '$2y$12$PQQ04xKZfLr5Z0/ehjsu7eM7Fw/aJ4/YZrxI5D9Ws.bDB4H9RRpju', NULL, '2026-02-12 16:38:35', '2026-02-12 16:38:35', NULL, NULL, NULL),
 (21, '2005-09-24', NULL, 'Hamamunashe Tirekerwi', 'hamamunashe@gmail.com', '222042235P22', 0.00, 'receptionist', '+263787247792', NULL, '$2y$12$F0gMKvMTihliQWQ/0E8kFuUou0R1R.yUi/fIIKg8Pe9ABtcpnp7FO', NULL, '2026-02-25 16:17:39', '2026-09-06 15:31:29', 'clerk', NULL, NULL),
-(30, NULL, NULL, 'Musa Elias Mukahlera', 'mmukahlera1@student.local', '222042235E22', 0.00, 'student', NULL, NULL, '$2y$12$OtC7.NiVdWvzNygxssAcSu6lPFKkKCFNjywx/IYdJTomm.fqZc/DW', NULL, '2026-09-03 11:30:26', '2026-09-03 11:30:26', '222042235E22', NULL, NULL),
-(31, NULL, NULL, 'Hamamunashe Tirekerwi', 'htirekerwi2@student.local', '12121212D12', 0.00, 'student', NULL, NULL, '$2y$12$nN4FRi2VKy467dsw8V0EdOvgApjR0ZvmdZ2zsnWKKWF65XNXjrDN2', NULL, '2026-09-03 11:33:58', '2026-09-03 11:33:58', '12121212D12', NULL, NULL),
-(32, NULL, NULL, 'Munashe Mbaimbai', 'mmbaimbai3@student.local', '112233445566778899P77', 0.00, 'student', NULL, NULL, '$2y$12$Xp8x/nGht8jHrSuCiCSzTeu2SMWeRvqP4B9SB/iKG2evgHcns/Zoy', NULL, '2026-09-04 06:57:36', '2026-09-04 06:57:36', '112233445566778899P77', NULL, NULL),
-(33, NULL, NULL, 'John Doe', 'jdoe4@student.local', '18621122Q11', 0.00, 'student', NULL, NULL, '$2y$12$Y1JznIJGRGrwxNAnxl9sb.ck2r0dMb2RWRBYCgy98d/aLVDGD8wXe', NULL, '2026-09-04 07:01:01', '2026-09-04 07:01:01', '18621122Q11', NULL, NULL);
+(30, NULL, NULL, 'Musa Elias Mukahlera', 'mmukahlera1@student.local', '222042235E22', 0.00, 'student', NULL, NULL, '$2y$12$OtC7.NiVdWvzNygxssAcSu6lPFKkKCFNjywx/IYdJTomm.fqZc/DW', NULL, '2026-09-03 11:30:26', '2026-10-16 11:02:19', '222042235E22', NULL, NULL),
+(31, NULL, NULL, 'Hamamunashe Tirekerwi', 'htirekerwi2@student.local', '12121212D12', 0.00, 'student', NULL, NULL, '$2y$12$nN4FRi2VKy467dsw8V0EdOvgApjR0ZvmdZ2zsnWKKWF65XNXjrDN2', NULL, '2026-09-03 11:33:58', '2026-10-16 11:02:37', '12121212D12', NULL, NULL),
+(33, NULL, NULL, 'John Doe', 'jdoe4@student.local', '18621122Q11', 0.00, 'student', NULL, NULL, '$2y$12$Y1JznIJGRGrwxNAnxl9sb.ck2r0dMb2RWRBYCgy98d/aLVDGD8wXe', NULL, '2026-09-04 07:01:01', '2026-10-16 11:02:07', '18621122Q11', NULL, NULL),
+(34, '2004-09-21', NULL, 'TATENDA MUKUNYADZE', 'tatenda@eac.ac.zw', 'Tatenda@123', 0.00, 'admin', '+263787247792', NULL, '$2y$12$KALjjt.I7GL44i2LrjD2sOPqVv.wc/POT58GoDQXF/YE.a32lAIaK', NULL, '2026-10-05 09:00:05', '2026-10-05 09:01:32', '1862', NULL, NULL),
+(35, '2001-01-01', NULL, 'Tapiwanashe Manyara', 'tapiwanashemanyara079@gmail.com', '1234567890A112', 0.00, 'admin', '0788243582', NULL, '$2y$12$5vmbeDJrUJHwA6qdhtrVXu0OkrdXIYNUhK93.Jmamc/TUyuFa21Ni', NULL, '2026-10-05 09:06:30', '2026-10-05 09:06:30', '1863', NULL, NULL),
+(36, '2001-09-09', NULL, 'Christine Munaki', 'cmunanki@eac.ac.zw', '11223344', 0.00, 'admin', '+263789781392', NULL, '$2y$12$E/bQsAo5lme/CNYL882Kw.Nqxx0HanjoBKvB8EV9jaMGg/V704.L.', NULL, '2026-10-05 09:12:40', '2026-10-05 09:12:40', '1864', NULL, NULL),
+(37, NULL, NULL, 'Sarah Corner', 'scorner4@student.local', '12121212D121', 0.00, 'student', NULL, NULL, '$2y$12$RNPpzMENjbH3kgKnqIaZquOMlbrs1CAuemrYxCA1D4tvP4Kvwo.LO', NULL, '2026-10-17 07:49:11', '2026-10-17 07:49:11', '12121212D121', NULL, NULL);
 
 --
 -- Indexes for dumped tables
@@ -981,6 +1302,12 @@ ALTER TABLE `admissions`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `admissions_tracking_id_unique` (`tracking_id`),
   ADD UNIQUE KEY `admissions_identity_number_unique` (`identity_number`);
+
+--
+-- Indexes for table `announcements`
+--
+ALTER TABLE `announcements`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `cache`
@@ -1060,6 +1387,18 @@ ALTER TABLE `fee_transactions`
   ADD KEY `fee_transactions_payment_id_foreign` (`payment_id`);
 
 --
+-- Indexes for table `grade_levels`
+--
+ALTER TABLE `grade_levels`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `grade_scales`
+--
+ALTER TABLE `grade_scales`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `inventory_items`
 --
 ALTER TABLE `inventory_items`
@@ -1115,6 +1454,12 @@ ALTER TABLE `model_has_roles`
   ADD KEY `model_has_roles_model_id_model_type_index` (`model_id`,`model_type`);
 
 --
+-- Indexes for table `newsletters`
+--
+ALTER TABLE `newsletters`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `password_reset_tokens`
 --
 ALTER TABLE `password_reset_tokens`
@@ -1162,7 +1507,8 @@ ALTER TABLE `role_has_permissions`
 --
 ALTER TABLE `school_classes`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `school_classes_class_code_unique` (`class_code`);
+  ADD UNIQUE KEY `school_classes_class_code_unique` (`class_code`),
+  ADD KEY `school_classes_grade_level_id_foreign` (`grade_level_id`);
 
 --
 -- Indexes for table `sessions`
@@ -1204,6 +1550,20 @@ ALTER TABLE `subject_assignments`
   ADD KEY `subject_assignments_class_id_foreign` (`class_id`);
 
 --
+-- Indexes for table `subject_combinations`
+--
+ALTER TABLE `subject_combinations`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `subject_combination_subject`
+--
+ALTER TABLE `subject_combination_subject`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `subject_combination_subject_subject_combination_id_foreign` (`subject_combination_id`),
+  ADD KEY `subject_combination_subject_subject_id_foreign` (`subject_id`);
+
+--
 -- Indexes for table `terms`
 --
 ALTER TABLE `terms`
@@ -1235,7 +1595,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `activity_log`
 --
 ALTER TABLE `activity_log`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=145;
 
 --
 -- AUTO_INCREMENT for table `activity_marks`
@@ -1250,6 +1610,12 @@ ALTER TABLE `admissions`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
+-- AUTO_INCREMENT for table `announcements`
+--
+ALTER TABLE `announcements`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `class_activities`
 --
 ALTER TABLE `class_activities`
@@ -1259,13 +1625,13 @@ ALTER TABLE `class_activities`
 -- AUTO_INCREMENT for table `class_subject`
 --
 ALTER TABLE `class_subject`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
 
 --
 -- AUTO_INCREMENT for table `exams`
 --
 ALTER TABLE `exams`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `exam_attendances`
@@ -1298,6 +1664,18 @@ ALTER TABLE `fee_transactions`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
+-- AUTO_INCREMENT for table `grade_levels`
+--
+ALTER TABLE `grade_levels`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+
+--
+-- AUTO_INCREMENT for table `grade_scales`
+--
+ALTER TABLE `grade_scales`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
 -- AUTO_INCREMENT for table `inventory_items`
 --
 ALTER TABLE `inventory_items`
@@ -1325,7 +1703,13 @@ ALTER TABLE `marks`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=63;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=69;
+
+--
+-- AUTO_INCREMENT for table `newsletters`
+--
+ALTER TABLE `newsletters`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `payments`
@@ -1337,13 +1721,13 @@ ALTER TABLE `payments`
 -- AUTO_INCREMENT for table `payslips`
 --
 ALTER TABLE `payslips`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `permissions`
 --
 ALTER TABLE `permissions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `roles`
@@ -1355,7 +1739,7 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT for table `school_classes`
 --
 ALTER TABLE `school_classes`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `settings`
@@ -1367,19 +1751,31 @@ ALTER TABLE `settings`
 -- AUTO_INCREMENT for table `students`
 --
 ALTER TABLE `students`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=179;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=180;
 
 --
 -- AUTO_INCREMENT for table `subjects`
 --
 ALTER TABLE `subjects`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `subject_assignments`
 --
 ALTER TABLE `subject_assignments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=65;
+
+--
+-- AUTO_INCREMENT for table `subject_combinations`
+--
+ALTER TABLE `subject_combinations`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `subject_combination_subject`
+--
+ALTER TABLE `subject_combination_subject`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `terms`
@@ -1391,13 +1787,13 @@ ALTER TABLE `terms`
 -- AUTO_INCREMENT for table `timetables`
 --
 ALTER TABLE `timetables`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=278;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=59;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
 -- Constraints for dumped tables
@@ -1503,6 +1899,12 @@ ALTER TABLE `role_has_permissions`
   ADD CONSTRAINT `role_has_permissions_role_id_foreign` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `school_classes`
+--
+ALTER TABLE `school_classes`
+  ADD CONSTRAINT `school_classes_grade_level_id_foreign` FOREIGN KEY (`grade_level_id`) REFERENCES `grade_levels` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `students`
 --
 ALTER TABLE `students`
@@ -1516,6 +1918,13 @@ ALTER TABLE `subject_assignments`
   ADD CONSTRAINT `subject_assignments_class_id_foreign` FOREIGN KEY (`class_id`) REFERENCES `school_classes` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `subject_assignments_subject_id_foreign` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `subject_assignments_teacher_id_foreign` FOREIGN KEY (`teacher_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `subject_combination_subject`
+--
+ALTER TABLE `subject_combination_subject`
+  ADD CONSTRAINT `subject_combination_subject_subject_combination_id_foreign` FOREIGN KEY (`subject_combination_id`) REFERENCES `subject_combinations` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `subject_combination_subject_subject_id_foreign` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `timetables`
