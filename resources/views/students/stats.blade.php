@@ -7,7 +7,7 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
         <div>
             <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Enrollment Analytics</h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Academic demographics and enrollment distribution metrics</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Academic demographics and enrollment distribution metrics across grade streams</p>
         </div>
         <div class="mt-4 sm:mt-0">
             <a href="{{ route('students.index') }}" 
@@ -25,16 +25,16 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             
             {{-- Total Students --}}
-            <div class="p-6 rounded-2xl bg-indigo-600 text-white shadow-sm flex items-center justify-between relative overflow-hidden">
+            <div class="p-6 rounded-3xl bg-indigo-600 text-white shadow-sm flex items-center justify-between relative overflow-hidden">
                 <div class="space-y-1">
-                    <p class="text-xs font-bold uppercase tracking-wider opacity-80">Total Students</p>
+                    <p class="text-xs font-bold uppercase tracking-wider opacity-80">Total Enrolled</p>
                     <h3 class="text-3xl font-extrabold">{{ $classStats->sum('total') }}</h3>
                 </div>
                 <i class="fa-solid fa-graduation-cap text-5xl opacity-20 absolute right-4 bottom-3"></i>
             </div>
 
             {{-- Active Term --}}
-            <div class="p-6 rounded-2xl bg-emerald-600 text-white shadow-sm flex items-center justify-between relative overflow-hidden">
+            <div class="p-6 rounded-3xl bg-emerald-600 text-white shadow-sm flex items-center justify-between relative overflow-hidden">
                 <div class="space-y-1">
                     <p class="text-xs font-bold uppercase tracking-wider opacity-80">Active Term</p>
                     <h3 class="text-2xl font-extrabold truncate max-w-[180px]">{{ \App\Models\Term::where('is_current', true)->value('term_name') ?? 'None' }}</h3>
@@ -42,17 +42,17 @@
                 <i class="fa-solid fa-flag-checkered text-5xl opacity-20 absolute right-4 bottom-3"></i>
             </div>
 
-            {{-- Class Groups --}}
-            <div class="p-6 rounded-2xl bg-sky-600 text-white shadow-sm flex items-center justify-between relative overflow-hidden">
+            {{-- Class Streams --}}
+            <div class="p-6 rounded-3xl bg-sky-600 text-white shadow-sm flex items-center justify-between relative overflow-hidden">
                 <div class="space-y-1">
-                    <p class="text-xs font-bold uppercase tracking-wider opacity-80">Class Streams</p>
+                    <p class="text-xs font-bold uppercase tracking-wider opacity-80">Active Streams</p>
                     <h3 class="text-3xl font-extrabold">{{ $classStats->count() }}</h3>
                 </div>
                 <i class="fa-solid fa-school text-5xl opacity-20 absolute right-4 bottom-3"></i>
             </div>
 
             {{-- Gender Balance --}}
-            <div class="p-6 rounded-2xl bg-amber-500 text-white shadow-sm flex items-center justify-between relative overflow-hidden">
+            <div class="p-6 rounded-3xl bg-amber-500 text-white shadow-sm flex items-center justify-between relative overflow-hidden">
                 @php
                     $f = $genderStats->where('gender', 'Female')->first()->total ?? 0;
                     $m = $genderStats->where('gender', 'Male')->first()->total ?? 0;
@@ -69,11 +69,11 @@
         {{-- Detailed Analytics --}}
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            {{-- Main Grade Distribution --}}
-            <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
+            {{-- Main Grade Stream Distribution --}}
+            <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
                 <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/90">
                     <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center">
-                        <i class="fa-solid fa-chart-column text-indigo-500 mr-2.5"></i> Enrollment by Grade Level
+                        <i class="fa-solid fa-chart-column text-indigo-500 mr-2.5"></i> Enrollment by Stream Level
                     </h3>
                 </div>
 
@@ -81,9 +81,9 @@
                     <table class="min-w-full divide-y divide-slate-100 dark:divide-slate-700/60">
                         <thead class="bg-slate-50/50 dark:bg-slate-800/50">
                             <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Grade Level</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Class Stream</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Distribution</th>
-                                <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Enrolled</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-slate-700/60 bg-white dark:bg-slate-800">
@@ -112,8 +112,8 @@
             {{-- Side Breakdown Widgets --}}
             <div class="space-y-6">
                 
-                {{-- Term Progression --}}
-                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
+                {{-- Term Progression Growth --}}
+                <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
                     <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/90">
                         <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center">
                             <i class="fa-solid fa-chart-line text-emerald-500 mr-2.5"></i> Term Growth Metrics
@@ -121,7 +121,7 @@
                     </div>
                     <div class="p-4 space-y-3">
                         @foreach($termStats as $t)
-                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/60">
+                        <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/60">
                             <div>
                                 <p class="text-xs font-bold text-slate-800 dark:text-slate-100">{{ $t->term_name }}</p>
                                 <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{{ $t->academic_year }}</p>
@@ -134,8 +134,8 @@
                     </div>
                 </div>
 
-                {{-- Gender Ratio --}}
-                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors p-6 space-y-4">
+                {{-- Gender Ratio Balance --}}
+                <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors p-6 space-y-4">
                     <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center border-b border-slate-100 dark:border-slate-700 pb-3">
                         <i class="fa-solid fa-pie-chart text-amber-500 mr-2.5"></i> Gender Ratio Balance
                     </h3>

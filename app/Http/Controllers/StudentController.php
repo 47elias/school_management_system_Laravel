@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Student;
 use App\Models\Term;
 use App\Models\SchoolClass;
+use App\Models\GradeLevel;
 use App\Models\Payment;
 use App\Models\FeeStructure;
 use App\Models\Mark;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Str;
 
 class StudentController extends Controller
 {
@@ -23,7 +25,10 @@ class StudentController extends Controller
      */
     public function index()
     {
-        $students = Student::with(['term', 'schoolClass'])->orderBy('surname', 'asc')->get();
+        $students = Student::with(['term', 'schoolClass', 'schoolClass.gradeLevel'])
+            ->orderBy('surname', 'asc')
+            ->get();
+
         return view('students.manage', compact('students'));
     }
 
@@ -57,7 +62,7 @@ class StudentController extends Controller
      */
     public function enrollmentStats()
     {
-        // 1. Class/Grade Statistics
+        // 1. Grade Stream / Level Statistics
         $classStats = Student::select('grade', DB::raw('count(*) as total'))
             ->groupBy('grade')
             ->orderBy('grade', 'asc')
@@ -87,10 +92,13 @@ class StudentController extends Controller
     public function create()
     {
         $classes = SchoolClass::orderBy('class_name', 'asc')->get();
+        $gradeLevels = class_exists(GradeLevel::class) 
+            ? GradeLevel::with('schoolClasses.students')->orderBy('level_order', 'asc')->get() 
+            : collect();
         $currentTerm = Term::where('is_current', true)->first() ?? Term::latest()->first();
         $terms = Term::orderBy('id', 'desc')->get();
 
-        return view('students.create', compact('classes', 'currentTerm', 'terms'));
+        return view('students.create', compact('classes', 'gradeLevels', 'currentTerm', 'terms'));
     }
 
     /**
@@ -105,7 +113,8 @@ class StudentController extends Controller
             'date_of_birth'     => 'required|date',
             'gender'            => 'required|in:Male,Female',
             'national_id'       => 'required|string|unique:students,national_id',
-            'grade'             => 'required|string',
+            'grade'             => 'nullable|string',
+            'class_id'          => 'nullable|exists:school_classes,id',
             'phone'             => 'required|string',
             'emergency_contact' => 'nullable|string',
             'address'           => 'nullable|string',
@@ -114,21 +123,28 @@ class StudentController extends Controller
 
         try {
             return DB::transaction(function () use ($validatedData) {
-                $schoolClass = SchoolClass::where('class_name', $validatedData['grade'])->first();
+                // Resolve Class & Grade Assignment
+                $schoolClass = null;
+                if (!empty($validatedData['class_id'])) {
+                    $schoolClass = SchoolClass::find($validatedData['class_id']);
+                } elseif (!empty($validatedData['grade'])) {
+                    $schoolClass = SchoolClass::where('class_name', $validatedData['grade'])->first();
+                }
 
                 // Generate Unique Student Number (e.g., STU20260001)
                 $studentCount = Student::count() + 1;
                 $prefix = env('SCHOOL_ACRONYM', 'STU');
                 $studentNumber = $prefix . date('Y') . str_pad($studentCount, 4, '0', STR_PAD_LEFT);
 
-                // Generate default email address
+                // Generate default portal email address
                 $generatedEmail = strtolower(substr($validatedData['name'], 0, 1) . $validatedData['surname']) . $studentCount . '@student.local';
 
                 $studentData = $validatedData;
                 $studentData['class_id'] = $schoolClass ? $schoolClass->id : null;
+                $studentData['grade'] = $schoolClass ? $schoolClass->class_name : ($validatedData['grade'] ?? 'Unassigned');
                 $studentData['status'] = 'active';
                 $studentData['enrollment_date'] = now();
-                $studentData['parent_contact'] = $validatedData['emergency_contact'];
+                $studentData['parent_contact'] = $validatedData['emergency_contact'] ?? $validatedData['phone'];
                 $studentData['age'] = Carbon::parse($validatedData['date_of_birth'])->age;
                 
                 // Assign generated credentials
@@ -163,8 +179,12 @@ class StudentController extends Controller
     {
         $student = Student::findOrFail($id);
         $classes = SchoolClass::orderBy('class_name', 'asc')->get();
-        $terms   = Term::orderBy('id', 'desc')->get();
-        return view('students.edit', compact('student', 'classes', 'terms'));
+        $gradeLevels = class_exists(GradeLevel::class) 
+            ? GradeLevel::with('schoolClasses')->orderBy('level_order', 'asc')->get() 
+            : collect();
+        $terms = Term::orderBy('id', 'desc')->get();
+
+        return view('students.edit', compact('student', 'classes', 'gradeLevels', 'terms'));
     }
 
     /**
@@ -182,7 +202,8 @@ class StudentController extends Controller
             'date_of_birth'     => 'required|date',
             'gender'            => 'required|in:Male,Female',
             'national_id'       => 'required|string|unique:students,national_id,' . $student->id,
-            'grade'             => 'required|string',
+            'grade'             => 'nullable|string',
+            'class_id'          => 'nullable|exists:school_classes,id',
             'phone'             => 'required|string',
             'emergency_contact' => 'nullable|string',
             'status'            => 'required|in:active,inactive',
@@ -192,11 +213,18 @@ class StudentController extends Controller
 
         try {
             DB::transaction(function () use ($student, $validatedData, $oldNationalId) {
-                $schoolClass = SchoolClass::where('class_name', $validatedData['grade'])->first();
+                $schoolClass = null;
+                if (!empty($validatedData['class_id'])) {
+                    $schoolClass = SchoolClass::find($validatedData['class_id']);
+                } elseif (!empty($validatedData['grade'])) {
+                    $schoolClass = SchoolClass::where('class_name', $validatedData['grade'])->first();
+                }
+
                 $updateData = $validatedData;
                 $updateData['class_id'] = $schoolClass ? $schoolClass->id : $student->class_id;
+                $updateData['grade']    = $schoolClass ? $schoolClass->class_name : ($validatedData['grade'] ?? $student->grade);
 
-                $updateData['parent_contact'] = $validatedData['emergency_contact'];
+                $updateData['parent_contact'] = $validatedData['emergency_contact'] ?? $validatedData['phone'];
                 $updateData['age'] = Carbon::parse($validatedData['date_of_birth'])->age;
 
                 $student->update($updateData);
@@ -239,55 +267,32 @@ class StudentController extends Controller
     }
 
     /**
-     * Show Student Promotion Form
+     * Show Grade-Based Student Promotion Form
      * GET: /students/promote
      */
     public function showPromotionForm()
     {
+        $gradeLevels = class_exists(GradeLevel::class)
+            ? GradeLevel::with(['schoolClasses.students', 'students'])->orderBy('level_order', 'asc')->get()
+            : collect();
+
         $classes = SchoolClass::orderBy('class_name', 'asc')->get();
-        $terms = Term::orderBy('start_date', 'desc')->get();
+        $terms   = Term::orderBy('id', 'desc')->get();
 
-        return view('students.promote', compact('classes', 'terms'));
+        return view('students.promote', compact('gradeLevels', 'classes', 'terms'));
     }
 
     /**
-     * Process Legacy Single Promotion
-     * POST: /students/promote
+     * Alias for showPromotionForm
+     * GET: /students/promote
      */
-    public function promote(Request $request)
+    public function promote()
     {
-        $request->validate([
-            'current_grade' => 'required|string',
-            'next_grade'    => 'required|string',
-            'next_term_id'  => 'required|exists:terms,id'
-        ]);
-
-        if ($request->current_grade === $request->next_grade) {
-            return back()->with('error', "Source and destination grades cannot be the same.");
-        }
-
-        try {
-            DB::transaction(function () use ($request) {
-                $nextClass = SchoolClass::where('class_name', $request->next_grade)->first();
-
-                Student::where('grade', $request->current_grade)
-                    ->where('status', 'active')
-                    ->update([
-                        'grade'      => $request->next_grade,
-                        'class_id'   => $nextClass ? $nextClass->id : null,
-                        'term_id'    => $request->next_term_id,
-                        'updated_at' => now()
-                    ]);
-            });
-
-            return redirect()->route('students.index')->with('success', "Promotion processed successfully.");
-        } catch (Exception $e) {
-            return back()->with('error', 'Promotion failed: ' . $e->getMessage());
-        }
+        return $this->showPromotionForm();
     }
 
     /**
-     * Process Mass Promotion Matrix Form
+     * Process Grade Level Mass Promotion Matrix Form (Prevents Cascading Updates)
      * POST: /students/promote/mass
      */
     public function processMassPromotion(Request $request)
@@ -299,65 +304,173 @@ class StudentController extends Controller
 
         $promotions = $request->input('promote');
         $targetTermId = $request->input('target_term_id');
-        $totalTransitioned = 0;
+        $totalPromoted = 0;
+        $totalGraduated = 0;
 
         try {
-            DB::transaction(function () use ($promotions, $targetTermId, &$totalTransitioned) {
-                $validMappings = [];
-                foreach ($promotions as $item) {
-                    if (isset($item['active']) && !empty($item['to_grade'])) {
-                        $fromGrade = $item['from_grade'];
-                        $toGrade = $item['to_grade'];
-
-                        if ($fromGrade === $toGrade && $toGrade !== 'Graduated') {
-                            continue;
-                        }
-
-                        $validMappings[$fromGrade] = $toGrade;
-                    }
-                }
-
-                if (empty($validMappings)) {
-                    throw new Exception("No valid class transitions were selected.");
-                }
-
+            DB::transaction(function () use ($promotions, $targetTermId, &$totalPromoted, &$totalGraduated) {
+                // Registry to track student IDs already promoted during this pass to prevent single-turn cascades
                 $processedStudentIds = [];
 
-                foreach ($validMappings as $fromGrade => $toGrade) {
-                    $isGraduated = ($toGrade === 'Graduated');
+                // Sort Grade Levels in DESCENDING order (highest level_order down to lowest)
+                $gradeLevelIds = array_keys($promotions);
+                $orderedGradeLevels = class_exists(GradeLevel::class)
+                    ? GradeLevel::whereIn('id', $gradeLevelIds)->orderBy('level_order', 'desc')->get()->keyBy('id')
+                    : collect();
 
-                    $studentIds = Student::where('grade', $fromGrade)
-                        ->where('status', 'active')
-                        ->whereNotIn('id', $processedStudentIds)
-                        ->pluck('id');
+                $promotionKeys = $orderedGradeLevels->count() > 0 
+                    ? $orderedGradeLevels->keys()->toArray() 
+                    : array_keys($promotions);
 
-                    if ($studentIds->isEmpty()) {
+                foreach ($promotionKeys as $id) {
+                    if (!isset($promotions[$id])) {
                         continue;
                     }
 
-                    $processedStudentIds = array_merge($processedStudentIds, $studentIds->toArray());
+                    $item = $promotions[$id];
 
-                    $updateData = [
-                        'term_id' => $targetTermId,
-                        'status'  => $isGraduated ? 'Alumni' : 'active',
-                    ];
-
-                    if ($isGraduated) {
-                        $updateData['class_id'] = null;
-                        $updateData['grade'] = 'Alumni';
-                    } else {
-                        $updateData['grade'] = $toGrade;
-                        $destinationClass = SchoolClass::where('class_name', $toGrade)->first();
-                        $updateData['class_id'] = $destinationClass ? $destinationClass->id : null;
+                    if (empty($item['active'])) {
+                        continue;
                     }
 
-                    $affected = Student::whereIn('id', $studentIds)->update($updateData);
-                    $totalTransitioned += $affected;
+                    // 1. Grade Level Mode
+                    if (isset($item['from_grade_level_id']) || isset($item['to_grade_level_id'])) {
+                        $fromGradeLevelId = $item['from_grade_level_id'] ?? $id;
+                        $toDestination = $item['to_grade_level_id'] ?? null;
+
+                        if (empty($toDestination)) {
+                            continue;
+                        }
+
+                        $fromGradeLevel = GradeLevel::with('schoolClasses')->find($fromGradeLevelId);
+                        if (!$fromGradeLevel) {
+                            continue;
+                        }
+
+                        if ($toDestination === 'Graduated') {
+                            $classIds = $fromGradeLevel->schoolClasses->pluck('id')->toArray();
+                            
+                            $studentsToGraduate = Student::where(function($q) use ($classIds, $fromGradeLevel) {
+                                    if (!empty($classIds)) {
+                                        $q->whereIn('class_id', $classIds);
+                                    }
+                                    $q->orWhere('grade', 'LIKE', $fromGradeLevel->name . '%');
+                                })
+                                ->where('status', 'active')
+                                ->whereNotIn('id', $processedStudentIds)
+                                ->pluck('id');
+
+                            if ($studentsToGraduate->isNotEmpty()) {
+                                $processedStudentIds = array_merge($processedStudentIds, $studentsToGraduate->toArray());
+
+                                $affected = Student::whereIn('id', $studentsToGraduate)
+                                    ->update([
+                                        'status'     => 'inactive',
+                                        'grade'      => 'Graduated',
+                                        'class_id'   => null,
+                                        'updated_at' => now(),
+                                    ]);
+
+                                $totalGraduated += $affected;
+                            }
+                        } else {
+                            $targetGradeLevel = GradeLevel::with('schoolClasses')->find($toDestination);
+                            if ($targetGradeLevel) {
+                                $fromClasses = $fromGradeLevel->schoolClasses;
+
+                                if ($fromClasses->count() > 0) {
+                                    foreach ($fromClasses as $fromClass) {
+                                        // Match corresponding stream (e.g. 1A -> 2A) or fall back to primary stream in target grade
+                                        $targetClass = $targetGradeLevel->schoolClasses->firstWhere('stream', $fromClass->stream)
+                                                    ?? $targetGradeLevel->schoolClasses->first();
+
+                                        if ($targetClass) {
+                                            $studentsToPromote = Student::where('class_id', $fromClass->id)
+                                                ->where('status', 'active')
+                                                ->whereNotIn('id', $processedStudentIds)
+                                                ->pluck('id');
+
+                                            if ($studentsToPromote->isNotEmpty()) {
+                                                $processedStudentIds = array_merge($processedStudentIds, $studentsToPromote->toArray());
+
+                                                $affected = Student::whereIn('id', $studentsToPromote)
+                                                    ->update([
+                                                        'class_id'   => $targetClass->id,
+                                                        'grade'      => $targetClass->class_name,
+                                                        'term_id'    => $targetTermId,
+                                                        'updated_at' => now(),
+                                                    ]);
+
+                                                $totalPromoted += $affected;
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    // Fallback when students are assigned directly by grade name string
+                                    $targetClass = $targetGradeLevel->schoolClasses->first();
+                                    $studentsToPromote = Student::where('grade', 'LIKE', $fromGradeLevel->name . '%')
+                                        ->where('status', 'active')
+                                        ->whereNotIn('id', $processedStudentIds)
+                                        ->pluck('id');
+
+                                    if ($studentsToPromote->isNotEmpty()) {
+                                        $processedStudentIds = array_merge($processedStudentIds, $studentsToPromote->toArray());
+
+                                        $affected = Student::whereIn('id', $studentsToPromote)
+                                            ->update([
+                                                'grade'      => $targetGradeLevel->name,
+                                                'class_id'   => $targetClass ? $targetClass->id : null,
+                                                'term_id'    => $targetTermId,
+                                                'updated_at' => now(),
+                                            ]);
+
+                                        $totalPromoted += $affected;
+                                    }
+                                }
+                            }
+                        }
+                    } 
+                    // 2. Legacy Grade String Mode
+                    elseif (isset($item['from_grade']) && isset($item['to_grade'])) {
+                        $fromGrade = $item['from_grade'];
+                        $toGrade = $item['to_grade'];
+
+                        if (empty($toGrade) || ($fromGrade === $toGrade && $toGrade !== 'Graduated')) {
+                            continue;
+                        }
+
+                        $isGraduated = ($toGrade === 'Graduated');
+                        $destinationClass = $isGraduated ? null : SchoolClass::where('class_name', $toGrade)->first();
+
+                        $studentsToTransition = Student::where('grade', $fromGrade)
+                            ->where('status', 'active')
+                            ->whereNotIn('id', $processedStudentIds)
+                            ->pluck('id');
+
+                        if ($studentsToTransition->isNotEmpty()) {
+                            $processedStudentIds = array_merge($processedStudentIds, $studentsToTransition->toArray());
+
+                            $affected = Student::whereIn('id', $studentsToTransition)
+                                ->update([
+                                    'term_id'    => $targetTermId,
+                                    'status'     => $isGraduated ? 'inactive' : 'active',
+                                    'grade'      => $isGraduated ? 'Graduated' : $toGrade,
+                                    'class_id'   => $destinationClass ? $destinationClass->id : null,
+                                    'updated_at' => now(),
+                                ]);
+
+                            if ($isGraduated) {
+                                $totalGraduated += $affected;
+                            } else {
+                                $totalPromoted += $affected;
+                            }
+                        }
+                    }
                 }
             });
 
-            return redirect()->route('students.promote')
-                ->with('success', "Success! {$totalTransitioned} student records have been successfully transitioned.");
+            return redirect()->route('students.index')
+                ->with('success', "Mass promotion complete! {$totalPromoted} student(s) promoted, {$totalGraduated} student(s) marked as Graduated.");
         } catch (Exception $e) {
             return back()->with('error', 'Mass promotion failed: ' . $e->getMessage());
         }
@@ -379,7 +492,7 @@ class StudentController extends Controller
             return back()->with('error', 'Student record not found.');
         }
 
-        $allTerms = Term::orderBy('start_date', 'desc')->get();
+        $allTerms = Term::orderBy('id', 'desc')->get();
         $requestedTermId = $request->get('term_id');
 
         if ($requestedTermId) {
@@ -410,7 +523,7 @@ class StudentController extends Controller
      */
     public function financials(Request $request, $id)
     {
-        $student = Student::with(['payments', 'term', 'class', 'feeStructures'])
+        $student = Student::with(['payments', 'term', 'schoolClass', 'feeStructures'])
             ->findOrFail($id);
 
         $termId = $request->get('term_id');
@@ -453,7 +566,7 @@ class StudentController extends Controller
     {
         if (!$term) return 0;
         $monthlyTarget = 50.00;
-        $billingDates = $term->getBillingMonthDates();
+        $billingDates = method_exists($term, 'getBillingMonthDates') ? $term->getBillingMonthDates() : [];
         $now = Carbon::now()->startOfMonth();
         $pool = (float)$totalPaid;
         $totalOverdueArrears = 0;

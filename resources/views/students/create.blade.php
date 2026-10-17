@@ -7,7 +7,7 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
         <div>
             <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Student Registration</h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Admission portal for registering new student records</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Admission portal for registering new student records into class streams</p>
         </div>
         <div class="mt-4 sm:mt-0">
             <a href="{{ route('students.index') }}" 
@@ -44,11 +44,11 @@
             <form method="POST" action="{{ route('students.store') }}" class="p-6 space-y-8">
                 @csrf
 
-                {{-- SECTION 1: Academic Placement --}}
+                {{-- SECTION 1: Academic Placement & Stream Assignment --}}
                 <div class="space-y-4">
                     <div class="flex items-center">
                         <span class="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mr-3 flex items-center">
-                            <i class="fa-solid fa-graduation-cap text-sm mr-2"></i> 1. Academic Placement
+                            <i class="fa-solid fa-graduation-cap text-sm mr-2"></i> 1. Academic Placement & Stream Assignment
                         </span>
                         <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
                     </div>
@@ -59,7 +59,7 @@
                                 Admission Term <span class="text-rose-500">*</span>
                             </label>
                             <select name="term_id" id="term_id" required
-                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold">
                                 @foreach($terms as $term)
                                     <option value="{{ $term->id }}"
                                         {{ (old('term_id') == $term->id || (isset($currentTerm) && $currentTerm->id == $term->id)) ? 'selected' : '' }}>
@@ -72,18 +72,31 @@
                         </div>
 
                         <div>
-                            <label for="grade" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
-                                Grade Assignment <span class="text-rose-500">*</span>
+                            <label for="class_id" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+                                Sub-Class Stream <span class="text-rose-500">*</span>
                             </label>
-                            <select name="grade" id="grade" required
-                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                <option value="">-- Select Grade --</option>
-                                @foreach($classes as $class)
-                                    <option value="{{ $class->class_name }}" {{ old('grade') == $class->class_name ? 'selected' : '' }}>
-                                        {{ $class->class_name }} ({{ $class->class_code }})
-                                    </option>
-                                @endforeach
+                            <select name="class_id" id="class_id" required
+                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold">
+                                <option value="">-- Select Class Stream --</option>
+                                @if(isset($gradeLevels) && $gradeLevels->count() > 0)
+                                    @foreach($gradeLevels as $grade)
+                                        <optgroup label="{{ $grade->name }}">
+                                            @foreach($grade->schoolClasses as $class)
+                                                <option value="{{ $class->id }}" {{ old('class_id') == $class->id ? 'selected' : '' }}>
+                                                    {{ $class->class_name }} ({{ $class->class_code }}) — {{ $class->students->count() }}/{{ $class->capacity }} enrolled
+                                                </option>
+                                            @endforeach
+                                        </optgroup>
+                                    @endforeach
+                                @else
+                                    @foreach($classes as $class)
+                                        <option value="{{ $class->id }}" {{ (old('class_id') == $class->id || old('grade') == $class->class_name) ? 'selected' : '' }}>
+                                            {{ $class->class_name }} ({{ $class->class_code }})
+                                        </option>
+                                    @endforeach
+                                @endif
                             </select>
+                            <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Enrolls student directly into the target class stream roster.</p>
                         </div>
                     </div>
                 </div>
@@ -155,7 +168,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label for="phone" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
-                                Primary Phone Number <span class="text-rose-500">*</span>
+                                Primary Guardian Phone <span class="text-rose-500">*</span>
                             </label>
                             <input type="text" name="phone" id="phone" value="{{ old('phone') }}" required placeholder="+263..."
                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
@@ -163,9 +176,9 @@
 
                         <div>
                             <label for="emergency_contact" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
-                                Emergency Contact
+                                Secondary Emergency Contact
                             </label>
-                            <input type="text" name="emergency_contact" id="emergency_contact" value="{{ old('emergency_contact') }}" placeholder="Guardian Name & Phone"
+                            <input type="text" name="emergency_contact" id="emergency_contact" value="{{ old('emergency_contact') }}" placeholder="Guardian Name & Alternative Phone"
                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         </div>
 
@@ -183,9 +196,9 @@
                 <div class="p-4 rounded-xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200/80 dark:border-indigo-800/50 flex items-start space-x-3 text-xs">
                     <i class="fa-solid fa-wand-magic-sparkles text-indigo-600 dark:text-indigo-400 text-lg mt-0.5 shrink-0"></i>
                     <div>
-                        <h4 class="font-bold text-indigo-950 dark:text-indigo-200">System Automated Setup</h4>
+                        <h4 class="font-bold text-indigo-950 dark:text-indigo-200">System Automated Account Setup</h4>
                         <p class="text-slate-600 dark:text-slate-400 mt-0.5 leading-relaxed">
-                            A unique <strong>Student Number</strong> and portal user account will be generated upon registration. The default login password will be set to <code>surname123</code> in lowercase.
+                            A unique <strong>Student Number</strong> and portal account will be automatically generated upon registration. The default portal login password will be set to <code>surname123</code> in lowercase.
                         </p>
                     </div>
                 </div>

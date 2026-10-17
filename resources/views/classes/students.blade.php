@@ -7,7 +7,9 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
         <div>
             <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">{{ $class->class_name }}</h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Class Roster & Student Records (Code: {{ $class->class_code }})</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Class Roster & Student Records (Code: {{ $class->class_code }} | Teacher: {{ $class->teacher->name ?? $class->classTeacher->name ?? 'Unassigned' }})
+            </p>
         </div>
         <div class="mt-4 sm:mt-0 flex items-center space-x-3">
             <a href="{{ Route::has('classes.index') ? route('classes.index') : url('/classes') }}" 
@@ -24,11 +26,14 @@
         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
             
             <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center">
-                    <i class="fa-solid fa-users text-indigo-500 mr-2.5"></i> Registered Students
-                </h3>
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-users text-indigo-500"></i>
+                    <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">
+                        Registered Students ({{ $class->students->count() }})
+                    </h3>
+                </div>
 
-                {{-- Filter Input --}}
+                {{-- Client-side Filter Input --}}
                 <div class="relative w-full sm:w-72">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                     <input type="text" x-model="search" placeholder="Filter roster..." 
@@ -80,7 +85,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-right text-xs">
                                 <a href="{{ Route::has('students.show') ? route('students.show', $student->id) : url('/students/' . $student->id) }}" 
                                    class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/50 transition-colors">
-                                    <i class="fa-solid fa-id-card mr-1.5"></i> View Profile
+                                    <i class="fa-solid fa-id-card mr-1.5"></i> Profile
                                 </a>
                             </td>
                         </tr>
@@ -91,7 +96,7 @@
                                     <i class="fa-solid fa-user-slash text-xl"></i>
                                 </div>
                                 <h4 class="font-bold text-slate-700 dark:text-slate-300">No Students Found</h4>
-                                <p class="text-xs text-slate-400 mt-1">No students are assigned to this class yet.</p>
+                                <p class="text-xs text-slate-400 mt-1">No students are assigned to {{ $class->class_name }} yet.</p>
                             </td>
                         </tr>
                         @endforelse

@@ -46,7 +46,7 @@
                 </span>
                 <div>
                     <p class="font-bold text-slate-800 dark:text-slate-100">Student Ref: <span class="font-mono">{{ $student->student_number }}</span></p>
-                    <p class="text-slate-500 dark:text-slate-400 mt-0.5">Portal Email: {{ $student->email }}</p>
+                    <p class="text-slate-500 dark:text-slate-400 mt-0.5">Portal Email: {{ $student->email ?? 'N/A' }}</p>
                 </div>
             </div>
             <div class="flex items-center space-x-3">
@@ -66,7 +66,7 @@
                 @csrf
                 @method('PUT')
 
-                {{-- SECTION 1: Academic Placement --}}
+                {{-- SECTION 1: Academic Placement & Stream Assignment --}}
                 <div class="space-y-4">
                     <div class="flex items-center">
                         <span class="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 mr-3 flex items-center">
@@ -77,21 +77,33 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
-                            <label for="grade" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Class Level</label>
-                            <select name="grade" id="grade" required
-                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500">
-                                @foreach($classes as $class)
-                                    <option value="{{ $class->class_name }}" {{ old('grade', $student->grade) == $class->class_name ? 'selected' : '' }}>
-                                        {{ $class->class_name }}
-                                    </option>
-                                @endforeach
+                            <label for="class_id" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Class Stream</label>
+                            <select name="class_id" id="class_id" required
+                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500 font-semibold">
+                                @if(isset($gradeLevels) && $gradeLevels->count() > 0)
+                                    @foreach($gradeLevels as $grade)
+                                        <optgroup label="{{ $grade->name }}">
+                                            @foreach($grade->schoolClasses as $class)
+                                                <option value="{{ $class->id }}" {{ (old('class_id', $student->class_id) == $class->id || old('grade', $student->grade) == $class->class_name) ? 'selected' : '' }}>
+                                                    {{ $class->class_name }} ({{ $class->class_code }})
+                                                </option>
+                                            @endforeach
+                                        </optgroup>
+                                    @endforeach
+                                @else
+                                    @foreach($classes as $class)
+                                        <option value="{{ $class->id }}" {{ (old('class_id', $student->class_id) == $class->id || old('grade', $student->grade) == $class->class_name) ? 'selected' : '' }}>
+                                            {{ $class->class_name }}
+                                        </option>
+                                    @endforeach
+                                @endif
                             </select>
                         </div>
 
                         <div>
                             <label for="term_id" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Current Academic Term</label>
                             <select name="term_id" id="term_id" required
-                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500 font-semibold">
                                 @foreach($terms as $term)
                                     <option value="{{ $term->id }}" {{ old('term_id', $student->term_id) == $term->id ? 'selected' : '' }}>
                                         {{ $term->term_name }} ({{ $term->academic_year }})
@@ -103,7 +115,7 @@
                         <div>
                             <label for="status" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Account Status</label>
                             <select name="status" id="status"
-                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500 font-semibold">
                                 <option value="active" {{ old('status', $student->status) == 'active' ? 'selected' : '' }}>Active</option>
                                 <option value="inactive" {{ old('status', $student->status) == 'inactive' ? 'selected' : '' }}>Inactive</option>
                             </select>

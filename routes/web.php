@@ -62,7 +62,7 @@ Route::get('/fix-admin', function () {
 */
 // Welcome & Authentication
 Route::get('/', function () {
-    return view('welcome');
+    return view('auth.login');
 })->name('login');
 
 Route::post('/', [LoginController::class, 'login']);
@@ -154,9 +154,9 @@ Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
         Route::get('/create', [StudentController::class, 'create'])->middleware('permission:student_management')->name('create');
         Route::post('/store', [StudentController::class, 'store'])->middleware('permission:student_management')->name('store');
         Route::get('/stats', [StudentController::class, 'enrollmentStats'])->middleware('permission:student_management')->name('enrollment_stats');
-        Route::get('/promote', [StudentController::class, 'showPromotionForm'])->middleware('permission:student_management')->name('promote');
-        Route::post('/promote', [StudentController::class, 'promote'])->middleware('permission:student_management')->name('promote.store');
-        Route::post('/promote/mass', [StudentController::class, 'processMassPromotion'])->middleware('permission:student_management')->name('promote.mass');
+        Route::get('/promote', [StudentController::class, 'showPromotionForm'])->middleware('permission:promote-students')->name('promote');
+        Route::post('/promote', [StudentController::class, 'promote'])->middleware('permission:promote-students')->name('promote.store');
+        Route::post('/promote/mass', [StudentController::class, 'processMassPromotion'])->middleware('permission:promote-students')->name('promote.mass');
         
         // Single Student Page & Modal Quick Data
         Route::get('/{student}', [StudentController::class, 'show'])->middleware('permission:student_management')->name('show');
@@ -176,6 +176,10 @@ Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
         Route::put('/{class}', [ClassController::class, 'update'])->name('update');
         Route::get('/{id}/students', [ClassController::class, 'showStudents'])->name('students');
     });
+
+    // Grade Levels / Forms Management
+    Route::post('/grade-levels', [ClassController::class, 'storeGradeLevel'])->name('grade-levels.store');
+    Route::delete('/grade-levels/{id}', [ClassController::class, 'destroyGradeLevel'])->name('grade-levels.destroy');
 
     // Subjects & Academic Curriculum Assignments
     Route::get('/subjects', [SubjectAssignmentController::class, 'index'])->name('subjects.index');

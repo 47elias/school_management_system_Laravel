@@ -26,12 +26,13 @@
     @php
         $avatarBg = ($student->gender == 'Male') ? '3b82f6' : 'ec4899';
         $avatarUrl = "https://ui-avatars.com/api/?name=" . urlencode($student->name . ' ' . $student->surname) . "&background={$avatarBg}&color=fff&size=256";
+        $streamName = $student->schoolClass->class_name ?? $student->grade ?? 'Unassigned';
     @endphp
 
     <div class="space-y-6">
 
         {{-- Hero Header Card --}}
-        <div class="bg-slate-900 rounded-2xl shadow-lg border border-slate-800 p-6 sm:p-8 text-white relative overflow-hidden">
+        <div class="bg-slate-900 rounded-3xl shadow-lg border border-slate-800 p-6 sm:p-8 text-white relative overflow-hidden">
             <div class="absolute -right-10 -bottom-10 opacity-10 text-slate-100 pointer-events-none">
                 <i class="fa-solid fa-graduation-cap text-[180px]"></i>
             </div>
@@ -41,7 +42,7 @@
                 <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 text-center sm:text-left">
                     <div class="relative">
                         <img src="{{ $student->photo_path ? asset('storage/' . $student->photo_path) : $avatarUrl }}" 
-                             x-on:error="$el.src = '{{ asset('img/default-avatar.png') }}'" 
+                             x-on:error="$el.src = '{{ $avatarUrl }}'" 
                              alt="{{ $student->name }}" 
                              class="w-24 h-24 rounded-2xl object-cover border-2 border-indigo-500/40 shadow-lg bg-slate-800">
                         <span class="absolute -bottom-2 -right-2 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-indigo-500 text-white shadow-sm">
@@ -52,7 +53,7 @@
                     <div class="space-y-1.5">
                         <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                             <h2 class="text-2xl font-extrabold text-white tracking-tight">{{ $student->surname }}, {{ $student->name }}</h2>
-                            @if($student->status == 'active')
+                            @if(strtolower($student->status) == 'active')
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                                     <i class="fa-solid fa-circle text-[6px] mr-1.5"></i> ACTIVE
                                 </span>
@@ -64,11 +65,11 @@
                         </div>
 
                         <div class="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-xs text-slate-400 font-medium">
-                            <span class="inline-flex items-center">
+                            <span class="inline-flex items-center font-mono">
                                 <i class="fa-solid fa-id-badge text-indigo-400 mr-1.5"></i> {{ $student->student_number }}
                             </span>
                             <span class="inline-flex items-center">
-                                <i class="fa-solid fa-layer-group text-indigo-400 mr-1.5"></i> {{ $student->grade }}
+                                <i class="fa-solid fa-layer-group text-indigo-400 mr-1.5"></i> {{ $streamName }}
                             </span>
                             @if($student->term)
                                 <span class="inline-flex items-center">
@@ -94,7 +95,7 @@
         {{-- Details Grid --}}
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-            {{-- Column 1 & 2: Personal & Academic Overview --}}
+            {{-- Column 1 & 2: Personal & Contact Overview --}}
             <div class="lg:col-span-2 space-y-6">
 
                 {{-- Personal Information --}}
@@ -122,14 +123,14 @@
                         </div>
 
                         <div class="bg-slate-50 dark:bg-slate-900/50 p-3.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Phone Number</span>
+                            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Guardian Phone</span>
                             <span class="text-xs font-bold text-slate-800 dark:text-slate-100 mt-1 block">
                                 {{ $student->phone ?? 'N/A' }}
                             </span>
                         </div>
 
                         <div class="bg-slate-50 dark:bg-slate-900/50 p-3.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Email Address</span>
+                            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Portal Email Address</span>
                             <span class="text-xs font-bold text-slate-800 dark:text-slate-100 mt-1 block truncate">
                                 {{ $student->email ?? 'N/A' }}
                             </span>
@@ -145,9 +146,9 @@
 
                     <div class="space-y-4">
                         <div class="bg-slate-50 dark:bg-slate-900/50 p-3.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Parent / Guardian Contact</span>
+                            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Emergency Contact</span>
                             <span class="text-xs font-bold text-slate-800 dark:text-slate-100 mt-1 block">
-                                {{ $student->parent_contact ?? $student->emergency_contact ?? 'No contact information available' }}
+                                {{ $student->emergency_contact ?? $student->phone ?? 'No emergency contact recorded' }}
                             </span>
                         </div>
 
@@ -162,7 +163,7 @@
 
             </div>
 
-            {{-- Column 3: Academic Metadata & Quick Stats --}}
+            {{-- Column 3: Academic Metadata & Stream Details --}}
             <div class="space-y-6">
 
                 <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 p-6 transition-colors">
@@ -172,16 +173,16 @@
 
                     <ul class="divide-y divide-slate-100 dark:divide-slate-700/60 text-xs">
                         <li class="py-3 flex items-center justify-between">
-                            <span class="text-slate-500 dark:text-slate-400 font-medium">Class / Level</span>
+                            <span class="text-slate-500 dark:text-slate-400 font-medium">Assigned Class Stream</span>
                             <span class="font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 px-2.5 py-1 rounded-lg border border-indigo-200 dark:border-indigo-800/50">
-                                {{ $student->grade }}
+                                {{ $streamName }}
                             </span>
                         </li>
 
                         <li class="py-3 flex items-center justify-between">
-                            <span class="text-slate-500 dark:text-slate-400 font-medium">Assigned Class Room</span>
+                            <span class="text-slate-500 dark:text-slate-400 font-medium">Form Teacher</span>
                             <span class="font-bold text-slate-800 dark:text-slate-200">
-                                {{ $student->schoolClass->class_name ?? $student->grade }}
+                                {{ $student->schoolClass->teacher->name ?? $student->schoolClass->classTeacher->name ?? 'Unassigned' }}
                             </span>
                         </li>
 
@@ -195,7 +196,7 @@
                         <li class="py-3 flex items-center justify-between">
                             <span class="text-slate-500 dark:text-slate-400 font-medium">Enrollment Date</span>
                             <span class="font-bold text-slate-800 dark:text-slate-200">
-                                {{ $student->enrollment_date ? \Carbon\Carbon::parse($student->enrollment_date)->format('d M, Y') : 'N/A' }}
+                                {{ $student->created_at ? $student->created_at->format('d M, Y') : 'N/A' }}
                             </span>
                         </li>
                     </ul>

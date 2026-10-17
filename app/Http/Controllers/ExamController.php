@@ -9,14 +9,24 @@ use App\Models\Term;
 use App\Models\Mark;
 use App\Models\Subject;
 use App\Models\SubjectAssignment;
+use App\Services\ExamCalculationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class ExamController extends Controller
 {
+    protected ExamCalculationService $calculationService;
+
     /**
-     * STUDENT VIEW: Display personal exam results
-     * UPDATED: Now groups by Subject and calculates the average for multiple papers
+     * Inject ExamCalculationService via Dependency Injection
+     */
+    public function __construct(ExamCalculationService $calculationService)
+    {
+        $this->calculationService = $calculationService;
+    }
+
+    /**
+     * STUDENT VIEW: Display personal exam results using dynamic grading service
      */
     public function studentResults(Request $request)
     {
@@ -35,7 +45,7 @@ class ExamController extends Controller
             return back()->with('error', 'No academic terms found in the system.');
         }
 
-        // 1. Fetch raw marks for the current term
+        // 1. Fetch raw marks for current term
         $raw_current_results = Mark::where('student_id', $student->id)
             ->whereHas('exam', function($query) use ($activeTerm) {
                 $query->where('term_id', $activeTerm->id);
@@ -43,13 +53,14 @@ class ExamController extends Controller
             ->with(['exam.subject', 'exam.term'])
             ->get();
 
-        // 2. Aggregate current term results (Averages Paper 1 + Paper 2 automatically)
-        $current_results = $this->aggregateMarksBySubject($raw_current_results);
+        // 2. Aggregate current term results & resolve dynamic grades
+        $current_results = $this->calculationService->aggregateMarksBySubject($raw_current_results);
 
-        // 3. Calculate overall average based on the final aggregated subject scores
-        $average = $current_results->count() > 0 ? $current_results->avg('average_score') : 0;
+        // 3. Calculate overall student average across all subjects
+        $average = $current_results->count() > 0 ? round($current_results->avg('average_score'), 2) : 0;
+        $overallGrade = $this->calculationService->calculateGrade($average);
 
-        // 4. Fetch and aggregate historical terms
+        // 4. Fetch and aggregate historical term results
         $history = Mark::where('student_id', $student->id)
             ->whereHas('exam', function($query) use ($activeTerm) {
                 $query->where('term_id', '!=', $activeTerm->id);
@@ -58,17 +69,16 @@ class ExamController extends Controller
             ->get()
             ->groupBy(fn($item) => $item->exam->term->term_name ?? 'Archive')
             ->map(function ($termMarks) {
-                return $this->aggregateMarksBySubject($termMarks);
+                return $this->calculationService->aggregateMarksBySubject($termMarks);
             });
 
         return view('exams.student_index', compact(
-            'student', 'current_results', 'history', 'average', 'activeTerm', 'allTerms'
+            'student', 'current_results', 'history', 'average', 'overallGrade', 'activeTerm', 'allTerms'
         ));
     }
 
     /**
-     * ADMIN/TEACHER VIEW: Generate a final averaged report card for a student
-     * (You can link to this method from your Admin or Teacher views)
+     * ADMIN/TEACHER VIEW: Generate a final averaged report card with dynamic grades
      */
     public function generateTermReport($student_id, $term_id)
     {
@@ -82,10 +92,12 @@ class ExamController extends Controller
             ->with(['exam.subject'])
             ->get();
 
-        $finalGrades = $this->aggregateMarksBySubject($raw_marks);
+        // Delegate aggregation to dynamic ExamCalculationService
+        $finalGrades = $this->calculationService->aggregateMarksBySubject($raw_marks);
         $overallAverage = $finalGrades->count() > 0 ? round($finalGrades->avg('average_score'), 2) : 0;
+        $overallGrade = $this->calculationService->calculateGrade($overallAverage);
 
-        return view('exams.student_report', compact('student', 'term', 'finalGrades', 'overallAverage'));
+        return view('exams.student_report', compact('student', 'term', 'finalGrades', 'overallAverage', 'overallGrade'));
     }
 
     /**
@@ -104,7 +116,9 @@ class ExamController extends Controller
         }
 
         $exams = Exam::with(['subject', 'term'])
-            ->where('term_id', $selectedTerm->id)
+            ->when($selectedTerm, function ($q) use ($selectedTerm) {
+                $q->where('term_id', $selectedTerm->id);
+            })
             ->latest()
             ->get();
 
@@ -119,7 +133,7 @@ class ExamController extends Controller
     }
 
     /**
-     * ADMIN STORE: Schedule an exam
+     * ADMIN STORE: Schedule an exam paper
      */
     public function store(Request $request)
     {
@@ -127,6 +141,7 @@ class ExamController extends Controller
             'exam_name'  => 'required|string|max:255',
             'term_id'    => 'required|exists:terms,id',
             'subject_id' => 'required|exists:subjects,id',
+            'class_id'   => 'nullable|exists:school_classes,id',
             'exam_date'  => 'required|date'
         ]);
 
@@ -186,7 +201,7 @@ class ExamController extends Controller
                         [
                             'subject'         => $exam->subject->subject_name,
                             'score'           => $data['score'],
-                            'max_score'       => 100,
+                            'max_score'       => $data['max_score'] ?? 100,
                             'teacher_comment' => $data['comment'] ?? null
                         ]
                     );
@@ -264,7 +279,7 @@ class ExamController extends Controller
                         [
                             'subject'         => $exam->subject->subject_name,
                             'score'           => $data['score'],
-                            'max_score'       => 100,
+                            'max_score'       => $data['max_score'] ?? 100,
                             'teacher_comment' => $data['comment'] ?? null
                         ]
                     );
@@ -303,51 +318,5 @@ class ExamController extends Controller
             DB::rollback();
             return back()->with('error', 'Error: ' . $e->getMessage());
         }
-    }
-
-    /* 
-    |--------------------------------------------------------------------------
-    | HELPER METHODS FOR AGGREGATING MULTIPLE PAPERS
-    |--------------------------------------------------------------------------
-    */
-
-    /**
-     * Groups raw marks by subject and calculates the final average.
-     * Automatically handles Paper 1, Paper 2, etc.
-     */
-    private function aggregateMarksBySubject($marksCollection)
-    {
-        return $marksCollection->groupBy('exam.subject_id')->map(function ($subjectMarks) {
-            // Calculate the average score across all papers for this subject
-            $averageScore = $subjectMarks->avg('score');
-            
-            // Calculate percentage based on max marks 
-            $totalMaxMarks = $subjectMarks->sum('exam.max_marks');
-            $totalObtained = $subjectMarks->sum('score');
-            $percentage = ($totalMaxMarks > 0) ? (($totalObtained / $totalMaxMarks) * 100) : 0;
-
-            return (object) [
-                'subject_id'    => $subjectMarks->first()->exam->subject_id,
-                'subject_name'  => $subjectMarks->first()->exam->subject->subject_name,
-                'papers_taken'  => $subjectMarks->count(),
-                'total_score'   => $totalObtained,
-                'average_score' => round($averageScore, 2),
-                'percentage'    => round($percentage, 2),
-                'grade'         => $this->calculateGrade(round($averageScore)),
-                'individual'    => $subjectMarks // Raw paper data included in case the view needs to list them
-            ];
-        })->values(); // Reset keys for easy iteration in blade
-    }
-
-    /**
-     * Resolves the letter grade based on the average score.
-     */
-    private function calculateGrade($score)
-    {
-        if ($score >= 80) return 'A';
-        if ($score >= 70) return 'B';
-        if ($score >= 60) return 'C';
-        if ($score >= 50) return 'D';
-        return 'F';
     }
 }

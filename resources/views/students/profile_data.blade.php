@@ -1,10 +1,14 @@
 {{-- resources/views/students/profile_data.blade.php --}}
+@php
+    $streamName = $student->schoolClass->class_name ?? $student->grade ?? 'Unassigned';
+@endphp
+
 <div class="space-y-5 text-slate-200 text-xs">
     
     {{-- Header Banner --}}
     <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center space-x-4">
         <img src="{{ route('students.view_face', $student->id) }}" 
-             x-on:error="$el.src = '{{ asset('img/default-avatar.png') }}'" 
+             x-on:error="$el.src = 'https://ui-avatars.com/api/?name={{ urlencode($student->name . ' ' . $student->surname) }}&background=6366f1&color=fff'" 
              alt="{{ $student->name }}" 
              class="w-16 h-16 rounded-xl object-cover border border-indigo-500/30 bg-slate-800 shrink-0">
         
@@ -13,9 +17,9 @@
             <p class="font-mono text-[11px] text-indigo-300">ID: {{ $student->student_number }}</p>
             <div class="flex items-center space-x-2">
                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                    Grade: {{ $student->grade }}
+                    Stream: {{ $streamName }}
                 </span>
-                @if($student->status == 'active')
+                @if(strtolower($student->status) == 'active')
                     <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                         ACTIVE
                     </span>
@@ -66,7 +70,11 @@
     </div>
 
     {{-- Footer Actions --}}
-    <div class="pt-2 flex items-center justify-end space-x-2">
+    <div class="pt-2 flex items-center justify-between border-t border-slate-800">
+        <a href="{{ Route::has('students.show') ? route('students.show', $student->id) : url('/students/' . $student->id) }}" 
+           class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+            <i class="fa-solid fa-id-card mr-1.5"></i> Full Profile Page
+        </a>
         <a href="{{ route('students.edit', $student->id) }}" 
            class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
             <i class="fa-solid fa-pen-to-square mr-1.5"></i> Edit Student

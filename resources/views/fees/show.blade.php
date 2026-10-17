@@ -6,30 +6,31 @@
 @section('header')
     @php
         $displayTerm = $term;
-        $totalExpected = (float) $student->expected_total;
+        $totalExpected = (float) ($student->expected_total ?? $termRawExpected ?? 0);
         $carriedForward = (float) ($student->carried_forward ?? 0);
         $currentTermFees = (float) ($termRawExpected ?? 0);
         $totalPaid = (float) ($termPaid ?? 0);
-        $balance = (float) ($trueBalance ?? 0);
+        $balance = (float) ($trueBalance ?? ($totalExpected - $totalPaid));
         $hasCredit = $balance < 0;
         $creditAmount = abs($balance);
+        $streamName = $student->schoolClass->class_name ?? $student->grade ?? 'Unassigned';
     @endphp
 
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full no-print">
         <div>
             <div class="flex items-center space-x-3">
                 <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Statement: {{ $displayTerm->term_name }} {{ $displayTerm->academic_year }}</h1>
-                @if($displayTerm->is_current)
+                @if(isset($displayTerm->is_current) && $displayTerm->is_current)
                     <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">CURRENT TERM</span>
                 @endif
             </div>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Account Ledger for {{ $student->name }} {{ $student->surname }} ({{ $student->student_number }})</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Account Ledger for {{ $student->surname }}, {{ $student->name }} ({{ $student->student_number }})</p>
         </div>
 
         <div class="mt-4 sm:mt-0 flex items-center space-x-2.5">
             <form action="{{ request()->url() }}" method="GET" class="inline-block">
                 <select name="term_id" onchange="this.form.submit()" 
-                        class="px-3 py-2 text-xs font-bold rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none">
+                        class="px-3.5 py-2 text-xs font-bold rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none">
                     @foreach($allTerms as $t)
                         <option value="{{ $t->id }}" {{ $t->id == $displayTerm->id ? 'selected' : '' }}>
                             View: {{ $t->term_name }} {{ $t->academic_year }}
@@ -78,14 +79,14 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {{-- Left Column: Summary Card --}}
             <div class="lg:col-span-4">
-                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 p-6 space-y-6 transition-colors">
+                <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 p-6 space-y-6 transition-colors">
                     
                     <div class="text-center">
-                        <div class="w-20 h-20 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-2xl mx-auto shadow-md mb-3">
+                        <div class="w-20 h-20 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold text-2xl mx-auto shadow-md mb-3">
                             {{ strtoupper(substr($student->name, 0, 1) . substr($student->surname, 0, 1)) }}
                         </div>
-                        <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100">{{ $student->name }} {{ $student->surname }}</h3>
-                        <p class="text-xs text-slate-400 font-medium">{{ $student->student_number }} | Grade {{ $student->grade }}</p>
+                        <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100">{{ $student->surname }}, {{ $student->name }}</h3>
+                        <p class="text-xs text-slate-400 font-medium">{{ $student->student_number }} | Grade Level: {{ $streamName }}</p>
                     </div>
 
                     <div class="divide-y divide-slate-100 dark:divide-slate-700/60 text-xs">
@@ -97,7 +98,7 @@
                             <span class="text-slate-500 dark:text-slate-400">Term Fees (Charged)</span>
                             <span class="font-bold text-slate-800 dark:text-slate-100">${{ number_format($currentTermFees, 2) }}</span>
                         </div>
-                        <div class="py-2.5 flex justify-between bg-slate-50 dark:bg-slate-900/50 px-3 rounded-lg font-bold">
+                        <div class="py-2.5 flex justify-between bg-slate-50 dark:bg-slate-900/50 px-3 rounded-xl font-bold">
                             <span class="text-slate-800 dark:text-slate-200">Total Invoice</span>
                             <span class="text-indigo-600 dark:text-indigo-400">${{ number_format($totalExpected, 2) }}</span>
                         </div>
@@ -107,19 +108,19 @@
                         </div>
 
                         @if($hasCredit)
-                        <div class="py-3 px-3 mt-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-200 space-y-2">
+                        <div class="py-3 px-3 mt-2 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-200 space-y-2">
                             <div class="flex justify-between items-center font-bold">
                                 <span><i class="fa-solid fa-star text-amber-500 mr-1"></i> Advance / Credit</span>
                                 <span class="text-sm">${{ number_format($creditAmount, 2) }}</span>
                             </div>
-                            <button type="button" @click="deductModalOpen = true" class="w-full py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold no-print">
+                            <button type="button" @click="deductModalOpen = true" class="w-full py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold no-print">
                                 Withdraw / Deduct Credit
                             </button>
                         </div>
                         @endif
                     </div>
 
-                    <div class="p-4 rounded-xl text-center border {{ $balance > 0 ? 'bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/40' : 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40' }}">
+                    <div class="p-4 rounded-2xl text-center border {{ $balance > 0 ? 'bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/40' : 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40' }}">
                         <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Outstanding Balance</span>
                         <h2 class="text-3xl font-black mt-1 {{ $balance <= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}">
                             ${{ number_format($balance, 2) }}
@@ -138,10 +139,10 @@
 
             {{-- Right Column: Statement of Account / Ledger --}}
             <div class="lg:col-span-8">
-                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
+                <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
                     <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/80">
                         <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center">
-                            <i class="fa-solid fa-file-invoice-dollar text-indigo-500 mr-2.5"></i> Statement of Account
+                            <i class="fa-solid fa-file-invoice-dollar text-indigo-500 mr-2.5"></i> Statement of Account Ledger
                         </h3>
                     </div>
 
@@ -249,7 +250,7 @@
             <div class="flex items-center justify-center min-h-screen px-4 text-center">
                 <div @click="deductModalOpen = false" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
 
-                <div class="inline-block w-full max-w-sm p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-slate-800 rounded-2xl shadow-xl z-10 border border-slate-200 dark:border-slate-700">
+                <div class="inline-block w-full max-w-sm p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-slate-800 rounded-3xl shadow-xl z-10 border border-slate-200 dark:border-slate-700">
                     <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center mb-4">
                         <i class="fa-solid fa-triangle-exclamation text-rose-500 mr-2"></i> Deduct / Withdraw Credit
                     </h3>
@@ -261,14 +262,14 @@
                         <div>
                             <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Amount to Withdraw ($)</label>
                             <input type="number" step="0.01" name="amount" max="{{ $creditAmount }}" required placeholder="0.00"
-                                   class="w-full px-3.5 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500">
+                                   class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500">
                             <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-1 block">Available Credit: ${{ number_format($creditAmount, 2) }}</span>
                         </div>
 
                         <div>
                             <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Reason / Remarks</label>
                             <textarea name="remarks" rows="2" placeholder="e.g. Refunded to parent"
-                                      class="w-full px-3.5 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500"></textarea>
+                                      class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500"></textarea>
                         </div>
 
                         <div class="flex justify-end space-x-2 pt-2">
