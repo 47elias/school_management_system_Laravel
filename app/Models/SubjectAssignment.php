@@ -13,10 +13,11 @@ class SubjectAssignment extends Model
 
     // Mass assignable attributes
     protected $fillable = [
+        'grade',
         'teacher_id',
         'subject_id',
         'class_id',
-        'academic_year'
+        'academic_year',
     ];
 
     /**
@@ -52,14 +53,13 @@ class SubjectAssignment extends Model
      */
     public function schoolClass()
     {
-        // Points to class_id as defined in your $fillable
         return $this->belongsTo(SchoolClass::class, 'class_id');
     }
 
     /**
-     * NEW: Inverse relationship to Exams
-     * Allows you to find all exams linked to this specific assignment
-     * via the subject_id and class_id match.
+     * Relationship to Exams
+     * Allows finding all exams linked to this specific assignment
+     * via subject_id and class_id match.
      */
     public function exams()
     {
@@ -68,9 +68,7 @@ class SubjectAssignment extends Model
     }
 
     /**
-     * NEW: Scope for Teacher Filtering
-     * Makes it easy to fetch assignments for the logged-in teacher:
-     * SubjectAssignment::forTeacher(auth()->id())->get();
+     * Scope for Teacher Filtering
      */
     public function scopeForTeacher($query, $teacherId)
     {
@@ -78,8 +76,8 @@ class SubjectAssignment extends Model
     }
 
     /**
-     * NEW: Relationship to Students
-     * Access all students in the class this teacher is assigned to.
+     * Relationship to Students
+     * Access all students in the class stream this allocation belongs to.
      */
     public function students()
     {
@@ -87,9 +85,7 @@ class SubjectAssignment extends Model
     }
 
     /**
-     * CONTINUOUS ASSESSMENT: All class activities (classwork, homework,
-     * quizzes, etc.) logged against this teaching assignment. Independent
-     * of the `exams` table entirely.
+     * CONTINUOUS ASSESSMENT: All class activities logged against this teaching assignment.
      */
     public function activities()
     {

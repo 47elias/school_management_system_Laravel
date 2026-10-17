@@ -181,13 +181,31 @@ Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
     Route::post('/grade-levels', [ClassController::class, 'storeGradeLevel'])->name('grade-levels.store');
     Route::delete('/grade-levels/{id}', [ClassController::class, 'destroyGradeLevel'])->name('grade-levels.destroy');
 
-    // Subjects & Academic Curriculum Assignments
+    
+    // 1. SPECIFIC STATIC GET ROUTES (MUST BE PLACED BEFORE WILDCARD {id} ROUTES)
     Route::get('/subjects', [SubjectAssignmentController::class, 'index'])->name('subjects.index');
-    Route::post('/subjects/store', [SubjectController::class, 'store'])->name('subjects.store');
-    Route::delete('/subjects/{subject}', [SubjectController::class, 'destroy'])->name('subjects.destroy');
+    Route::get('/subjects/manage', [SubjectAssignmentController::class, 'manage'])->name('subjects.manage');
+    Route::get('/subjects/allocate-classes', [SubjectAssignmentController::class, 'allocateClasses'])->name('subjects.allocate_classes');
+    Route::get('/subjects/allocate-teachers', [SubjectAssignmentController::class, 'allocateTeachers'])->name('subjects.allocate_teachers');
+
+    // 2. SUBJECT CRUD OPERATIONS
+    Route::post('/subjects', [SubjectAssignmentController::class, 'store'])->name('subjects.store');
+    Route::put('/subjects/{id}', [SubjectAssignmentController::class, 'update'])->name('subjects.update');
+    Route::delete('/subjects/{id}', [SubjectAssignmentController::class, 'destroy'])->name('subjects.destroy');
+
+    // 3. SUBJECT COMBINATION PACKAGES
+    Route::post('/subject-combinations', [SubjectAssignmentController::class, 'storeCombination'])->name('subject-combinations.store');
+    Route::delete('/subject-combinations/{id}', [SubjectAssignmentController::class, 'destroyCombination'])->name('subject-combinations.destroy');
+
+    // 4. CLASS & STREAM SUBJECT ALLOCATIONS
+    Route::post('/class-subjects', [SubjectAssignmentController::class, 'storeClassAllocation'])->name('class-subjects.store');
+    Route::delete('/class-subjects/{id}', [SubjectAssignmentController::class, 'destroyClassAllocation'])->name('class-subjects.destroy');
+
+    // 5. FACULTY TEACHING LOAD ASSIGNMENTS
     Route::post('/subject-assignments', [SubjectAssignmentController::class, 'store'])->name('subject-assignments.store');
     Route::delete('/subject-assignments/{id}', [SubjectAssignmentController::class, 'destroy'])->name('subject-assignments.destroy');
-
+    
+    
     // Timetable System Routes
     Route::get('/api/classes/{classId}/subjects', [TimetableController::class, 'getSubjectsByClass']);
     Route::prefix('admin/timetable')->name('timetable.')->group(function () {
