@@ -241,7 +241,7 @@ Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
         Route::post('/store', [NewsletterController::class, 'store'])->name('store');
         Route::get('/{id}', [NewsletterController::class, 'show'])->name('show');
         Route::delete('/{id}', [NewsletterController::class, 'destroy'])->name('destroy');
-    });
+    })->middleware('permission:newsletter_management');
 
     // Fees & Accounting Financials
     Route::prefix('fees')->name('fees.')->group(function () {

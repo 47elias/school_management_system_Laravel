@@ -1,259 +1,144 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Teacher Dashboard | SIT</title>
-    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
-    @include('components.adminlte')
+@extends('layouts.admin.app')
 
-    <style>
-        .small-box { border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .inner-action-icon {
-            font-size: 40px;
-            float: right;
-            opacity: 0.3;
-        }
-        .small-box:hover .inner-action-icon {
-            opacity: 0.5;
-            transition: 0.3s;
-        }
-        .widget-user-2 .widget-user-header { padding: 15px; border-top-right-radius: 3px; border-top-left-radius: 3px; }
-        .table > tbody > tr > td { vertical-align: middle; }
-        .progress-group .progress-text { font-weight: 600; margin-bottom: 5px; }
-        .box { border-top-width: 3px; }
-    </style>
-</head>
-<body class="hold-transition skin-blue sidebar-mini">
-    <div class="wrapper">
-        @include('layouts.topbar')
-        @include('layouts.teacher_sidebar')
+@section('title', 'Teacher Dashboard')
 
-        <div class="content-wrapper">
-            {{-- PAGE HEADER --}}
-            <section class="content-header">
-                <h1>
-                    Teacher Portal
-                    <small>Overview for {{ Auth::user()->name }}</small>
-                </h1>
-                <ol class="breadcrumb">
-                    <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
-                    <li class="active">Dashboard</li>
-                </ol>
-            </section>
+@section('content_header')
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-2 border-b border-gray-200">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Teacher Dashboard</h1>
+            <p class="text-sm text-gray-600">Welcome back, {{ auth()->user()->name }}</p>
+        </div>
+        <div class="mt-2 sm:mt-0">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                <i class="fas fa-chalkboard-teacher mr-1.5"></i> Academic Term Active
+            </span>
+        </div>
+    </div>
+@endsection
 
-            {{-- MAIN CONTENT --}}
-            <section class="content">
-
-                {{-- ROW 1: ENHANCED QUICK STATS --}}
-                <div class="row">
-                    <div class="col-lg-3 col-xs-6">
-                        <div class="small-box bg-aqua-active">
-                            <div class="inner">
-                                <h3>{{ $studentCount }}</h3>
-                                <p>Total Students</p>
-                            </div>
-                            <div class="icon">
-                                <i class="ion ion-ios-people"></i>
-                            </div>
-                            <a href="{{ route('teacher.my_class') }}" class="small-box-footer">My Class List <i class="fa fa-arrow-circle-right"></i></a>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-xs-6">
-                        <div class="small-box bg-green-active">
-                            <div class="inner">
-                                <h3>{{ $examCount }}</h3>
-                                <p>Active Assessments</p>
-                            </div>
-                            <div class="icon">
-                                <i class="ion ion-document-text"></i>
-                            </div>
-                            <a href="{{ route('teacher.exams.index') }}" class="small-box-footer">View Exams <i class="fa fa-arrow-circle-right"></i></a>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-xs-6">
-                        <div class="small-box bg-yellow-active">
-                            <div class="inner">
-                                <h3>{{ $myClass->class_code ?? 'None' }}</h3>
-                                <p>Form Class</p>
-                            </div>
-                            <div class="icon">
-                                <i class="ion ion-university"></i>
-                            </div>
-                            <a href="{{ route('teacher.my_class') }}" class="small-box-footer">Class Management <i class="fa fa-arrow-circle-right"></i></a>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-xs-6">
-                        <div class="small-box bg-purple-active">
-                            <div class="inner">
-                                <h3>{{ $assignedSubjects->count() }}</h3>
-                                <p>Subjects Taught</p>
-                            </div>
-                            <div class="icon">
-                                <i class="ion ion-ios-book"></i>
-                            </div>
-                            <a href="{{ route('teacher.subjects') }}" class="small-box-footer">Academic Load <i class="fa fa-arrow-circle-right"></i></a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    {{-- LEFT COLUMN --}}
-                    <div class="col-md-8">
-
-                        {{-- ENHANCED QUICK ACTIONS --}}
-                        <div class="box box-solid bg-gray-light">
-                            <div class="box-header with-border">
-                                <h3 class="box-title text-black"><i class="fa fa-bolt"></i> Quick Workflow</h3>
-                            </div>
-                            <div class="box-body">
-                                <div class="row text-center">
-                                    <div class="col-xs-4">
-                                        <a href="{{ route('teacher.exams.create') }}" class="btn btn-app btn-block bg-navy margin-bottom">
-                                            <i class="fa fa-plus-square"></i> Create Exam
-                                        </a>
-                                    </div>
-                                    <div class="col-xs-4">
-                                        <a href="#" class="btn btn-app btn-block bg-olive margin-bottom">
-                                            <span class="badge bg-yellow">!</span>
-                                            <i class="fa fa-calendar-check-o"></i> Daily Roll Call
-                                        </a>
-                                    </div>
-                                    <div class="col-xs-4">
-                                        <a href="#" class="btn btn-app btn-block bg-maroon margin-bottom">
-                                            <i class="fa fa-bullhorn"></i> Parents Notice
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- ENHANCED STUDENT LIST --}}
-                        <div class="box box-primary">
-                            <div class="box-header with-border">
-                                <h3 class="box-title"><i class="fa fa-users text-blue"></i> Form Class: {{ $myClass->class_name ?? 'Not Assigned' }}</h3>
-                                <div class="box-tools pull-right">
-                                    <span class="label label-primary">{{ $classStudents->count() ?? 0 }} Registered</span>
-                                </div>
-                            </div>
-                            <div class="box-body table-responsive no-padding">
-                                <table class="table table-hover table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th># Number</th>
-                                            <th>Full Name</th>
-                                            <th>Status</th>
-                                            <th class="text-right">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse($classStudents as $student)
-                                        <tr>
-                                            <td><code class="text-primary">{{ $student->student_number }}</code></td>
-                                            <td>
-                                                <strong>{{ $student->name }} {{ $student->surname }}</strong>
-                                            </td>
-                                            <td><span class="label label-success">Enrolled</span></td>
-                                            <td class="text-right">
-                                                <a href="{{ route('teacher.students.show', $student->id) }}" class="btn btn-xs btn-default btn-flat border-blue"><i class="fa fa-eye"></i> View</a>
-                                            </td>
-                                        </tr>
-                                        @empty
-                                        <tr>
-                                            <td colspan="4" class="text-center p-20 text-muted">No students found in your assigned class.</td>
-                                        </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        {{-- TEACHING LOAD WITH PROGRESS INDICATORS --}}
-                        <div class="box box-info">
-                            <div class="box-header with-border">
-                                <h3 class="box-title"><i class="fa fa-graduation-cap"></i> Grading & Subject Load</h3>
-                            </div>
-                            <div class="box-body">
-                                <div class="row">
-                                    @forelse($assignedSubjects as $assignment)
-                                    <div class="col-md-6">
-                                        <div class="well well-sm bg-white" style="border-left: 3px solid #00c0ef">
-                                            <h4 style="margin-top: 0">{{ $assignment->subject->name ?? 'Subject' }}</h4>
-                                            <p class="text-muted"><i class="fa fa-university"></i> Class: {{ $assignment->schoolClass->class_name }}</p>
-                                            <a href="{{ route('teacher.marks.manage', $assignment->id) }}" class="btn btn-sm btn-info btn-flat"><i class="fa fa-edit"></i> Record Marks</a>
-                                        </div>
-                                    </div>
-                                    @empty
-                                    <div class="col-xs-12 text-center text-muted">No subject assignments found.</div>
-                                    @endforelse
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- RIGHT COLUMN --}}
-                    <div class="col-md-4">
-
-                        {{-- TEACHER PROFILE CARD --}}
-                        <div class="box box-widget widget-user-2 shadow">
-                            <div class="widget-user-header bg-blue-active">
-                                <div class="widget-user-image">
-                                    <img class="img-circle" src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=fff&color=0073b7" alt="User Avatar">
-                                </div>
-                                <h3 class="widget-user-username">{{ Auth::user()->name }}</h3>
-                                <h5 class="widget-user-desc">Authenticated Academic Staff</h5>
-                            </div>
-                            <div class="box-footer no-padding">
-                                <ul class="nav nav-stacked">
-                                    <li><a href="#">Staff ID <span class="pull-right badge bg-blue">{{ Auth::user()->id }}</span></a></li>
-                                    <li><a href="#">Email <span class="pull-right text-muted">{{ Auth::user()->email }}</span></a></li>
-                                    <li><a href="{{ route('teacher.profile') }}" class="text-center bg-gray-light"><strong>Update My Profile</strong></a></li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        {{-- ACADEMIC CALENDAR PROGRESS --}}
-                        <div class="box box-danger">
-                            <div class="box-header with-border">
-                                <h3 class="box-title text-bold"><i class="fa fa-calendar"></i> Term Timeline</h3>
-                            </div>
-                            <div class="box-body">
-                                <div class="progress-group">
-                                    <span class="progress-text">Term 1 Completion</span>
-                                    <span class="progress-number"><b>8</b>/12 Weeks</span>
-                                    <div class="progress sm">
-                                        <div class="progress-bar progress-bar-red progress-bar-striped" style="width: 65%"></div>
-                                    </div>
-                                </div>
-                                <p class="text-sm text-muted text-center margin-top">Upcoming: Mid-term Assessments</p>
-                            </div>
-                        </div>
-
-                        {{-- SYSTEM NOTIFICATIONS --}}
-                        <div class="box box-warning">
-                            <div class="box-header with-border">
-                                <h3 class="box-title"><i class="fa fa-bell-o"></i> Recent Alerts</h3>
-                            </div>
-                            <div class="box-body no-padding">
-                                <ul class="nav nav-pills nav-stacked">
-                                    <li><a href="#"><i class="fa fa-envelope-o text-blue"></i> New Exam Template Ready
-                                        <span class="label label-primary pull-right">New</span></a></li>
-                                    <li><a href="#"><i class="fa fa-info-circle text-red"></i> Submit Final Grades by Friday</a></li>
-                                    <li><a href="#"><i class="fa fa-users text-green"></i> 3 New Students joined class</a></li>
-                                </ul>
-                            </div>
-                            <div class="box-footer text-center">
-                                <a href="#" class="uppercase">View All Alerts</a>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </section>
+@section('content')
+<div class="space-y-6">
+    <!-- Stat Cards Row -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Assigned Subjects -->
+        <div class="bg-white rounded-lg border border-gray-200 p-5 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-xs font-semibold uppercase text-gray-500">My Subjects</p>
+                <h3 class="text-2xl font-black text-gray-900 mt-1">{{ $assignedSubjectsCount ?? 0 }}</h3>
+                <a href="#" class="text-xs font-bold text-blue-600 hover:underline mt-2 inline-block">View Allocations &rarr;</a>
+            </div>
+            <div class="w-12 h-12 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                <i class="fas fa-book"></i>
+            </div>
         </div>
 
-        @include('layouts.footer')
+        <!-- Total Students -->
+        <div class="bg-white rounded-lg border border-gray-200 p-5 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-xs font-semibold uppercase text-gray-500">Total Students</p>
+                <h3 class="text-2xl font-black text-gray-900 mt-1">{{ $totalStudentsCount ?? 0 }}</h3>
+                    <a href="#" class="text-xs font-bold text-blue-600 hover:underline mt-2 inline-block">View Student List &rarr;</a>
+                </div>
+            <div class="w-12 h-12 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                <i class="fas fa-user-graduate"></i>
+            </div>
+        </div>
+
+        <!-- Class Activities -->
+        <div class="bg-white rounded-lg border border-gray-200 p-5 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-xs font-semibold uppercase text-gray-500">Active Tasks</p>
+                <h3 class="text-2xl font-black text-gray-900 mt-1">{{ $activitiesCount ?? 0 }}</h3>
+                <a href="#" class="text-xs font-bold text-blue-600 hover:underline mt-2 inline-block">Record Activity Marks &rarr;</a>
+            </div>
+            <div class="w-12 h-12 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+                <i class="fas fa-tasks"></i>
+            </div>
+        </div>
+
+        <!-- Pending Marks Entry -->
+        <div class="bg-white rounded-lg border border-gray-200 p-5 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-xs font-semibold uppercase text-gray-500">Exams Recorded</p>
+                <h3 class="text-2xl font-black text-gray-900 mt-1">{{ $examsRecordedCount ?? 0 }}</h3>
+                <a href="#" class="text-xs font-bold text-blue-600 hover:underline mt-2 inline-block">Manage Exam Marks &rarr;</a>
+            </div>
+            <div class="w-12 h-12 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
+                <i class="fas fa-edit"></i>
+            </div>
+        </div>
     </div>
-    @include('components.scripts')
-</body>
-</html>
+
+    <!-- Quick Action Shortcuts & Overview -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Panel: Assigned Classes & Subjects -->
+        <div class="lg:col-span-2 bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+                <h3 class="font-bold text-sm text-gray-900 flex items-center space-x-2">
+                    <i class="fas fa-chalkboard text-blue-600"></i>
+                    <span>Assigned Subjects & Classes</span>
+                </h3>
+                <a href="#" class="text-xs font-semibold text-blue-600 hover:underline">View All</a>
+            </div>
+            <div class="divide-y divide-gray-200">
+                @forelse($assignedSubjects ?? [] as $assignment)
+                    <div class="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                        <div>
+                            <h4 class="font-bold text-sm text-gray-900">{{ $assignment->subject->name ?? 'Subject' }}</h4>
+                            <p class="text-xs text-gray-500">Class: {{ $assignment->schoolClass->name ?? 'Class' }} | Code: {{ $assignment->subject->code ?? 'N/A' }}</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <a href="#" class="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-semibold">
+                                Activities
+                            </a>
+                            <a href="#" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold">
+                                Marks
+                            </a>
+                        </div>
+                    </div>
+                @empty
+                    <div class="p-8 text-center text-gray-500">
+                        <i class="fas fa-info-circle text-2xl text-gray-400 mb-2 block"></i>
+                        <p class="text-sm">No subjects allocated for the active term yet.</p>
+                    </div>
+                @endforelse
+            </div>
+        </div>
+
+        <!-- Right Side Panel: Quick Actions -->
+        <div class="space-y-4">
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
+                <h3 class="font-bold text-sm text-gray-900 mb-3 border-b border-gray-100 pb-2 flex items-center space-x-2">
+                    <i class="fas fa-bolt text-amber-500"></i>
+                    <span>Quick Tasks</span>
+                </h3>
+                <div class="space-y-2">
+                    <a href="#" class="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-blue-500 hover:bg-blue-50/50 transition-all text-xs font-semibold text-gray-800">
+                        <span class="flex items-center space-x-2">
+                            <i class="fas fa-plus-circle text-blue-600"></i>
+                            <span>Record Activity Marks</span>
+                        </span>
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </a>
+
+                    <a href="#" class="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-blue-500 hover:bg-blue-50/50 transition-all text-xs font-semibold text-gray-800">
+                        <span class="flex items-center space-x-2">
+                            <i class="fas fa-pen-nib text-emerald-600"></i>
+                            <span>Enter Exam Scores</span>
+                        </span>
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </a>
+
+                    <a href="#" class="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-blue-500 hover:bg-blue-50/50 transition-all text-xs font-semibold text-gray-800">
+                        <span class="flex items-center space-x-2">
+                            <i class="fas fa-clipboard-list text-purple-600"></i>
+                            <span>Class Roster & Profiles</span>
+                        </span>
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
