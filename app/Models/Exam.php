@@ -14,35 +14,33 @@ class Exam extends Model
     use LogsActivity;
 
     /**
-     * The attributes that are mass assignable.
-     * Updated to match your SQL dump columns exactly.
+     * Mass assignable attributes matching the database schema.
      */
     protected $fillable = [
         'exam_name',
         'term_id',
         'subject_id',
         'exam_date',
-        'status' // Added status as per your SQL dump
+        'status',
+        'subject_assignment_id',
+        'class_id'
     ];
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logFillable()         // Logs all attributes listed in $fillable
-            ->logOnlyDirty()        // Only records a log if fields actually changed during an update
-            ->dontSubmitEmptyLogs() // Prevents saving empty log entries
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
             ->setDescriptionForEvent(fn(string $eventName) => "Exam record has been {$eventName}");
     }
 
-    /**
-     * The attributes that should be cast.
-     */
     protected $casts = [
         'exam_date' => 'date',
     ];
 
     /**
-     * Relationship: The term (Academic Session) this exam belongs to.
+     * Relationship: The academic term/session.
      */
     public function term(): BelongsTo
     {
@@ -50,7 +48,7 @@ class Exam extends Model
     }
 
     /**
-     * Relationship: The specific subject being examined.
+     * Relationship: The specific subject examined.
      */
     public function subject(): BelongsTo
     {
@@ -58,7 +56,23 @@ class Exam extends Model
     }
 
     /**
-     * Relationship: All marks recorded for this exam.
+     * Relationship: Specific school class stream (if allocated to a stream).
+     */
+    public function schoolClass(): BelongsTo
+    {
+        return $this->belongsTo(SchoolClass::class, 'class_id');
+    }
+
+    /**
+     * Relationship: Link to teaching load assignment.
+     */
+    public function subjectAssignment(): BelongsTo
+    {
+        return $this->belongsTo(SubjectAssignment::class, 'subject_assignment_id');
+    }
+
+    /**
+     * Relationship: All marks recorded for this exam paper.
      */
     public function marks(): HasMany
     {
@@ -66,40 +80,22 @@ class Exam extends Model
     }
 
     /**
-     * BRIDGE RELATIONSHIP
-     * Since 'exams' table is missing 'class_id', we find the class
-     * through the SubjectAssignment table using the subject_id.
-     */
-    public function schoolClass()
-    {
-        // This assumes a subject is assigned to a class in subject_assignments
-        return $this->hasOneThrough(
-            SchoolClass::class,
-            SubjectAssignment::class,
-            'subject_id', // Foreign key on subject_assignments...
-            'id',         // Foreign key on school_classes...
-            'subject_id', // Local key on exams...
-            'class_id'    // Local key on subject_assignments...
-        );
-    }
-
-    /**
-     * Relationship: Access all students who have marks for this exam.
+     * Relationship: Access all students taking this exam through marks.
      */
     public function students(): HasManyThrough
     {
         return $this->hasManyThrough(
             Student::class,
             Mark::class,
-            'exam_id',    // Foreign key on marks table...
-            'id',         // Foreign key on students table...
-            'id',         // Local key on exams table...
-            'student_id'  // Local key on marks table...
+            'exam_id',
+            'id',
+            'id',
+            'student_id'
         );
     }
 
     /**
-     * Accessor: Format the exam date for the UI.
+     * Helper: Format exam date for UI.
      */
     public function getFormattedDateAttribute(): string
     {
@@ -107,28 +103,24 @@ class Exam extends Model
     }
 
     /**
-     * Helper: Calculate the average score for this specific exam.
+     * Helper: Dynamic average score for this paper.
      */
     public function getAverageScoreAttribute(): float
     {
         return round((float) ($this->marks()->avg('score') ?? 0), 2);
     }
 
-    public function getAssignmentIdAttribute()
-    {
-        $assignment = \App\Models\SubjectAssignment::where('subject_id', $this->subject_id)
-            ->where('class_id', $this->schoolClass->id ?? null)
-            ->first();
-        return $assignment ? $assignment->id : null;
-    }
-
     /**
-     * NEW: DIRECT TEACHER AUTHORIZATION LINK
-     * This helps the controller verify if the logged-in teacher owns this exam
-     * via the SubjectAssignment bridge.
+     * Helper: Format readable target scope string.
      */
-    public function subjectAssignment()
+    public function getTargetNameAttribute(): string
     {
-        return $this->hasOne(SubjectAssignment::class, 'subject_id', 'subject_id');
+        if ($this->schoolClass) {
+            return $this->schoolClass->class_name;
+        }
+        if ($this->subjectAssignment && $this->subjectAssignment->grade) {
+            return $this->subjectAssignment->grade;
+        }
+        return 'All Grade Streams';
     }
 }

@@ -77,8 +77,8 @@
                                 {{ \Carbon\Carbon::parse($payment->payment_date)->format('d M Y') }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <strong class="text-slate-900 dark:text-white block">{{ $payment->student->surname }}, {{ $payment->student->name }}</strong>
-                                <span class="text-[11px] font-mono text-slate-400">{{ $payment->student->student_number }}</span>
+                                <strong class="text-slate-900 dark:text-white block">{{ $payment->student->surname ?? '' }}, {{ $payment->student->name ?? 'Student' }}</strong>
+                                <span class="text-[11px] font-mono text-slate-400">{{ $payment->student->student_number ?? 'N/A' }}</span>
                             </td>
                             <td class="px-6 py-4 text-slate-600 dark:text-slate-300 font-medium whitespace-nowrap">
                                 {{ $payment->term->term_name ?? 'N/A' }}

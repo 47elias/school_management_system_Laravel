@@ -1,9 +1,7 @@
 @extends('layouts.student')
 
 @section('content')
-{{-- 1. DATA PREPARATION: Calculate Active Term Balance --}}
 @php
-    // Identify the active term
     $activeTerm = $currentTerm ?? \App\Models\Term::where('is_current', true)->first();
     
     $activeTermBalance = 0;
@@ -12,7 +10,6 @@
     $carriedForward = 0;
 
     if ($activeTerm) {
-        // Calculate Arrears (Brought Forward)
         $pastTransactions = \App\Models\Payment::where('student_id', $student->id)
             ->whereHas('term', function($q) use ($activeTerm) {
                 $q->where('start_date', '<', $activeTerm->start_date);
@@ -22,7 +19,6 @@
             $carriedForward += ($pt->amount_paid < 0) ? abs($pt->amount_paid) : -$pt->amount_paid;
         }
 
-        // Get Current Term Transactions
         $termTransactions = \App\Models\Payment::where('student_id', $student->id)
             ->where('term_id', $activeTerm->id)
             ->get();
@@ -30,13 +26,9 @@
         $termCharges = $termTransactions->where('amount_paid', '<', 0)->sum(function($q) { return abs($q->amount_paid); });
         $termPayments = $termTransactions->where('amount_paid', '>', 0)->sum('amount_paid');
 
-        // The exact balance for this specific term (excluding arrears)
         $activeTermBalance = $termCharges - $termPayments;
-        
-        // The total amount they owe right now (Arrears + Active Term Balance)
         $totalDue = $carriedForward + $activeTermBalance;
 
-        // Calculate progress percentage for the active term's fees
         if ($termCharges > 0) {
             $paymentPercentage = ($termPayments / $termCharges) * 100;
             $paymentPercentage = min(100, max(0, $paymentPercentage));
@@ -48,229 +40,215 @@
     }
 @endphp
 
-<section class="content-header">
-    <h1>
-        Academic Portal
-        <small>{{ env('SCHOOL_ACRONYM') }} v{{ env('PORTAL_VERSION') }}</small>
-    </h1>
-    <ol class="breadcrumb">
-        <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
-        <li class="active">Dashboard</li>
-    </ol>
-</section>
+<div class="space-y-4">
+    <!-- PAGE TITLE -->
+    <div class="flex items-center justify-between pb-2 border-b border-slate-300 dark:border-slate-800">
+        <div>
+            <h1 class="text-base font-black text-slate-900 dark:text-slate-100 tracking-tight">Academic Dashboard</h1>
+            <p class="text-xs font-bold text-slate-700 dark:text-slate-400">Welcome to your academic and financial portal</p>
+        </div>
+        <span class="px-3 py-1 text-xs font-black rounded-md bg-slate-900 text-white dark:bg-slate-800 border border-slate-900">
+            {{ env('SCHOOL_ACRONYM', 'SMS') }} v{{ env('PORTAL_VERSION', '2.6') }}
+        </span>
+    </div>
 
-<section class="content">
-    {{-- TOP STATS ROW --}}
-    <div class="row">
-        {{-- GRADE BOX --}}
-        <div class="col-md-3 col-sm-6 col-xs-12">
-            <div class="info-box bg-aqua shadow">
-                <span class="info-box-icon"><i class="fa fa-graduation-cap"></i></span>
-                <div class="info-box-content">
-                    <span class="info-box-text">Grade / Level</span>
-                    <span class="info-box-number">{{ $student->grade }}</span>
-                    <div class="progress"><div class="progress-bar" style="width: 100%"></div></div>
-                    <span class="progress-description text-bold">{{ env('SCHOOL_NAME') }}</span>
-                </div>
+    <!-- STATS ROW -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <!-- Grade -->
+        <div class="bg-white dark:bg-slate-900 rounded-lg p-4 border border-slate-300 dark:border-slate-800 shadow-xs flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-lg bg-slate-900 text-white flex items-center justify-center text-base shrink-0">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+                <p class="text-[10px] font-black uppercase text-slate-700 dark:text-slate-400">Grade Level</p>
+                <p class="text-sm font-black text-slate-900 dark:text-slate-100 truncate">{{ $student->grade }}</p>
+                <p class="text-[11px] font-bold text-slate-700 dark:text-slate-300 truncate">{{ env('SCHOOL_NAME') }}</p>
             </div>
         </div>
 
-        {{-- ACTIVE TERM BALANCE BOX --}}
-        <div class="col-md-3 col-sm-6 col-xs-12">
-            <div class="info-box {{ $totalDue > 0 ? 'bg-red' : 'bg-green' }} shadow">
-                <span class="info-box-icon"><i class="fa fa-money"></i></span>
-                <div class="info-box-content">
-                    <span class="info-box-text" title="Includes Arrears + Current Term">Total Due Balance</span>
-                    <span class="info-box-number">{{ env('CURRENCY_SYMBOL', '$') }}{{ number_format($totalDue, 2) }}</span>
-                    <div class="progress">
-                        <div class="progress-bar" style="width: {{ $paymentPercentage }}%"></div>
-                    </div>
-                    <span class="progress-description">
-                        {{ number_format($paymentPercentage, 0) }}% Term Cleared
-                    </span>
-                </div>
+        <!-- Balance -->
+        <div class="bg-white dark:bg-slate-900 rounded-lg p-4 border border-slate-300 dark:border-slate-800 shadow-xs flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-lg {{ $totalDue > 0 ? 'bg-rose-700 text-white' : 'bg-emerald-700 text-white' }} flex items-center justify-center text-base shrink-0">
+                <i class="fa-solid fa-wallet"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+                <p class="text-[10px] font-black uppercase text-slate-700 dark:text-slate-400">Total Due Balance</p>
+                <p class="text-sm font-black text-slate-900 dark:text-slate-100">{{ env('CURRENCY_SYMBOL', '$') }}{{ number_format($totalDue, 2) }}</p>
+                <p class="text-[11px] font-black {{ $totalDue > 0 ? 'text-rose-700 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400' }}">{{ number_format($paymentPercentage, 0) }}% Cleared</p>
             </div>
         </div>
 
-        {{-- TERM BOX --}}
-        <div class="col-md-3 col-sm-6 col-xs-12">
-            <div class="info-box bg-yellow shadow">
-                <span class="info-box-icon"><i class="fa fa-calendar-check-o"></i></span>
-                <div class="info-box-content">
-                    <span class="info-box-text">Active Term</span>
-                    <span class="info-box-number">{{ $activeTerm->term_name ?? 'N/A' }}</span>
-                    <div class="progress"><div class="progress-bar" style="width: 100%"></div></div>
-                    <span class="progress-description">Academic Year {{ $activeTerm->academic_year ?? date('Y') }}</span>
-                </div>
+        <!-- Active Term -->
+        <div class="bg-white dark:bg-slate-900 rounded-lg p-4 border border-slate-300 dark:border-slate-800 shadow-xs flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-lg bg-amber-600 text-white flex items-center justify-center text-base shrink-0">
+                <i class="fa-solid fa-calendar-check"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+                <p class="text-[10px] font-black uppercase text-slate-700 dark:text-slate-400">Active Term</p>
+                <p class="text-sm font-black text-slate-900 dark:text-slate-100 truncate">{{ $activeTerm->term_name ?? 'N/A' }}</p>
+                <p class="text-[11px] font-bold text-slate-700 dark:text-slate-300">Year {{ $activeTerm->academic_year ?? date('Y') }}</p>
             </div>
         </div>
 
-        {{-- PERFORMANCE BOX --}}
-        <div class="col-md-3 col-sm-6 col-xs-12">
-            <div class="info-box bg-purple shadow">
-                <span class="info-box-icon"><i class="fa fa-line-chart"></i></span>
-                <div class="info-box-content">
-                    <span class="info-box-text">Academic Status</span>
-                    <span class="info-box-number">Results Ready</span>
-                    <div class="progress"><div class="progress-bar" style="width: 100%"></div></div>
-                    <span class="progress-description">
-                        <a href="{{ route('student.results') }}" style="color: white; font-weight: bold;">
-                            VIEW REPORT <i class="fa fa-arrow-circle-right"></i>
-                        </a>
-                    </span>
-                </div>
+        <!-- Academic Status -->
+        <div class="bg-white dark:bg-slate-900 rounded-lg p-4 border border-slate-300 dark:border-slate-800 shadow-xs flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-lg bg-emerald-700 text-white flex items-center justify-center text-base shrink-0">
+                <i class="fa-solid fa-chart-line"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+                <p class="text-[10px] font-black uppercase text-slate-700 dark:text-slate-400">Academic Status</p>
+                <a href="{{ route('student.results') }}" class="text-xs font-black text-slate-900 dark:text-emerald-400 hover:underline flex items-center space-x-1 mt-0.5">
+                    <span>View Exam Results</span>
+                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </a>
             </div>
         </div>
     </div>
 
-    <div class="row">
-        {{-- LEFT COLUMN: PROFILE --}}
-        <div class="col-md-3">
-            {{-- Profile Image Box --}}
-            <div class="box box-primary shadow">
-                <div class="box-body box-profile">
-                    <div style="position: relative; text-align: center;">
-                        <img class="profile-user-img img-responsive img-circle"
-                             src="{{ asset($avatar ?? '') }}"
-                             onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($student->name) }}&background=3c8dbc&color=fff'"
-                             alt="Student profile"
-                             style="width: 100px; height: 100px; object-fit: cover;">
-                        <span class="label label-success" style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); border: 2px solid white;">ACTIVE</span>
-                    </div>
-
-                    <h3 class="profile-username text-center text-bold">{{ $student->name }} {{ $student->surname }}</h3>
-                    <p class="text-muted text-center"><i class="fa fa-id-card-o"></i> {{ $student->student_number }}</p>
-
-                    <ul class="list-group list-group-unbordered">
-                        <li class="list-group-item">
-                            <b>Email</b> <span class="pull-right text-sm text-primary">{{ $student->email ?? 'N/A' }}</span>
-                        </li>
-                        <li class="list-group-item">
-                            <b>Gender</b> <span class="pull-right">{{ $student->gender }}</span>
-                        </li>
-                        <li class="list-group-item">
-                            <b>Contact</b> <span class="pull-right">{{ $student->phone ?? 'N/A' }}</span>
-                        </li>
-                    </ul>
-
-                    <a href="{{ route('student.fees') }}" class="btn btn-primary btn-block btn-flat text-bold">
-                        <i class="fa fa-file-text-o"></i> FINANCIAL STATEMENT
-                    </a>
+    <!-- MAIN GRID -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        
+        <!-- LEFT COLUMN: PROFILE CARD -->
+        <div class="space-y-3.5">
+            <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-300 dark:border-slate-800 shadow-xs p-4 text-center">
+                <div class="relative inline-block mx-auto mb-2">
+                    <img src="{{ asset($avatar ?? '') }}" 
+                         onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($student->name) }}&background=0f172a&color=fff'"
+                         class="w-16 h-16 rounded-xl object-cover ring-2 ring-slate-900 bg-slate-200 dark:bg-slate-800 mx-auto"
+                         alt="Profile">
+                    <span class="px-2 py-0.5 text-[9px] font-black rounded bg-emerald-700 text-white absolute -bottom-1 left-1/2 -translate-x-1/2">ACTIVE</span>
                 </div>
+
+                <h3 class="text-sm font-black text-slate-900 dark:text-slate-100 mt-1">{{ $student->name }} {{ $student->surname }}</h3>
+                <p class="text-xs font-bold text-slate-700 dark:text-slate-400 mt-0.5"><i class="fa-solid fa-id-card text-slate-900 mr-1"></i>{{ $student->student_number }}</p>
+
+                <div class="mt-3 py-2 border-y border-slate-300 dark:border-slate-800 space-y-2 text-left text-xs">
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-700 font-bold">Email:</span>
+                        <span class="font-black text-slate-900 dark:text-slate-100 truncate max-w-[140px]">{{ $student->email ?? 'N/A' }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-700 font-bold">Gender:</span>
+                        <span class="font-black text-slate-900 dark:text-slate-100">{{ $student->gender }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-700 font-bold">Contact:</span>
+                        <span class="font-black text-slate-900 dark:text-slate-100">{{ $student->phone ?? 'N/A' }}</span>
+                    </div>
+                </div>
+
+                <a href="{{ route('student.fees') }}" class="mt-3 inline-flex items-center justify-center space-x-1.5 w-full py-2 px-3 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-black transition-all shadow-xs">
+                    <i class="fa-solid fa-file-invoice text-xs"></i>
+                    <span>Financial Statement</span>
+                </a>
             </div>
 
-            {{-- School Contact Box --}}
-            <div class="box box-solid shadow">
-                <div class="box-header with-border">
-                    <h3 class="box-title text-bold">Campus Info</h3>
-                </div>
-                <div class="box-body">
-                    <strong><i class="fa fa-map-marker margin-r-5 text-primary"></i> Address</strong>
-                    <p class="text-muted">{{ env('SCHOOL_ADDRESS') }}</p>
-                    <hr>
-                    <strong><i class="fa fa-phone margin-r-5 text-primary"></i> Phone</strong>
-                    <p class="text-muted">{{ env('SCHOOL_PHONE') }}</p>
-                    <hr>
-                    <strong><i class="fa fa-globe margin-r-5 text-primary"></i> Website</strong>
-                    <p class="text-muted"><a href="http://{{ env('SCHOOL_WEBSITE') }}" target="_blank">{{ env('SCHOOL_WEBSITE') }}</a></p>
+            <!-- Campus Info -->
+            <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-300 dark:border-slate-800 shadow-xs p-4 space-y-2.5">
+                <h4 class="text-xs font-black text-slate-900 dark:text-slate-100 flex items-center space-x-2 border-b border-slate-300 dark:border-slate-800 pb-2">
+                    <i class="fa-solid fa-school text-slate-900"></i>
+                    <span>Campus Particulars</span>
+                </h4>
+                <div class="text-xs space-y-2 text-slate-900 dark:text-slate-200">
+                    <div>
+                        <span class="text-[10px] font-black uppercase text-slate-700 dark:text-slate-400 block">Address</span>
+                        <p class="font-bold mt-0.5 text-slate-900 dark:text-slate-100">{{ env('SCHOOL_ADDRESS', 'N/A') }}</p>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-black uppercase text-slate-700 dark:text-slate-400 block">Phone</span>
+                        <p class="font-bold mt-0.5 text-slate-900 dark:text-slate-100">{{ env('SCHOOL_PHONE', 'N/A') }}</p>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-black uppercase text-slate-700 dark:text-slate-400 block">Website</span>
+                        <a href="http://{{ env('SCHOOL_WEBSITE') }}" target="_blank" class="text-slate-900 dark:text-emerald-400 hover:underline font-bold mt-0.5 block truncate">{{ env('SCHOOL_WEBSITE', 'N/A') }}</a>
+                    </div>
                 </div>
             </div>
         </div>
 
-        {{-- RIGHT COLUMN: CONTENT TABS --}}
-        <div class="col-md-9">
-            <div class="nav-tabs-custom shadow">
-                <ul class="nav nav-tabs">
-                    <li class="active"><a href="#activity" data-toggle="tab"><i class="fa fa-clock-o"></i> Timeline</a></li>
-                    <li><a href="#personal" data-toggle="tab"><i class="fa fa-user"></i> Full Profile</a></li>
-                    <li><a href="#guardian" data-toggle="tab"><i class="fa fa-users"></i> Emergency Contact</a></li>
-                </ul>
-                <div class="tab-content">
-                    {{-- TIMELINE TAB --}}
-                    <div class="active tab-pane" id="activity">
-                        <ul class="timeline timeline-inverse">
-                            <li class="time-label"><span class="bg-blue">{{ date('d M. Y') }}</span></li>
+        <!-- RIGHT COLUMN: TAB NAVIGATION -->
+        <div class="lg:col-span-2 space-y-3.5" x-data="{ activeTab: 'activity' }">
+            <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-300 dark:border-slate-800 shadow-xs overflow-hidden">
+                <!-- Tab Headers -->
+                <div class="flex border-b border-slate-300 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 px-2">
+                    <button @click="activeTab = 'activity'" 
+                            :class="activeTab === 'activity' ? 'border-slate-900 text-slate-900 dark:text-white font-black bg-white dark:bg-slate-900' : 'border-transparent text-slate-700 hover:text-slate-900 font-bold'"
+                            class="py-3 px-4 text-xs border-b-2 transition-all flex items-center space-x-2 focus:outline-none">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span>Overview</span>
+                    </button>
+                    <button @click="activeTab = 'personal'" 
+                            :class="activeTab === 'personal' ? 'border-slate-900 text-slate-900 dark:text-white font-black bg-white dark:bg-slate-900' : 'border-transparent text-slate-700 hover:text-slate-900 font-bold'"
+                            class="py-3 px-4 text-xs border-b-2 transition-all flex items-center space-x-2 focus:outline-none">
+                        <i class="fa-solid fa-user-gear"></i>
+                        <span>Full Particulars</span>
+                    </button>
+                    <button @click="activeTab = 'guardian'" 
+                            :class="activeTab === 'guardian' ? 'border-slate-900 text-slate-900 dark:text-white font-black bg-white dark:bg-slate-900' : 'border-transparent text-slate-700 hover:text-slate-900 font-bold'"
+                            class="py-3 px-4 text-xs border-b-2 transition-all flex items-center space-x-2 focus:outline-none">
+                        <i class="fa-solid fa-users"></i>
+                        <span>Guardian Contact</span>
+                    </button>
+                </div>
 
-                            {{-- Finance Timeline Item --}}
-                            <li>
-                                <i class="fa fa-money bg-{{ $totalDue > 0 ? 'red' : 'green' }}"></i>
-                                <div class="timeline-item">
-                                    <span class="time"><i class="fa fa-clock-o"></i> {{ date('H:i') }}</span>
-                                    <h3 class="timeline-header text-bold"><a href="#">Financial Overview</a></h3>
-                                    <div class="timeline-body">
-                                        Your total due balance for the active term (including any arrears) is 
-                                        <span class="text-{{ $totalDue > 0 ? 'red' : 'green' }} text-bold">
-                                            {{ env('CURRENCY_SYMBOL', '$') }}{{ number_format($totalDue, 2) }}
-                                        </span>.
-                                        Please ensure all payments are made promptly to avoid interruptions.
-                                    </div>
-                                    <div class="timeline-footer">
-                                        <a href="{{ route('student.fees') }}" class="btn btn-xs btn-default">View Full Statement</a>
-                                    </div>
-                                </div>
-                            </li>
-
-                            {{-- Support Timeline Item --}}
-                            <li>
-                                <i class="fa fa-envelope bg-blue"></i>
-                                <div class="timeline-item">
-                                    <h3 class="timeline-header no-border">
-                                        <a href="#">Support:</a> Need help? Contact us at {{ env('SCHOOL_EMAIL') }}
-                                    </h3>
-                                </div>
-                            </li>
-
-                            <li><i class="fa fa-clock-o bg-gray"></i></li>
-                        </ul>
-                    </div>
-
-                    {{-- PERSONAL INFO TAB --}}
-                    <div class="tab-pane" id="personal">
-                        <div class="box-body no-padding">
-                            <h4 class="text-blue" style="border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0;">Registration Particulars</h4>
-                            <table class="table table-striped">
-                                <tr><th width="30%">Student ID</th><td>{{ $student->student_number }}</td></tr>
-                                <tr><th>Full Name</th><td>{{ $student->name }} {{ $student->surname }}</td></tr>
-                                <tr><th>Enrollment Grade</th><td>{{ $student->grade }}</td></tr>
-                                <tr><th>Primary Mobile</th><td>{{ $student->phone ?? 'N/A' }}</td></tr>
-                                <tr><th>Email Address</th><td>{{ $student->email ?? 'N/A' }}</td></tr>
-                                <tr><th>Residential Address</th><td>{{ $student->address ?? 'N/A' }}</td></tr>
-                            </table>
-                        </div>
-                    </div>
-
-                    {{-- GUARDIAN TAB --}}
-                    <div class="tab-pane" id="guardian">
-                        <div class="box-body text-center" style="padding: 40px 10px;">
-                            <div style="font-size: 60px; color: #d2d6de; margin-bottom: 10px;">
-                                <i class="fa fa-user-secret"></i>
+                <!-- Tab Body -->
+                <div class="p-4">
+                    <!-- OVERVIEW -->
+                    <div x-show="activeTab === 'activity'" class="space-y-3">
+                        <div class="p-4 rounded-lg border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-black text-slate-900 dark:text-slate-100 flex items-center space-x-1.5">
+                                    <i class="fa-solid fa-wallet text-slate-900"></i>
+                                    <span>Financial Status Notice</span>
+                                </span>
+                                <span class="text-xs font-bold text-slate-700 dark:text-slate-400">{{ date('d M Y') }}</span>
                             </div>
-                            <h4 class="text-bold">Guardian / Next of Kin</h4>
-                            <p class="text-muted">For emergency notifications, academic updates, or payment queries, we contact:</p>
-                            <h2 class="text-primary text-bold" style="letter-spacing: 1px;">
-                                {{ $student->parent_contact ?? 'N/A' }}
-                            </h2>
+                            <p class="text-xs text-slate-900 dark:text-slate-200 leading-relaxed font-semibold">
+                                Total due balance for the active term (including prior arrears) is 
+                                <strong class="{{ $totalDue > 0 ? 'text-rose-700 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400' }} font-black">{{ env('CURRENCY_SYMBOL', '$') }}{{ number_format($totalDue, 2) }}</strong>.
+                            </p>
+                            <a href="{{ route('student.fees') }}" class="inline-block text-xs font-black text-slate-900 dark:text-emerald-400 hover:underline pt-1">
+                                Open Financial Ledger &rarr;
+                            </a>
                         </div>
+
+                        <div class="p-3 rounded-lg border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs font-bold text-slate-900 dark:text-slate-300 flex items-center space-x-2">
+                            <i class="fa-solid fa-envelope text-slate-900"></i>
+                            <span>Administrative Support Contact: <strong class="text-slate-900 dark:text-white font-black">{{ env('SCHOOL_EMAIL') }}</strong></span>
+                        </div>
+                    </div>
+
+                    <!-- PERSONAL -->
+                    <div x-show="activeTab === 'personal'" x-cloak class="space-y-2">
+                        <h4 class="text-xs font-black text-slate-900 dark:text-slate-100 pb-2 border-b border-slate-300 dark:border-slate-800">Registration Records</h4>
+                        <div class="divide-y divide-slate-200 dark:divide-slate-800 text-xs">
+                            <div class="py-2 flex justify-between"><span class="text-slate-700 font-bold">Student Number</span><span class="font-black text-slate-900 dark:text-slate-100">{{ $student->student_number }}</span></div>
+                            <div class="py-2 flex justify-between"><span class="text-slate-700 font-bold">Full Name</span><span class="font-black text-slate-900 dark:text-slate-100">{{ $student->name }} {{ $student->surname }}</span></div>
+                            <div class="py-2 flex justify-between"><span class="text-slate-700 font-bold">Grade Level</span><span class="font-black text-slate-900 dark:text-slate-100">{{ $student->grade }}</span></div>
+                            <div class="py-2 flex justify-between"><span class="text-slate-700 font-bold">Primary Phone</span><span class="font-black text-slate-900 dark:text-slate-100">{{ $student->phone ?? 'N/A' }}</span></div>
+                            <div class="py-2 flex justify-between"><span class="text-slate-700 font-bold">Email Address</span><span class="font-black text-slate-900 dark:text-slate-100">{{ $student->email ?? 'N/A' }}</span></div>
+                            <div class="py-2 flex justify-between"><span class="text-slate-700 font-bold">Residential Address</span><span class="font-black text-slate-900 dark:text-slate-100">{{ $student->address ?? 'N/A' }}</span></div>
+                        </div>
+                    </div>
+
+                    <!-- GUARDIAN -->
+                    <div x-show="activeTab === 'guardian'" x-cloak class="py-6 text-center space-y-2">
+                        <div class="w-12 h-12 rounded-full bg-slate-900 text-white flex items-center justify-center text-xl mx-auto">
+                            <i class="fa-solid fa-user-shield"></i>
+                        </div>
+                        <h4 class="text-xs font-black text-slate-900 dark:text-slate-100">Guardian / Emergency Contact</h4>
+                        <p class="text-xs font-bold text-slate-700 dark:text-slate-400 max-w-sm mx-auto">Official primary contact for emergency notifications and account queries:</p>
+                        <p class="text-base font-black text-slate-900 dark:text-emerald-400 tracking-wider pt-1">{{ $student->parent_contact ?? 'N/A' }}</p>
                     </div>
                 </div>
             </div>
 
-            {{-- WELCOME CALLOUT --}}
-            <div class="callout callout-info shadow" style="border-left: 5px solid #0073b7 !important; background-color: #f4f7f9 !important; color: #444 !important;">
-                <h4 class="text-bold text-blue">Welcome back, {{ $student->name }}!</h4>
-                <p>Welcome to the <strong>{{ env('SCHOOL_NAME') }}</strong> Academic Portal. You can track your academic progress, monitor your financial status, and update your personal records here.</p>
+            <!-- WELCOME CALLOUT -->
+            <div class="p-4 rounded-lg bg-slate-900 text-white text-xs space-y-1">
+                <h4 class="font-black text-white text-xs">Welcome, {{ $student->name }}!</h4>
+                <p class="text-xs text-slate-200 leading-relaxed font-semibold">Welcome to the official <strong>{{ env('SCHOOL_NAME') }}</strong> Student Portal. Manage your records, review fees, and view published exam results.</p>
             </div>
         </div>
     </div>
-</section>
-
-<style>
-    .info-box-number { font-size: 24px !important; }
-    .shadow { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24) !important; }
-    .profile-user-img { border: 3px solid #d2d6de; padding: 3px; transition: all 0.3s ease; }
-    .profile-user-img:hover { border-color: #3c8dbc; }
-    .nav-tabs-custom > .nav-tabs > li.active { border-top-color: #3c8dbc; }
-    .list-group-unbordered > .list-group-item { border-radius: 0; padding-left: 0; padding-right: 0; }
-    .text-bold { font-weight: 700; }
-</style>
+</div>
 @endsection

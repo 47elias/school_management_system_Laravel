@@ -2,85 +2,85 @@
 
 namespace App\Services;
 
-use App\Models\Mark;
 use App\Models\GradeScale;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 
 class ExamCalculationService
 {
     /**
-     * Groups raw marks collection by subject and calculates dynamic average percentages and grades.
-     */
-    public function aggregateMarksBySubject(Collection $marksCollection): Collection
-    {
-        return $marksCollection->groupBy(function ($mark) {
-            return $mark->exam->subject_id ?? $mark->subject_id;
-        })->map(function ($subjectMarks) {
-            $firstMark = $subjectMarks->first();
-            $subject = $firstMark->exam->subject ?? null;
-            $passMark = $subject->pass_mark ?? 50;
-
-            $totalPercentage = 0;
-            $papers = [];
-
-            foreach ($subjectMarks as $mark) {
-                $maxScore = ($mark->max_score && $mark->max_score > 0) ? $mark->max_score : 100;
-                $pct = ($mark->score / $maxScore) * 100;
-                $totalPercentage += $pct;
-
-                $papers[] = [
-                    'exam_id'    => $mark->exam_id,
-                    'exam_name'  => $mark->exam->exam_name ?? 'Paper',
-                    'score'      => $mark->score,
-                    'max_score'  => $maxScore,
-                    'percentage' => round($pct, 2),
-                    'comment'    => $mark->teacher_comment
-                ];
-            }
-
-            $papersCount = $subjectMarks->count();
-            $averagePercentage = $papersCount > 0 ? round($totalPercentage / $papersCount, 2) : 0;
-            $gradeDetails = $this->calculateGrade($averagePercentage);
-
-            return (object) [
-                'subject_id'    => $subject->id ?? $firstMark->exam->subject_id,
-                'subject_name'  => $subject->subject_name ?? $firstMark->subject,
-                'subject_code'  => $subject->subject_code ?? 'N/A',
-                'pass_mark'     => $passMark,
-                'papers_taken'  => $papersCount,
-                'average_score' => $averagePercentage,
-                'percentage'    => $averagePercentage,
-                'grade'         => $gradeDetails['grade'],
-                'remark'        => $gradeDetails['remark'],
-                'is_passed'     => $averagePercentage >= $passMark,
-                'papers'        => $papers,
-                'individual'    => $subjectMarks
-            ];
-        })->values();
-    }
-
-    /**
-     * Dynamically resolves the letter grade and remark from database configuration.
+     * Dynamically determine grade, remark, and pass status using the grade_scales database table.
      */
     public function calculateGrade(float $score): array
     {
-        $scales = Cache::remember('active_grade_scales', 3600, function () {
-            return GradeScale::orderBy('min_score', 'desc')->get();
-        });
+        $score = round($score, 2);
 
-        foreach ($scales as $scale) {
-            if ($score >= $scale->min_score && $score <= $scale->max_score) {
-                return [
-                    'grade'  => $scale->grade,
-                    'remark' => $scale->remark ?? '',
-                ];
-            }
+        $scale = GradeScale::where('min_score', '<=', $score)
+            ->where('max_score', '>=', $score)
+            ->first();
+
+        if ($scale) {
+            $isPassed = !in_array(strtoupper($scale->grade), ['F', 'U', 'E']);
+            return [
+                'grade'     => $scale->grade,
+                'remark'    => $scale->remark ?? 'Evaluated',
+                'is_passed' => $isPassed
+            ];
         }
 
-        return [
-            'grade'  => 'N/A',
-            'remark' => 'Unrated',
-        ];
+        // Fallback standard scale if table is empty
+        if ($score >= 80) return ['grade' => 'A', 'remark' => 'Distinction', 'is_passed' => true];
+        if ($score >= 70) return ['grade' => 'B', 'remark' => 'Merit', 'is_passed' => true];
+        if ($score >= 60) return ['grade' => 'C', 'remark' => 'Credit', 'is_passed' => true];
+        if ($score >= 50) return ['grade' => 'D', 'remark' => 'Pass', 'is_passed' => true];
+        if ($score >= 40) return ['grade' => 'E', 'remark' => 'Subordinate Pass', 'is_passed' => false];
+        return ['grade' => 'F', 'remark' => 'Fail', 'is_passed' => false];
+    }
+
+    /**
+     * Aggregate raw paper marks by subject and compute overall scores.
+     */
+    public function aggregateMarksBySubject(Collection $rawMarks): Collection
+    {
+        return $rawMarks->groupBy(function ($mark) {
+            return $mark->exam->subject_id ?? $mark->subject;
+        })->map(function ($subjectMarks) {
+            $firstMark = $subjectMarks->first();
+            $subjectName = $firstMark->exam->subject->subject_name ?? $firstMark->subject ?? 'N/A';
+            $subjectCode = $firstMark->exam->subject->subject_code ?? 'SUBJ';
+
+            $totalPercentageSum = 0;
+            $papers = [];
+
+            foreach ($subjectMarks as $m) {
+                $maxScore = $m->max_score > 0 ? $m->max_score : 100;
+                $percentage = round(($m->score / $maxScore) * 100, 2);
+                $totalPercentageSum += $percentage;
+
+                $papers[] = [
+                    'exam_id'    => $m->exam_id,
+                    'exam_name'  => $m->exam->exam_name ?? 'Paper',
+                    'score'      => $m->score,
+                    'max_score'  => $maxScore,
+                    'percentage' => $percentage,
+                    'comment'    => $m->teacher_comment
+                ];
+            }
+
+            $papersCount = count($papers);
+            $averageScore = $papersCount > 0 ? round($totalPercentageSum / $papersCount, 2) : 0;
+            $gradeInfo = $this->calculateGrade($averageScore);
+
+            return (object) [
+                'subject_id'   => $firstMark->exam->subject_id ?? null,
+                'subject_name' => $subjectName,
+                'subject_code' => $subjectCode,
+                'papers'       => $papers,
+                'papers_taken' => $papersCount,
+                'average_score'=> $averageScore,
+                'grade'        => $gradeInfo['grade'],
+                'remark'       => $gradeInfo['remark'],
+                'is_passed'    => $gradeInfo['is_passed']
+            ];
+        })->values();
     }
 }

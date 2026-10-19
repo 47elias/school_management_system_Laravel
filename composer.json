@@ -10,10 +10,10 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "codevirtus/pesepay": "^1.0",
         "doctrine/dbal": "^4.4",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
-        "paynow/php-sdk": "^1.0",
         "spatie/laravel-activitylog": "^4.12",
         "spatie/laravel-permission": "^6.25"
     },

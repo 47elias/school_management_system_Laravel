@@ -98,6 +98,11 @@ Route::middleware(['auth', 'role:admin|receptionist'])
         Route::get('/profile', [ReceptionistController::class, 'profile'])->name('profile');
         Route::get('/classes', [ReceptionistController::class, 'classesIndex'])->name('classes.index');
 
+        // Pesepay Payment Gateway Endpoints for Receptionist
+        Route::post('/fees/pesepay/initiate', [FeeController::class, 'payWithPesepay'])->middleware('permission:manage-fees')->name('fees.pesepay.initiate');
+        Route::get('/fees/pesepay/return', [FeeController::class, 'pesepayReturn'])->name('fees.pesepay.return');
+        Route::post('/fees/pesepay/result', [FeeController::class, 'pesepayResult'])->name('fees.pesepay.result')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
         // Student Management
         Route::prefix('students')->name('students.')->group(function () {
             Route::get('/', [ReceptionistController::class, 'indexStudents'])->name('index');
@@ -128,7 +133,7 @@ Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
     // Main Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // System Staff User Management (using UserController)
+    // System Staff User Management
     Route::resource('users', UserController::class)->middleware('permission:manage-users');
 
     // System Roles & Permissions Security
@@ -140,7 +145,7 @@ Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
         Route::delete('/permissions/{id}', [RolePermissionController::class, 'destroyPermission'])->middleware('permission:manage-users')->name('destroy_permission');
     });
 
-    // Account Profile & Security Settings (renders users.profile)
+    // Account Profile & Security Settings
     Route::prefix('settings')->group(function () {
         Route::get('/change-password', [DashboardController::class, 'showChangePassword'])->name('admin.change_password');
         Route::post('/update-password', [DashboardController::class, 'updatePassword'])->name('admin.update_password');
@@ -181,30 +186,24 @@ Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
     Route::post('/grade-levels', [ClassController::class, 'storeGradeLevel'])->name('grade-levels.store');
     Route::delete('/grade-levels/{id}', [ClassController::class, 'destroyGradeLevel'])->name('grade-levels.destroy');
 
-    
-    // 1. SPECIFIC STATIC GET ROUTES (MUST BE PLACED BEFORE WILDCARD {id} ROUTES)
+    // Subjects & Allocations
     Route::get('/subjects', [SubjectAssignmentController::class, 'index'])->name('subjects.index');
     Route::get('/subjects/manage', [SubjectAssignmentController::class, 'manage'])->name('subjects.manage');
     Route::get('/subjects/allocate-classes', [SubjectAssignmentController::class, 'allocateClasses'])->name('subjects.allocate_classes');
     Route::get('/subjects/allocate-teachers', [SubjectAssignmentController::class, 'allocateTeachers'])->name('subjects.allocate_teachers');
 
-    // 2. SUBJECT CRUD OPERATIONS
     Route::post('/subjects', [SubjectAssignmentController::class, 'store'])->name('subjects.store');
     Route::put('/subjects/{id}', [SubjectAssignmentController::class, 'update'])->name('subjects.update');
     Route::delete('/subjects/{id}', [SubjectAssignmentController::class, 'destroy'])->name('subjects.destroy');
 
-    // 3. SUBJECT COMBINATION PACKAGES
     Route::post('/subject-combinations', [SubjectAssignmentController::class, 'storeCombination'])->name('subject-combinations.store');
     Route::delete('/subject-combinations/{id}', [SubjectAssignmentController::class, 'destroyCombination'])->name('subject-combinations.destroy');
 
-    // 4. CLASS & STREAM SUBJECT ALLOCATIONS
     Route::post('/class-subjects', [SubjectAssignmentController::class, 'storeClassAllocation'])->name('class-subjects.store');
     Route::delete('/class-subjects/{id}', [SubjectAssignmentController::class, 'destroyClassAllocation'])->name('class-subjects.destroy');
 
-    // 5. FACULTY TEACHING LOAD ASSIGNMENTS
     Route::post('/subject-assignments', [SubjectAssignmentController::class, 'store'])->name('subject-assignments.store');
     Route::delete('/subject-assignments/{id}', [SubjectAssignmentController::class, 'destroy'])->name('subject-assignments.destroy');
-    
     
     // Timetable System Routes
     Route::get('/api/classes/{classId}/subjects', [TimetableController::class, 'getSubjectsByClass']);
@@ -259,10 +258,13 @@ Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
         Route::get('/{id}', [FeeController::class, 'show'])->middleware('permission:manage-fees')->name('show');
         Route::delete('/{id}', [FeeController::class, 'destroy'])->middleware('permission:manage-fees')->name('destroy');
 
-        // Online Payment Gateways
+        // Pesepay Payment Gateway Endpoints
+        Route::post('/pesepay/initiate', [FeeController::class, 'payWithPesepay'])->middleware('permission:manage-fees')->name('pesepay.initiate');
+        Route::get('/pesepay/return', [FeeController::class, 'pesepayReturn'])->name('pesepay.return');
+        Route::post('/pesepay/result', [FeeController::class, 'pesepayResult'])->name('pesepay.result')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
+        // Online Payment Gateway Aliases
         Route::post('/pay-online', [FeeController::class, 'payOnline'])->middleware('permission:manage-fees')->name('payOnline');
-        Route::post('/pay-online/result', [FeeController::class, 'payOnlineResult'])->name('payOnline.result')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
-        Route::get('/pay-online/return/{feeTransaction}', [FeeController::class, 'payOnlineReturn'])->name('payOnline.return');
     });
 
     // Payroll Management
@@ -317,7 +319,14 @@ Route::middleware(['auth', 'role:admin|teacher'])->group(function () {
     // Examinations & Marks Recording
     Route::prefix('exams')->name('exams.')->group(function () {
         Route::get('/', [ExamController::class, 'index'])->middleware('permission:exams_management')->name('index');
+        Route::get('/schedule/{type}/{id}', [ExamController::class, 'scheduleView'])->middleware('permission:exams_management')->name('schedule');
+        Route::get('/subject-report/{subject_id}', [ExamController::class, 'subjectReport'])->middleware('permission:exams_management')->name('subject_report');
+        Route::get('/{exam_id}/download-template/{target}', [ExamController::class, 'downloadTemplate'])->middleware('permission:exams_management')->name('download_template');
+        Route::post('/import-marks', [ExamController::class, 'importMarks'])->middleware('permission:exams_management')->name('import_marks');
         Route::post('/', [ExamController::class, 'store'])->middleware('permission:exams_management')->name('store');
+        Route::get('/{exam_id}/verify', [ExamController::class, 'verify'])->middleware('permission:exams_management')->name('verify');
+        Route::post('/verify-face', [ExamController::class, 'verifyFace'])->middleware('permission:exams_management')->name('verify_face');
+        Route::patch('/{id}/toggle-publish', [ExamController::class, 'togglePublish'])->middleware('permission:exams_management')->name('toggle_publish');
         Route::get('/{exam_id}/marks/{grade}', [ExamController::class, 'createMarks'])->middleware('permission:exams_management')->name('create_marks');
         Route::get('/{exam_id}/report/{grade}', [ExamController::class, 'examReport'])->middleware('permission:exams_management')->name('report');
         Route::delete('/{id}', [ExamController::class, 'destroy'])->middleware('permission:exams_management')->name('destroy');
@@ -365,7 +374,7 @@ Route::middleware(['auth', 'role:teacher'])
 
         // Teacher Continuous Assessment
         Route::prefix('activities')->name('activities.')->group(function () {
-            Route::get('/', [ActivityController::class, 'teacherIndex'])->name('index');
+            Route::get('/', [ActivityController::class, 'index'])->name('index');
             Route::post('/', [ActivityController::class, 'store'])->name('store');
             Route::get('/{id}/record', [ActivityController::class, 'recordMarks'])->name('record');
             Route::post('/marks/store', [ActivityController::class, 'bulkStore'])->name('marks.store');

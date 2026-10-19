@@ -39,9 +39,10 @@ return [
         'key' => env('GEMINI_API_KEY'),
     ],
 
-    'paynow' => [
-        'integration_id'  => env('PAYNOW_INTEGRATION_ID'),
-        'integration_key' => env('PAYNOW_INTEGRATION_KEY'),
+    'pesepay' => [
+        'integration_key' => env('PESEPAY_INTEGRATION_KEY'),
+        'encryption_key'  => env('PESEPAY_ENCRYPTION_KEY'),
+        'result_url'      => env('PESEPAY_RESULT_URL'),
+        'return_url'      => env('PESEPAY_RETURN_URL'),
     ],
-
 ];

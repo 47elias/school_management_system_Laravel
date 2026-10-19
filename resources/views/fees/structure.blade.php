@@ -123,10 +123,6 @@
             </div>
         </div>
 
-        {{--
-            NORMALIZE PARENT FORM LISTING & INCLUDE EMPTY CLASSES:
-            Extract top-level Form names (e.g., "Form 2") so there is ONLY ONE main outer accordion block per Form level.
-        --}}
         @php
             if (isset($gradeLevels) && count($gradeLevels) > 0) {
                 $parentGrades = $gradeLevels;
@@ -147,7 +143,6 @@
                 $gradeId = is_object($gradeObj) ? $gradeObj->id : null;
                 $levelOrder = is_object($gradeObj) ? ($gradeObj->level_order ?? ($gradeIndex + 1)) : ($gradeIndex + 1);
                 
-                // 1. Fetch ALL class streams belonging to this Grade/Form from database (INCLUDING EMPTY CLASSES)
                 if (is_object($gradeObj) && isset($gradeObj->schoolClasses) && count($gradeObj->schoolClasses) > 0) {
                     $streamsInGrade = $gradeObj->schoolClasses;
                 } elseif (isset($schoolClasses) && count($schoolClasses) > 0) {
@@ -172,7 +167,6 @@
                     $streamsInGrade = collect();
                 }
 
-                // 2. Fetch enrolled students for this form level
                 $formStudents = $students->filter(function($s) use ($gradeName, $gradeId) {
                     if ($gradeId && isset($s->schoolClass->grade_level_id) && $s->schoolClass->grade_level_id == $gradeId) {
                         return true;
@@ -181,14 +175,12 @@
                     return $cName === $gradeName || Str::startsWith($cName, $gradeName);
                 });
 
-                // Fallback: If no class models exist in database, group students by class name
                 if ($streamsInGrade->count() === 0 && $formStudents->count() > 0) {
                     $streamsInGrade = $formStudents->groupBy(function($s) {
                         return $s->schoolClass->class_name ?? $s->grade ?? 'General Stream';
                     });
                 }
 
-                // Fetch fee structures configured for this Form level
                 $gradeFees = $structures->filter(function($f) use ($gradeName) {
                     return $f->grade === $gradeName || Str::startsWith($f->grade, $gradeName);
                 });
@@ -199,7 +191,6 @@
                 
                 $masterTotal = $masterFormFees->sum('amount');
 
-                // Generate stream names string for header badge
                 if ($streamsInGrade->count() > 0) {
                     $firstStream = $streamsInGrade->first();
                     if (is_object($firstStream) && isset($firstStream->class_name)) {
@@ -290,7 +281,7 @@
                         </button>
                     </div>
 
-                    {{-- TAB 1: MASTER FORM BASE FEES (Auto-applies to Form 2A, 2B, 2C...) --}}
+                    {{-- TAB 1: MASTER FORM BASE FEES --}}
                     <div x-show="activeSubTab === 'master'">
                         <div class="mb-4 p-3.5 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/40 flex items-center justify-between text-xs text-indigo-900 dark:text-indigo-200">
                             <div class="flex items-center space-x-2">
@@ -358,25 +349,22 @@
                         </div>
                     </div>
 
-                    {{-- TAB 2: STREAMS BREAKOUT GRID (Includes Empty Classes with 0 Students) --}}
+                    {{-- TAB 2: STREAMS BREAKOUT GRID --}}
                     <div x-show="activeSubTab === 'streams'" style="display: none;">
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                             @forelse($streamsInGrade as $key => $streamItem)
                                 @php
                                     if (is_object($streamItem) && (isset($streamItem->class_name) || isset($streamItem->name))) {
-                                        // It's a SchoolClass model (shows even if 0 students enrolled!)
                                         $sClass = $streamItem;
                                         $sName = $sClass->class_name ?? $sClass->name;
                                         $sClassId = $sClass->id;
                                         
-                                        // Count students enrolled in this exact class stream
                                         $sStudentsCount = $students->filter(function($st) use ($sClassId, $sName) {
                                             return (isset($st->class_id) && $st->class_id == $sClassId) 
                                                 || (isset($st->school_class_id) && $st->school_class_id == $sClassId)
                                                 || ($st->schoolClass->class_name ?? $st->grade ?? '') === $sName;
                                         })->count();
                                     } else {
-                                        // Grouped student collection fallback
                                         $sClass = null;
                                         $sName = $key;
                                         $sClassId = null;

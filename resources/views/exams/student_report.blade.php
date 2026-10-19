@@ -39,14 +39,14 @@
     <div class="max-w-4xl mx-auto space-y-6">
 
         {{-- Report Card Outer Page --}}
-        <div class="report-card bg-white p-8 sm:p-12 rounded-2xl shadow-lg border border-slate-200 min-h-[297mm] flex flex-col justify-between">
+        <div class="report-card bg-white p-8 sm:p-12 rounded-3xl shadow-lg border border-slate-200 min-h-[297mm] flex flex-col justify-between">
             <div>
                 {{-- Header --}}
                 <div class="text-center pb-6 border-b-2 border-slate-900 mb-6">
                     @if(env('SCHOOL_LOGO_PATH'))
                         <img src="{{ asset(env('SCHOOL_LOGO_PATH')) }}" alt="Logo" class="h-16 mx-auto mb-3 object-contain">
                     @endif
-                    <h1 class="text-3xl font-black uppercase tracking-tight font-serif">{{ env('SCHOOL_NAME', 'KNOWLEDGE PLANET COLLEGE') }}</h1>
+                    <h1 class="text-3xl font-black uppercase tracking-tight font-serif">{{ env('SCHOOL_NAME', 'ACADEMIC INSTITUTION') }}</h1>
                     <div class="inline-block mt-2 px-4 py-1 text-xs font-bold uppercase tracking-wider bg-slate-100 border border-slate-300 rounded-md">
                         Official Terminal Academic Performance Report
                     </div>
@@ -54,14 +54,14 @@
                 </div>
 
                 {{-- Student & Term Details Grid --}}
-                <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs mb-6">
+                <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs mb-6">
                     <div>
                         <span class="text-slate-500 uppercase font-bold text-[10px] block">Student Name:</span>
                         <strong class="text-sm text-slate-900 block font-bold">{{ $student->name }} {{ $student->surname }}</strong>
                         <span class="text-slate-600 font-mono">Reg No: {{ $student->student_number }}</span>
                     </div>
                     <div class="text-right">
-                        <span class="text-slate-500 uppercase font-bold text-[10px] block">Academic Term & Grade:</span>
+                        <span class="text-slate-500 uppercase font-bold text-[10px] block">Academic Term & Stream:</span>
                         <strong class="text-sm text-slate-900 block font-bold">{{ $term->term_name }} ({{ $term->academic_year }})</strong>
                         <span class="text-slate-600 font-bold">Class: {{ $student->schoolClass->class_name ?? $student->grade }}</span>
                     </div>
@@ -112,7 +112,7 @@
                 </table>
 
                 {{-- Overall Summary --}}
-                <div class="flex items-center justify-between p-4 bg-slate-900 text-white rounded-xl font-sans mb-8">
+                <div class="flex items-center justify-between p-4 bg-slate-900 text-white rounded-2xl font-sans mb-8">
                     <div>
                         <span class="text-[10px] uppercase font-bold text-slate-400 block">Overall Term Mean Score</span>
                         <span class="text-2xl font-black font-mono">{{ $overallAverage }}%</span>

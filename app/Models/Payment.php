@@ -37,8 +37,6 @@ class Payment extends Model
 
     /**
      * The attributes that should be cast.
-     * Casting 'payment_date' ensures it returns a Carbon instance,
-     * making it easy to format in your Blade files.
      */
     protected $casts = [
         'payment_date' => 'date',

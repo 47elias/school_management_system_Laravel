@@ -1,143 +1,20 @@
 @extends('layouts.student')
 
 @section('content')
-<!-- Scoped Modern UI Updates -->
-<style>
-    body { font-family: 'Inter', sans-serif !important; background: #f8fafc; }
-
-    /* Modern Box Styling */
-    .content .box { 
-        border-radius: 12px; 
-        border-top: none; 
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        margin-bottom: 25px; 
-        overflow: hidden; 
-        background: #ffffff;
-    }
-    .content .box-header { 
-        border-bottom: 1px solid #f1f5f9; 
-        padding: 20px 25px; 
-        background: #fff; 
-    }
-    .content .box-title { 
-        font-weight: 800 !important; 
-        color: #0f172a; 
-        font-size: 18px; 
-    }
-
-    /* Filter Bar */
-    .content .filter-bar {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 15px 25px;
-        margin-bottom: 25px;
-        display: flex;
-        align-items: center;
-        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-    }
-
-    /* Form Inputs */
-    .content .form-control { 
-        border-radius: 8px; 
-        border: 1px solid #cbd5e1; 
-        padding: 8px 15px; 
-        height: auto; 
-        font-size: 14px; 
-        color: #334155;
-    }
-    .content .form-control:focus {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        outline: none;
-    }
-    
-    /* Optimized Table for 10+ Subjects */
-    .content .table > tbody > tr > td { 
-        vertical-align: middle !important; 
-        padding: 16px 20px; 
-        border-top: 1px solid #f1f5f9; 
-    }
-    .content .table > thead > tr > th { 
-        border-bottom: 2px solid #e2e8f0; 
-        color: #64748b; 
-        font-weight: 700; 
-        padding: 14px 20px; 
-        text-transform: uppercase; 
-        font-size: 12px; 
-        letter-spacing: 0.05em; 
-        background: #f8fafc; 
-    }
-    .content .table-hover > tbody > tr:hover { 
-        background-color: #f8fafc; 
-    }
-
-    /* Paper Breakdown UI */
-    .paper-item {
-        font-size: 13px;
-        color: #475569;
-        margin-bottom: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background: #f1f5f9;
-        padding: 6px 10px;
-        border-radius: 6px;
-        border: 1px solid #e2e8f0;
-    }
-    .paper-item:last-child { margin-bottom: 0; }
-    .paper-item strong { color: #0f172a; font-family: monospace; font-size: 14px;}
-
-    /* Comments UI */
-    .comment-box {
-        font-size: 13px;
-        color: #475569;
-        background: #fdf8f6;
-        border-left: 3px solid #f97316;
-        padding: 8px 12px;
-        margin-bottom: 6px;
-        border-radius: 0 6px 6px 0;
-    }
-    .comment-box:last-child { margin-bottom: 0; }
-    .comment-paper-title { font-weight: 700; color: #c2410c; font-size: 11px; text-transform: uppercase; margin-bottom: 2px; display: block; }
-    .no-comment { color: #94a3b8; font-style: italic; font-size: 13px; }
-
-    /* Typography Utilities */
-    .badge-grade { font-size: 16px; font-weight: 800; padding: 6px 14px; border-radius: 8px; display: inline-block;}
-    .grade-A { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-    .grade-B { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
-    .grade-C { background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
-    .grade-D { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
-    .grade-F { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-
-    .avg-score { font-size: 18px; font-weight: 800; color: #0f172a; font-family: monospace; }
-    
-    /* Stats Widget */
-    .stat-widget { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border-radius: 12px; padding: 25px; color: white; box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2); }
-    .stat-value { font-size: 36px; font-weight: 800; line-height: 1; margin-bottom: 5px; }
-    .stat-label { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; }
-</style>
-
-<section class="content-header" style="padding-bottom: 15px;">
-    <h1 style="font-weight: 800; color: #0f172a; font-size: 28px;">
-        My Exam Results
-    </h1>
-</section>
-
-<section class="content">
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible" style="border-radius: 8px; box-shadow: 0 4px 10px rgba(239,68,68,0.2);">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-            <h4 style="font-weight: 700; margin-bottom: 0;"><i class="icon fa fa-ban"></i> {{ session('error') }}</h4>
+<div class="space-y-4">
+    <!-- PAGE TITLE -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 border-b border-slate-300 dark:border-slate-800">
+        <div>
+            <h1 class="text-base font-black text-slate-900 dark:text-slate-100 tracking-tight">Exam Results</h1>
+            <p class="text-xs font-bold text-slate-700 dark:text-slate-400">Subject marks, paper breakdowns, and remarks</p>
         </div>
-    @endif
 
-    {{-- 1. TERM SWITCHER --}}
-    <div class="filter-bar">
-        <form method="GET" action="{{ url()->current() }}" class="form-inline" style="display: flex; align-items: center; width: 100%; gap: 15px;">
-            <div class="form-group" style="margin: 0; display: flex; align-items: center; gap: 10px;">
-                <label style="margin: 0; color: #475569;"><i class="fa fa-filter text-blue"></i> Viewing Term:</label>
-                <select name="term_id" class="form-control" onchange="this.form.submit()" style="min-width: 250px; font-weight: 600;">
+        <form method="GET" action="{{ url()->current() }}">
+            <div class="relative">
+                <i class="fa-solid fa-filter absolute left-3 top-1/2 -translate-y-1/2 text-slate-900 text-xs pointer-events-none"></i>
+                <select name="term_id" 
+                        onchange="this.form.submit()"
+                        class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg pl-8 pr-8 py-1.5 text-xs font-black text-slate-900 dark:text-slate-100 focus:outline-none">
                     @foreach($allTerms as $t)
                         <option value="{{ $t->id }}" {{ ($activeTerm->id == $t->id) ? 'selected' : '' }}>
                             {{ $t->term_name }} ({{ $t->academic_year ?? $t->academicYear->year_name }})
@@ -148,121 +25,97 @@
         </form>
     </div>
 
-    <div class="row">
-        {{-- 2. STUDENT OVERVIEW WIDGET --}}
-        <div class="col-md-3">
-            <div class="stat-widget mb-4">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div>
-                        <div class="stat-label">Term Average</div>
-                        <div class="stat-value">{{ round($average, 1) }}%</div>
-                    </div>
-                    <i class="fa fa-line-chart" style="font-size: 40px; opacity: 0.3;"></i>
-                </div>
-                <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
-                    <div style="font-size: 16px; font-weight: 600;">{{ $student->surname }}, {{ $student->name }}</div>
-                    <div style="font-size: 13px; opacity: 0.9;">Grade: {{ $student->grade }} | ID: {{ $student->student_number ?? $student->student_id }}</div>
-                </div>
+    <!-- MAIN GRID -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <!-- TERM AVERAGE STAT WIDGET -->
+        <div class="bg-slate-900 text-white rounded-lg p-4 shadow-xs flex flex-col justify-between border border-slate-900">
+            <div>
+                <span class="text-[10px] font-black uppercase tracking-wider text-slate-300 block">Term Average</span>
+                <span class="text-3xl font-black mt-1 block">{{ round($average, 1) }}%</span>
+            </div>
+            <div class="pt-4 mt-4 border-t border-slate-700 text-xs space-y-0.5">
+                <p class="font-black truncate text-white">{{ $student->surname }}, {{ $student->name }}</p>
+                <p class="text-[11px] font-bold text-slate-300">Grade: {{ $student->grade }} | ID: {{ $student->student_number ?? $student->student_id }}</p>
             </div>
         </div>
 
-        {{-- 3. RESULTS TABLE --}}
-        <div class="col-md-9">
-            <div class="box">
-                <div class="box-header with-border">
-                    <h3 class="box-title"><i class="fa fa-graduation-cap text-blue" style="margin-right: 8px;"></i> Academic Performance: {{ $activeTerm->term_name }}</h3>
-                </div>
-                <div class="box-body no-padding">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th style="width: 20%;">Subject Name</th>
-                                    <th style="width: 20%;">Papers</th>
-                                    <th style="width: 30%;">Teacher's Comments</th>
-                                    <th style="width: 15%;" class="text-center">Final Mark</th>
-                                    <th style="width: 15%;" class="text-center">Grade</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($current_results as $result)
-                                <tr>
-                                    {{-- Column 1: Subject Name --}}
-                                    <td>
-                                        <strong style="color: #0f172a; font-size: 15px; text-transform: uppercase; display: block;">{{ $result->subject_name }}</strong>
-                                        @if($result->papers_taken > 1)
-                                            <span style="font-size: 11px; font-weight: 600; color: #64748b; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; margin-top: 4px; display: inline-block;">
-                                                {{ $result->papers_taken }} Papers Assessed
-                                            </span>
-                                        @endif
-                                    </td>
-                                    
-                                    {{-- Column 2: Papers Breakdown --}}
-                                    <td>
-                                        @foreach($result->individual as $mark)
-                                            <div class="paper-item">
-                                                <span><i class="fa fa-file-text-o" style="color: #94a3b8; margin-right: 4px;"></i> {{ $mark->exam->exam_name }}</span>
-                                                <span><strong>{{ $mark->score }}%</strong></span>
-                                            </div>
-                                        @endforeach
-                                    </td>
+        <!-- RESULTS TABLE -->
+        <div class="lg:col-span-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-300 dark:border-slate-800 shadow-xs overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-300 dark:border-slate-800 bg-slate-100 dark:bg-slate-950">
+                <h3 class="text-xs font-black text-slate-900 dark:text-slate-100 flex items-center space-x-2">
+                    <i class="fa-solid fa-graduation-cap text-slate-900"></i>
+                    <span>Academic Performance: {{ $activeTerm->term_name }}</span>
+                </h3>
+            </div>
 
-                                    {{-- Column 3: Comments --}}
-                                    <td>
-                                        @php $hasComments = false; @endphp
-                                        @foreach($result->individual as $mark)
-                                            @if(!empty($mark->teacher_comment))
-                                                @php $hasComments = true; @endphp
-                                                <div class="comment-box">
-                                                    @if($result->papers_taken > 1)
-                                                        <span class="comment-paper-title">{{ $mark->exam->exam_name }}</span>
-                                                    @endif
-                                                    "{{ $mark->teacher_comment }}"
-                                                </div>
-                                            @endif
-                                        @endforeach
-                                        
-                                        @if(!$hasComments)
-                                            <span class="no-comment">No comments provided.</span>
-                                        @endif
-                                    </td>
-                                    
-                                    {{-- Column 4: Final Mark --}}
-                                    <td class="text-center">
-                                        <span class="avg-score">{{ $result->average_score }}%</span>
-                                    </td>
-
-                                    {{-- Column 5: Grade --}}
-                                    <td class="text-center">
-                                        @php
-                                            $gradeClass = 'grade-F';
-                                            if($result->grade == 'A') $gradeClass = 'grade-A';
-                                            elseif($result->grade == 'B') $gradeClass = 'grade-B';
-                                            elseif($result->grade == 'C') $gradeClass = 'grade-C';
-                                            elseif($result->grade == 'D') $gradeClass = 'grade-D';
-                                        @endphp
-                                        <span class="badge-grade {{ $gradeClass }}">
-                                            {{ $result->grade }}
-                                        </span>
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="5" class="text-center" style="padding: 60px 20px;">
-                                        <div style="width: 80px; height: 80px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
-                                            <i class="fa fa-inbox" style="font-size: 35px; color: #94a3b8;"></i>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-900 dark:text-slate-200">
+                    <thead class="bg-slate-100 dark:bg-slate-950 text-[10px] font-black uppercase text-slate-900 dark:text-slate-300 border-b border-slate-300 dark:border-slate-800">
+                        <tr>
+                            <th class="py-2.5 px-4">Subject</th>
+                            <th class="py-2.5 px-4">Papers</th>
+                            <th class="py-2.5 px-4">Teacher Comments</th>
+                            <th class="py-2.5 px-4 text-center">Score</th>
+                            <th class="py-2.5 px-4 text-center">Grade</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+                        @forelse($current_results as $result)
+                            <tr class="hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors">
+                                <td class="py-2.5 px-4 font-black text-slate-900 dark:text-slate-100">
+                                    {{ $result->subject_name }}
+                                    @if($result->papers_taken > 1)
+                                        <span class="block text-[10px] font-bold text-slate-700 dark:text-slate-400 mt-0.5">{{ $result->papers_taken }} Papers</span>
+                                    @endif
+                                </td>
+                                <td class="py-2.5 px-4 space-y-1">
+                                    @foreach($result->individual as $mark)
+                                        <div class="flex items-center justify-between px-2 py-1 rounded bg-slate-200 dark:bg-slate-800 text-[10px] border border-slate-300 dark:border-slate-700">
+                                            <span class="font-bold text-slate-900 dark:text-slate-300 truncate max-w-[100px]">{{ $mark->exam->exam_name }}</span>
+                                            <span class="font-mono font-black text-slate-900 dark:text-slate-100">{{ $mark->score }}%</span>
                                         </div>
-                                        <h4 style="font-weight: 700; color: #475569;">No Results Published</h4>
-                                        <p style="color: #94a3b8;">You currently have no exam marks recorded for this term.</p>
-                                    </td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                                    @endforeach
+                                </td>
+                                <td class="py-2.5 px-4">
+                                    @php $hasComments = false; @endphp
+                                    @foreach($result->individual as $mark)
+                                        @if(!empty($mark->teacher_comment))
+                                            @php $hasComments = true; @endphp
+                                            <div class="p-2 rounded bg-amber-100 dark:bg-amber-950/40 border-l-4 border-amber-600 text-xs font-bold text-slate-900 dark:text-amber-200 mb-1">
+                                                "{{ $mark->teacher_comment }}"
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                    @if(!$hasComments)
+                                        <span class="text-slate-700 dark:text-slate-400 font-bold italic text-[11px]">No remarks</span>
+                                    @endif
+                                </td>
+                                <td class="py-2.5 px-4 text-center font-mono font-black text-xs text-slate-900 dark:text-slate-100">
+                                    {{ $result->average_score }}%
+                                </td>
+                                <td class="py-2.5 px-4 text-center">
+                                    @php
+                                        $badgeStyle = 'bg-rose-200 text-rose-900 border-rose-400';
+                                        if($result->grade == 'A') $badgeStyle = 'bg-emerald-200 text-emerald-950 border-emerald-400';
+                                        elseif($result->grade == 'B') $badgeStyle = 'bg-sky-200 text-sky-950 border-sky-400';
+                                        elseif($result->grade == 'C') $badgeStyle = 'bg-amber-200 text-amber-950 border-amber-400';
+                                    @endphp
+                                    <span class="px-2.5 py-1 rounded text-xs font-black border {{ $badgeStyle }}">
+                                        {{ $result->grade }}
+                                    </span>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="py-8 text-center text-slate-900 dark:text-slate-400 font-bold">
+                                    No results published for this term.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
-</section>
+</div>
 @endsection

@@ -1,125 +1,114 @@
 @extends('layouts.student')
 
 @section('content')
-<section class="content-header">
-    <h1>
-        AI Academic Assistant
-        <small>{{ env('SCHOOL_ACRONYM') }} v{{ env('PORTAL_VERSION') }}</small>
-    </h1>
-    <ol class="breadcrumb">
-        <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
-        <li class="active">AI Chat</li>
-    </ol>
-</section>
+<div class="space-y-4">
+    <!-- PAGE TITLE -->
+    <div class="flex items-center justify-between pb-2 border-b border-slate-300 dark:border-slate-800">
+        <div>
+            <h1 class="text-base font-black text-slate-900 dark:text-slate-100 tracking-tight">AI Academic Assistant</h1>
+            <p class="text-xs font-bold text-slate-700 dark:text-slate-400">AI guidance for your academic and financial records</p>
+        </div>
+        <span class="px-2.5 py-1 text-[10px] font-black rounded bg-slate-900 text-white">
+            {{ env('SCHOOL_ACRONYM', 'SMS') }} v{{ env('PORTAL_VERSION', '2.6') }}
+        </span>
+    </div>
 
-<section class="content">
-    {{-- TOP STATS ROW --}}
-    <div class="row">
-        {{-- GRADE BOX --}}
-        <div class="col-md-3 col-sm-6 col-xs-12">
-            <div class="info-box bg-aqua">
-                <span class="info-box-icon"><i class="fa fa-graduation-cap"></i></span>
-                <div class="info-box-content">
-                    <span class="info-box-text">Grade / Level</span>
-                    <span class="info-box-number">{{ $student->grade }}</span>
-                    <div class="progress"><div class="progress-bar" style="width: 100%"></div></div>
-                    <span class="progress-description text-bold">{{ env('SCHOOL_NAME') }}</span>
-                </div>
+    <!-- STATS ROW -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="bg-white dark:bg-slate-900 rounded-lg p-3.5 border border-slate-300 dark:border-slate-800 shadow-xs flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-lg bg-slate-900 text-white flex items-center justify-center text-base shrink-0">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+                <p class="text-[10px] font-black uppercase text-slate-700 dark:text-slate-400">Grade Level</p>
+                <p class="text-sm font-black text-slate-900 dark:text-slate-100 truncate">{{ $student->grade }}</p>
             </div>
         </div>
 
-        {{-- FEE STATUS BOX --}}
-        <div class="col-md-3 col-sm-6 col-xs-12">
-            <div class="info-box {{ $calculatedBalance > 0 ? 'bg-red' : 'bg-green' }}">
-                <span class="info-box-icon"><i class="fa fa-money"></i></span>
-                <div class="info-box-content">
-                    <span class="info-box-text">Fee Balance</span>
-                    <span class="info-box-number">{{ env('CURRENCY_SYMBOL') }}{{ number_format($calculatedBalance, 2) }}</span>
-                    <div class="progress">
-                        <div class="progress-bar" style="width: {{ $paymentPercentage }}%"></div>
-                    </div>
-                    <span class="progress-description">
-                        {{ number_format($paymentPercentage, 0) }}% Cleared
-                    </span>
-                </div>
+        <div class="bg-white dark:bg-slate-900 rounded-lg p-3.5 border border-slate-300 dark:border-slate-800 shadow-xs flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-lg {{ $calculatedBalance > 0 ? 'bg-rose-700 text-white' : 'bg-emerald-700 text-white' }} flex items-center justify-center text-base shrink-0">
+                <i class="fa-solid fa-wallet"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+                <p class="text-[10px] font-black uppercase text-slate-700 dark:text-slate-400">Fee Balance</p>
+                <p class="text-sm font-black text-slate-900 dark:text-slate-100">{{ env('CURRENCY_SYMBOL', '$') }}{{ number_format($calculatedBalance, 2) }}</p>
             </div>
         </div>
 
-        {{-- TERM BOX --}}
-        <div class="col-md-3 col-sm-6 col-xs-12">
-            <div class="info-box bg-yellow">
-                <span class="info-box-icon"><i class="fa fa-calendar-check-o"></i></span>
-                <div class="info-box-content">
-                    <span class="info-box-text">Active Term</span>
-                    <span class="info-box-number">{{ $currentTerm->term_name ?? $student->term->name ?? 'N/A' }}</span>
-                    <div class="progress"><div class="progress-bar" style="width: 100%"></div></div>
-                    <span class="progress-description">Academic Year {{ date('Y') }}</span>
-                </div>
+        <div class="bg-white dark:bg-slate-900 rounded-lg p-3.5 border border-slate-300 dark:border-slate-800 shadow-xs flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-lg bg-amber-600 text-white flex items-center justify-center text-base shrink-0">
+                <i class="fa-solid fa-calendar-check"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+                <p class="text-[10px] font-black uppercase text-slate-700 dark:text-slate-400">Active Term</p>
+                <p class="text-sm font-black text-slate-900 dark:text-slate-100 truncate">{{ $currentTerm->term_name ?? $student->term->name ?? 'N/A' }}</p>
             </div>
         </div>
 
-        {{-- PERFORMANCE BOX --}}
-        <div class="col-md-3 col-sm-6 col-xs-12">
-            <div class="info-box bg-purple">
-                <span class="info-box-icon"><i class="fa fa-line-chart"></i></span>
-                <div class="info-box-content">
-                    <span class="info-box-text">Academic Status</span>
-                    <span class="info-box-number">AI Enhanced</span>
-                    <div class="progress"><div class="progress-bar" style="width: 100%"></div></div>
-                    <span class="progress-description">Inspired to inspire</span>
-                </div>
+        <div class="bg-white dark:bg-slate-900 rounded-lg p-3.5 border border-slate-300 dark:border-slate-800 shadow-xs flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-lg bg-emerald-700 text-white flex items-center justify-center text-base shrink-0">
+                <i class="fa-solid fa-robot"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+                <p class="text-[10px] font-black uppercase text-slate-700 dark:text-slate-400">Assistant Status</p>
+                <p class="text-sm font-black text-slate-900 dark:text-slate-100">Ready</p>
             </div>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-12">
-            {{-- CHAT BOX --}}
-            <div class="box box-primary direct-chat direct-chat-primary">
-                <div class="box-header with-border">
-                    <h3 class="box-title text-bold">Chat with Assistant</h3>
-                    <div class="box-tools pull-right">
-                        <button type="button" class="btn btn-box-tool" data-toggle="tooltip" title="Clear Chat" onclick="window.location.reload()">
-                            <i class="fa fa-refresh"></i>
-                        </button>
+    <!-- CHAT BOX -->
+    <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-300 dark:border-slate-800 shadow-xs overflow-hidden">
+        <div class="px-4 py-3 border-b border-slate-300 dark:border-slate-800 flex items-center justify-between bg-slate-100 dark:bg-slate-950">
+            <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+                <h3 class="text-xs font-black text-slate-900 dark:text-slate-100">Interactive Assistant Chat</h3>
+            </div>
+            <button onclick="window.location.reload()" class="p-1 rounded text-slate-900 dark:text-slate-200 hover:bg-slate-200">
+                <i class="fa-solid fa-rotate-right text-xs"></i>
+            </button>
+        </div>
+
+        <div class="p-4">
+            <div id="chat-window" class="h-[380px] overflow-y-auto space-y-3 pr-2 scroll-smooth">
+                <!-- System Greeting -->
+                <div class="flex items-start space-x-2.5 max-w-[85%]">
+                    <div class="w-7 h-7 rounded bg-slate-900 text-white flex items-center justify-center text-xs shrink-0 mt-0.5">
+                        <i class="fa-solid fa-robot"></i>
                     </div>
-                </div>
-
-                <div class="box-body">
-                    <div class="direct-chat-messages" id="chat-window" style="height: 450px;">
-
-                        <div class="direct-chat-msg">
-                            <div class="direct-chat-info clearfix">
-                                <span class="direct-chat-name pull-left">System AI</span>
-                                <span class="direct-chat-timestamp pull-right">{{ date('H:i') }}</span>
-                            </div>
-                            <img class="direct-chat-img" src="{{ asset('adminlte/dist/img/avatar5.png') }}" alt="Bot Image">
-                            <div class="direct-chat-text">
-                                Hello {{ $student->name }}! I have access to your financial and academic records. How can I assist you today?
-                            </div>
+                    <div>
+                        <div class="flex items-center space-x-2 mb-1">
+                            <span class="text-[10px] font-black text-slate-900 dark:text-slate-100">System AI</span>
+                            <span class="text-[10px] font-bold text-slate-700">{{ date('H:i') }}</span>
                         </div>
-
-                    </div>
-
-                    <div id="chat-loading" style="display: none; padding: 10px;">
-                        <i class="fa fa-refresh fa-spin"></i> Assistant is thinking...
-                    </div>
-                </div>
-
-                <div class="box-footer">
-                    <form id="chat-form">
-                        <div class="input-group">
-                            <input type="text" id="user-input" name="message" placeholder="Ask about your fees, results, or school policies..." class="form-control" autocomplete="off">
-                            <span class="input-group-btn">
-                                <button type="submit" class="btn btn-primary btn-flat text-bold">Send Request</button>
-                            </span>
+                        <div class="p-3 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-slate-100 leading-relaxed border border-slate-300 dark:border-slate-700">
+                            Hello {{ $student->name }}! I have access to your financial and academic records. How can I assist you today?
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
+
+            <div id="chat-loading" class="hidden my-2 text-xs font-bold text-slate-900 flex items-center space-x-2">
+                <i class="fa-solid fa-spinner fa-spin text-slate-900"></i>
+                <span>Assistant is thinking...</span>
+            </div>
+        </div>
+
+        <div class="p-3 bg-slate-100 dark:bg-slate-950 border-t border-slate-300 dark:border-slate-800">
+            <form id="chat-form" class="flex items-center space-x-2">
+                <input type="text" 
+                       id="user-input" 
+                       name="message" 
+                       placeholder="Ask about your fees, results, or school policies..." 
+                       class="flex-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg px-3.5 py-2 text-xs font-bold text-slate-900 dark:text-slate-100 placeholder-slate-700 focus:outline-none"
+                       autocomplete="off">
+                <button type="submit" class="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-black flex items-center space-x-1.5 shrink-0">
+                    <span>Send</span>
+                    <i class="fa-solid fa-paper-plane text-[10px]"></i>
+                </button>
+            </form>
         </div>
     </div>
-</section>
+</div>
 
 <script>
     document.getElementById('chat-form').addEventListener('submit', function(e) {
@@ -132,13 +121,11 @@
 
         if (!message) return;
 
-        // 1. Append User Message to UI
         appendMessage('user', message);
         input.value = '';
-        loader.style.display = 'block';
+        loader.classList.remove('hidden');
         chatWindow.scrollTop = chatWindow.scrollHeight;
 
-        // 2. AJAX Request to Controller
         fetch("{{ route('student.ai_chat.message') }}", {
             method: "POST",
             headers: {
@@ -149,49 +136,59 @@
         })
         .then(response => response.json())
         .then(data => {
-            loader.style.display = 'none';
+            loader.classList.add('hidden');
             appendMessage('bot', data.reply);
             chatWindow.scrollTop = chatWindow.scrollHeight;
         })
         .catch(error => {
-            loader.style.display = 'none';
-            appendMessage('bot', "Error: I'm having trouble connecting to the system. Please try again later.");
+            loader.classList.add('hidden');
+            appendMessage('bot', "Error: System connection failed. Please try again.");
         });
     });
 
     function appendMessage(role, text) {
         const chatWindow = document.getElementById('chat-window');
         const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
         const isBot = role === 'bot';
         const name = isBot ? 'System AI' : "{{ $student->name }}";
-        const align = isBot ? 'left' : 'right';
-        const pullName = isBot ? 'pull-left' : 'pull-right';
-        const pullTime = isBot ? 'pull-right' : 'pull-left';
         const img = isBot ? "{{ asset('adminlte/dist/img/avatar5.png') }}" : "{{ asset($avatar) }}";
-        const msgClass = isBot ? '' : 'right';
 
-        const html = `
-            <div class="direct-chat-msg ${msgClass}">
-                <div class="direct-chat-info clearfix">
-                    <span class="direct-chat-name ${pullName}">${name}</span>
-                    <span class="direct-chat-timestamp ${pullTime}">${time}</span>
+        let html = '';
+        if (isBot) {
+            html = `
+                <div class="flex items-start space-x-2.5 max-w-[85%]">
+                    <div class="w-7 h-7 rounded bg-slate-900 text-white flex items-center justify-center text-xs shrink-0 mt-0.5">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2 mb-1">
+                            <span class="text-[10px] font-black text-slate-900 dark:text-slate-100">${name}</span>
+                            <span class="text-[10px] font-bold text-slate-700">${time}</span>
+                        </div>
+                        <div class="p-3 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-slate-100 leading-relaxed border border-slate-300 dark:border-slate-700">
+                            ${text}
+                        </div>
+                    </div>
                 </div>
-                <img class="direct-chat-img" src="${img}" alt="User Image">
-                <div class="direct-chat-text">
-                    ${text}
+            `;
+        } else {
+            html = `
+                <div class="flex items-start justify-end space-x-2.5 ml-auto max-w-[85%]">
+                    <div class="text-right">
+                        <div class="flex items-center justify-end space-x-2 mb-1">
+                            <span class="text-[10px] font-bold text-slate-700">${time}</span>
+                            <span class="text-[10px] font-black text-slate-900 dark:text-slate-100">${name}</span>
+                        </div>
+                        <div class="p-3 rounded-lg bg-slate-900 text-white text-xs font-bold leading-relaxed">
+                            ${text}
+                        </div>
+                    </div>
+                    <img src="${img}" class="w-7 h-7 rounded object-cover ring-2 ring-slate-900 shrink-0 mt-0.5" alt="User">
                 </div>
-            </div>
-        `;
+            `;
+        }
 
         chatWindow.insertAdjacentHTML('beforeend', html);
     }
 </script>
-
-<style>
-    .direct-chat-text { border-radius: 15px !important; }
-    .direct-chat-primary .right > .direct-chat-text { background: #3c8dbc !important; border-color: #3c8dbc !important; }
-    .info-box-number { font-size: 22px !important; }
-    .text-bold { font-weight: 700; }
-</style>
 @endsection

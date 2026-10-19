@@ -7,8 +7,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Biometric Gatekeeper</h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Exam Authentication Terminal</p>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Biometric Optical Terminal</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Exam Hall Gatekeeper Authentication</p>
         </div>
         <div class="mt-4 sm:mt-0">
             <a href="{{ Route::has('exams.index') ? route('exams.index') : url('/exams') }}" 
@@ -39,7 +39,7 @@
 
             {{-- Optical Scanner Feed --}}
             <div class="lg:col-span-7">
-                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
+                <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
                     <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/80">
                         <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center">
                             <i class="fa-solid fa-camera text-indigo-500 mr-2.5"></i> Live Optical Scanner Feed
@@ -47,14 +47,14 @@
                     </div>
 
                     <div class="p-6 space-y-4">
-                        <div class="relative bg-slate-900 rounded-xl overflow-hidden aspect-[4/3] w-full border border-slate-700">
+                        <div class="relative bg-slate-900 rounded-2xl overflow-hidden aspect-[4/3] w-full border border-slate-700">
                             <video id="webcam-feed-source" autoplay playsinline muted class="w-full h-full object-cover scale-x-[-1]"></video>
                             <canvas id="snapshot-canvas-buffer" style="display: none;" width="640" height="480"></canvas>
-                            <div id="interactive-hud" class="absolute inset-[15%] border-2 border-dashed border-indigo-500 rounded-xl pointer-events-none transition-all"></div>
+                            <div id="interactive-hud" class="absolute inset-[15%] border-2 border-dashed border-indigo-500 rounded-2xl pointer-events-none transition-all"></div>
                         </div>
 
                         <button id="trigger-scan-btn" 
-                                class="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center space-x-2">
+                                class="w-full py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center space-x-2">
                             <i id="processing-spinner" class="fa-solid fa-circle-notch fa-spin hidden"></i>
                             <span id="btn-label-text" class="flex items-center"><i class="fa-solid fa-eye mr-2"></i> CAPTURE & ANALYZE BIOMETRICS</span>
                         </button>
@@ -64,7 +64,7 @@
 
             {{-- Authentication Output Console --}}
             <div class="lg:col-span-5">
-                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden min-h-[420px] transition-colors flex flex-col">
+                <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden min-h-[420px] transition-colors flex flex-col">
                     <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-900 text-white">
                         <h3 class="text-base font-bold flex items-center">
                             <i class="fa-solid fa-desktop mr-2.5"></i> Authentication Console
@@ -135,7 +135,6 @@
                 })
                 .catch(function(hardwareError) {
                     console.error("Camera access failed: ", hardwareError);
-                    alert("Unable to access camera media stream. Please verify browser permissions and SSL configuration.");
                 });
         }
 
@@ -169,7 +168,7 @@
                     document.getElementById('out-idnumber').innerText = bundle.data.student.student_number;
                     document.getElementById('out-timestamp').innerText = bundle.data.student.verified_time;
 
-                    hudOverlay.className = "absolute inset-[15%] border-2 border-emerald-500 bg-emerald-500/10 rounded-xl pointer-events-none transition-all";
+                    hudOverlay.className = "absolute inset-[15%] border-2 border-emerald-500 bg-emerald-500/10 rounded-2xl pointer-events-none transition-all";
                     successPanel.classList.remove('hidden');
 
                     setTimeout(clearConsoleToIdle, 3500);
@@ -183,7 +182,7 @@
                     }
 
                     document.getElementById('out-error-message').innerText = bundle.data.message || "Failed biometric signature mapping confirmation.";
-                    hudOverlay.className = "absolute inset-[15%] border-2 border-rose-500 bg-rose-500/10 rounded-xl pointer-events-none transition-all";
+                    hudOverlay.className = "absolute inset-[15%] border-2 border-rose-500 bg-rose-500/10 rounded-2xl pointer-events-none transition-all";
                     errorPanel.classList.remove('hidden');
                 }
             })
@@ -202,7 +201,7 @@
                 actionButton.disabled = true;
                 spinnerIcon.classList.remove('hidden');
                 labelsContainer.innerText = " COMPUTING BIOMETRIC HASH MATRICES...";
-                hudOverlay.className = "absolute inset-[15%] border-2 border-dashed border-amber-500 animate-pulse rounded-xl pointer-events-none transition-all";
+                hudOverlay.className = "absolute inset-[15%] border-2 border-dashed border-amber-500 animate-pulse rounded-2xl pointer-events-none transition-all";
             } else {
                 actionButton.disabled = false;
                 spinnerIcon.classList.add('hidden');
@@ -218,7 +217,7 @@
 
         function clearConsoleToIdle() {
             purgePanelVisibilities();
-            hudOverlay.className = "absolute inset-[15%] border-2 border-dashed border-indigo-500 rounded-xl pointer-events-none transition-all";
+            hudOverlay.className = "absolute inset-[15%] border-2 border-dashed border-indigo-500 rounded-2xl pointer-events-none transition-all";
             idlePanel.classList.remove('hidden');
         }
     </script>

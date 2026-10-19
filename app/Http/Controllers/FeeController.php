@@ -11,8 +11,12 @@ use App\Models\Payslip;
 use App\Models\FeeTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
-use Paynow\Payments\Paynow;
+
+// Pesepay SDK Namespace Import
+use Pesepay\Pesepay;
 
 class FeeController extends Controller
 {
@@ -43,9 +47,9 @@ class FeeController extends Controller
         $carriedForward = 0;
         foreach($pastTransactions as $pt) {
             if ($pt->amount_paid < 0) {
-                $carriedForward += abs($pt->amount_paid); // Charges increase arrears
+                $carriedForward += abs($pt->amount_paid);
             } else {
-                $carriedForward -= $pt->amount_paid; // Payments reduce arrears
+                $carriedForward -= $pt->amount_paid;
             }
         }
 
@@ -88,19 +92,19 @@ class FeeController extends Controller
         $student = Student::findOrFail($id);
 
         $data = $request->validate([
-            'amount' => 'required|numeric|min:0.01',
+            'amount'  => 'required|numeric|min:0.01',
             'term_id' => 'required|exists:terms,id',
             'remarks' => 'nullable|string'
         ]);
 
         Payment::create([
-            'student_id' => $student->id,
-            'term_id' => $data['term_id'],
-            'amount_paid' => -abs($data['amount']),
-            'payment_date' => now(),
+            'student_id'     => $student->id,
+            'term_id'        => $data['term_id'],
+            'amount_paid'    => -abs($data['amount']),
+            'payment_date'   => now(),
             'payment_method' => 'Credit Withdrawal',
-            'reference_no' => 'WD-' . strtoupper(uniqid()),
-            'remarks' => $data['remarks'] ?? 'Withdrawal of overpayment'
+            'reference_no'   => 'WD-' . strtoupper(uniqid()),
+            'remarks'        => $data['remarks'] ?? 'Withdrawal of overpayment'
         ]);
 
         return back()->with('success', 'Amount successfully deducted from current term.');
@@ -226,8 +230,7 @@ class FeeController extends Controller
             $report = $report->where('balance', '<=', 0);
         }
 
-        // EXACT FIX: Added 'totalRevenue' to the compact array here so the view can read it
-        return view('fees.balance_report', compact(
+        return view('fees.report', compact(
             'report', 'currentTerm', 'terms', 'grades',
             'selectedGrade', 'selectedTermId', 'searchName', 'status',
             'dailyIncome', 'dailyExpense', 'weeklyIncome', 'weeklyExpense',
@@ -381,9 +384,9 @@ class FeeController extends Controller
         ]);
 
         try {
-            $data['payment_date'] = Carbon::createFromFormat('d/m/Y', $request->payment_date)->format('Y-m-d');
+            $data['payment_date'] = Carbon::parse($request->payment_date)->format('Y-m-d');
         } catch (\Exception $e) {
-            return back()->withInput()->withErrors(['payment_date' => 'Invalid date format. Use DD/MM/YYYY.']);
+            return back()->withInput()->withErrors(['payment_date' => 'Invalid date format.']);
         }
 
         Payment::create($data);
@@ -396,98 +399,276 @@ class FeeController extends Controller
         return back()->with('success', 'Payment record has been deleted successfully.');
     }
 
+    /**
+     * INITIATE PESEPAY TRANSACTION
+     */
+    public function payWithPesepay(Request $request)
+    {
+        $request->validate([
+            'student_id'  => 'required|exists:students,id',
+            'term_id'     => 'nullable|exists:terms,id',
+            'amount'      => 'nullable|numeric|min:0.50',
+            'amount_paid' => 'nullable|numeric|min:0.50',
+            'currency'    => 'required|string',
+            'reason'      => 'nullable|string|max:255',
+            'payer_phone' => 'nullable|string',
+            'payer_email' => 'nullable|email',
+        ]);
+
+        $student = Student::findOrFail($request->student_id);
+        $amount = (float) ($request->amount ?? $request->amount_paid ?? 0);
+        
+        // Normalize currency for Pesepay ISO standard
+        $rawCurrency = strtoupper($request->currency ?? 'USD');
+        $currency = ($rawCurrency === 'ZIG' || $rawCurrency === 'ZWG') ? 'ZWG' : 'USD';
+        
+        $reason = $request->reason ?? $request->remarks ?? ('Tuition Fee Payment for ' . $student->name . ' ' . $student->surname);
+
+        $integrationKey = config('services.pesepay.integration_key');
+        $encryptionKey  = config('services.pesepay.encryption_key');
+
+        if (empty($integrationKey) || empty($encryptionKey)) {
+            return back()->with('error', 'Pesepay API credentials are missing in config/services.php or .env file.');
+        }
+
+        $returnUrl = config('services.pesepay.return_url') ?: url('/fees/pesepay/return');
+        $resultUrl = config('services.pesepay.result_url') ?: url('/fees/pesepay/result');
+        $merchantReference = 'FEE-' . $student->id . '-' . time();
+
+        // 1. Primary: Use Codevirtus Pesepay SDK
+        if (class_exists(Pesepay::class)) {
+            try {
+                $pesepay = new Pesepay($integrationKey, $encryptionKey);
+                $pesepay->returnUrl = $returnUrl;
+                $pesepay->resultUrl = $resultUrl;
+
+                $transaction = $pesepay->createTransaction($amount, $currency, $reason, $merchantReference);
+                $response = $pesepay->initiateTransaction($transaction);
+
+                if ($response->success()) {
+                    FeeTransaction::create([
+                        'student_id'        => $student->id,
+                        'term_id'           => $request->term_id,
+                        'amount'            => $amount,
+                        'currency'          => $currency,
+                        'reference'         => $merchantReference,
+                        'pesepay_reference' => $response->referenceNumber(),
+                        'poll_url'          => $response->pollUrl(),
+                        'status'            => 'pending',
+                        'channel'           => $request->online_channel ?? 'pesepay',
+                        'payer_phone'       => $request->payer_phone,
+                        'payer_email'       => $request->payer_email,
+                        'remarks'           => $reason,
+                    ]);
+
+                    return redirect($response->redirectUrl());
+                }
+
+                Log::error('Pesepay SDK Initiation Error: ' . $response->message());
+                return back()->with('error', 'Pesepay Gateway Error: ' . ($response->message() ?: 'Initiation failed. Check your credentials.'));
+            } catch (\Exception $e) {
+                Log::error('Pesepay SDK Exception: ' . $e->getMessage());
+            }
+        }
+
+        // 2. Encrypted REST API Fallback
+        try {
+            $payloadData = [
+                'amountDetails' => [
+                    'amount'       => $amount,
+                    'currencyCode' => $currency,
+                ],
+                'merchantReference' => $merchantReference,
+                'reasonForPayment'  => $reason,
+                'resultUrl'         => $resultUrl,
+                'returnUrl'         => $returnUrl,
+            ];
+
+            // AES-256-CBC Payload Encryption
+            $iv = substr($encryptionKey, 0, 16);
+            $encryptedPayload = openssl_encrypt(json_encode($payloadData), 'aes-256-cbc', $encryptionKey, 0, $iv);
+
+            $apiResponse = Http::withHeaders([
+                'Authorization' => $integrationKey,
+                'Content-Type'  => 'application/json',
+            ])->post('https://api.pesepay.com/api/payments/engine/initiate', [
+                'payload' => $encryptedPayload,
+            ]);
+
+            if ($apiResponse->successful()) {
+                $rawResponseBody = $apiResponse->json();
+                
+                // Decrypt response payload if returned encrypted
+                $responseData = [];
+                if (isset($rawResponseBody['payload'])) {
+                    $decrypted = openssl_decrypt($rawResponseBody['payload'], 'aes-256-cbc', $encryptionKey, 0, $iv);
+                    $responseData = json_decode($decrypted, true) ?? [];
+                } else {
+                    $responseData = $rawResponseBody;
+                }
+
+                $pesepayRef = $responseData['referenceNumber'] ?? $merchantReference;
+                $redirectUrl = $responseData['redirectUrl'] ?? null;
+                $pollUrl = $responseData['pollUrl'] ?? null;
+
+                FeeTransaction::create([
+                    'student_id'        => $student->id,
+                    'term_id'           => $request->term_id,
+                    'amount'            => $amount,
+                    'currency'          => $currency,
+                    'reference'         => $merchantReference,
+                    'pesepay_reference' => $pesepayRef,
+                    'poll_url'          => $pollUrl,
+                    'status'            => 'pending',
+                    'channel'           => $request->online_channel ?? 'pesepay',
+                    'payer_phone'       => $request->payer_phone,
+                    'payer_email'       => $request->payer_email,
+                    'remarks'           => $reason,
+                ]);
+
+                if ($redirectUrl) {
+                    return redirect($redirectUrl);
+                }
+            }
+
+            Log::error('Pesepay API Fallback Error: ' . $apiResponse->body());
+            return back()->with('error', 'Pesepay API Error: Verify your PESEPAY_INTEGRATION_KEY and PESEPAY_ENCRYPTION_KEY.');
+        } catch (\Exception $e) {
+            Log::error('Pesepay Connection Error: ' . $e->getMessage());
+            return back()->with('error', 'Failed to connect to Pesepay Gateway: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Alias method for online payment submission.
+     */
     public function payOnline(Request $request)
     {
-        $validated = $request->validate([
-            'student_id'     => 'required|exists:students,id',
-            'term_id'        => 'required|exists:terms,id',
-            'amount_paid'    => 'required|numeric|min:0.01',
-            'online_channel' => 'required|in:paynow_link,ecocash_push,card',
-            'payer_phone'    => 'required_if:online_channel,ecocash_push|nullable|string',
-            'payer_email'    => 'nullable|email',
-            'remarks'        => 'nullable|string',
-        ]);
-
-        $student = Student::findOrFail($validated['student_id']);
-
-        $transaction = FeeTransaction::create([
-            'student_id' => $student->id,
-            'term_id'    => $validated['term_id'],
-            'amount'     => $validated['amount_paid'],
-            'channel'    => $validated['online_channel'],
-            'status'     => 'pending',
-            'remarks'    => $validated['remarks'] ?? null,
-        ]);
-
-        $paynow = new Paynow(
-            config('services.paynow.integration_id'),
-            config('services.paynow.integration_key'),
-            route('fees.payOnline.result'),
-            route('fees.payOnline.return', $transaction)
-        );
-
-        $payment = $paynow->createPayment(
-            'FEE-' . $transaction->id,
-            $validated['payer_email'] ?: $student->parent_email
-        );
-        
-        $payment->add(
-            "School fees - {$student->name} {$student->surname} ({$validated['term_id']})",
-            $validated['amount_paid']
-        );
-
-        if ($validated['online_channel'] === 'ecocash_push') {
-            $response = $paynow->sendMobile($payment, $validated['payer_phone'], 'ecocash');
-        } else {
-            $response = $paynow->send($payment);
-        }
-
-        if (! $response->success()) {
-            $transaction->update(['status' => 'failed']);
-            return back()->withErrors(['online_payment' => 'Could not start the Paynow transaction. Please try again.']);
-        }
-
-        $transaction->update(['poll_url' => $response->pollUrl()]);
-
-        if ($validated['online_channel'] === 'ecocash_push') {
-            return back()->with('online_success', $response->instructions());
-        }
-
-        return redirect($response->redirectLink());
+        return $this->payWithPesepay($request);
     }
 
-    public function payOnlineResult(Request $request)
+    /**
+     * CLIENT RETURN REDIRECT HANDLER (PESEPAY)
+     */
+    public function pesepayReturn(Request $request)
     {
-        $reference = str_replace('FEE-', '', $request->input('reference'));
-        $transaction = FeeTransaction::findOrFail($reference);
+        $referenceNumber = $request->get('referenceNumber');
 
-        $paynow = new Paynow(
-            config('services.paynow.integration_id'),
-            config('services.paynow.integration_key')
-        );
-
-        $status = $paynow->pollTransaction($transaction->poll_url);
-
-        if ($status->paid()) {
-            $transaction->update(['status' => 'paid']);
-        } else {
-            $transaction->update(['status' => 'failed']);
+        if (!$referenceNumber) {
+            return redirect()->route('fees.index')->with('error', 'No transaction reference received.');
         }
 
-        return response('OK');
+        $transaction = FeeTransaction::where('pesepay_reference', $referenceNumber)->first();
+
+        $integrationKey = config('services.pesepay.integration_key');
+        $encryptionKey  = config('services.pesepay.encryption_key');
+
+        $isPaid = false;
+
+        if (class_exists(Pesepay::class)) {
+            try {
+                $pesepay = new Pesepay($integrationKey, $encryptionKey);
+                $statusResponse = $pesepay->checkPaymentStatus($referenceNumber);
+                $isPaid = $statusResponse->paid();
+            } catch (\Exception $e) {
+                Log::error('Pesepay Return SDK Check Failed: ' . $e->getMessage());
+            }
+        } else {
+            try {
+                $response = Http::withHeaders([
+                    'Authorization' => $integrationKey,
+                ])->get('https://api.pesepay.com/api/payments/engine/check-status', [
+                    'referenceNumber' => $referenceNumber
+                ]);
+
+                if ($response->successful()) {
+                    $resData = $response->json();
+                    $isPaid = ($resData['transactionStatus'] ?? '') === 'SUCCESS' || ($resData['paid'] ?? false);
+                }
+            } catch (\Exception $e) {
+                Log::error('Pesepay Return API Check Failed: ' . $e->getMessage());
+            }
+        }
+
+        if ($transaction && $isPaid) {
+            if ($transaction->status !== 'paid') {
+                $transaction->update(['status' => 'paid']);
+
+                Payment::create([
+                    'student_id'     => $transaction->student_id,
+                    'term_id'        => $transaction->term_id,
+                    'amount_paid'    => $transaction->amount,
+                    'payment_date'   => now()->format('Y-m-d'),
+                    'payment_method' => 'Pesepay (' . ($transaction->currency ?? 'USD') . ')',
+                    'reference_no'   => $transaction->pesepay_reference ?? $transaction->reference,
+                    'remarks'        => 'Online payment via Pesepay Gateway',
+                ]);
+            }
+
+            return redirect()->route('fees.index')->with('success', 'Payment of ' . ($transaction->currency ?? 'USD') . ' ' . number_format($transaction->amount, 2) . ' received successfully via Pesepay!');
+        }
+
+        return redirect()->route('fees.index')->with('error', 'Payment remains pending or was cancelled.');
     }
 
-    public function payOnlineReturn(FeeTransaction $feeTransaction)
+    /**
+     * ASYNCHRONOUS WEBHOOK RESULT CALLBACK (PESEPAY)
+     */
+    public function pesepayResult(Request $request)
     {
-        return view('fees.create', [
-            'students' => Student::all(),
-            'terms'    => Term::all(),
-        ])->with(
-            $feeTransaction->fresh()->status === 'paid' ? 'success' : 'online_success',
-            $feeTransaction->fresh()->status === 'paid'
-                ? 'Online payment received — thank you!'
-                : 'We\'re waiting for confirmation from Paynow. Refresh in a moment.'
-        );
+        $referenceNumber = $request->input('referenceNumber');
+
+        if ($referenceNumber) {
+            $transaction = FeeTransaction::where('pesepay_reference', $referenceNumber)->first();
+            
+            if ($transaction && $transaction->status !== 'paid') {
+                $integrationKey = config('services.pesepay.integration_key');
+                $encryptionKey  = config('services.pesepay.encryption_key');
+
+                $isPaid = false;
+
+                if (class_exists(Pesepay::class)) {
+                    try {
+                        $pesepay = new Pesepay($integrationKey, $encryptionKey);
+                        $statusResponse = $pesepay->checkPaymentStatus($referenceNumber);
+                        $isPaid = $statusResponse->paid();
+                    } catch (\Exception $e) {
+                        Log::error('Pesepay Webhook SDK Check Failed: ' . $e->getMessage());
+                    }
+                } else {
+                    try {
+                        $response = Http::withHeaders([
+                            'Authorization' => $integrationKey,
+                        ])->get('https://api.pesepay.com/api/payments/engine/check-status', [
+                            'referenceNumber' => $referenceNumber
+                        ]);
+
+                        if ($response->successful()) {
+                            $resData = $response->json();
+                            $isPaid = ($resData['transactionStatus'] ?? '') === 'SUCCESS' || ($resData['paid'] ?? false);
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Pesepay Webhook API Check Failed: ' . $e->getMessage());
+                    }
+                }
+
+                if ($isPaid) {
+                    $transaction->update(['status' => 'paid']);
+
+                    Payment::create([
+                        'student_id'     => $transaction->student_id,
+                        'term_id'        => $transaction->term_id,
+                        'amount_paid'    => $transaction->amount,
+                        'payment_date'   => now()->format('Y-m-d'),
+                        'payment_method' => 'Pesepay (' . ($transaction->currency ?? 'USD') . ')',
+                        'reference_no'   => $transaction->pesepay_reference ?? $transaction->reference,
+                        'remarks'        => 'Online payment via Pesepay Webhook',
+                    ]);
+                }
+            }
+        }
+
+        return response()->json(['status' => 'SUCCESS']);
     }
 
     /**
@@ -507,8 +688,6 @@ class FeeController extends Controller
 
         foreach ($students as $student) {
             
-            // 🚨 FOOLPROOF CHECK: Has this student already been billed for THIS term?
-            // This prevents the double-charge shown in your image.
             $alreadyCharged = Payment::where('student_id', $student->id)
                 ->where('term_id', $term->id)
                 ->where(function($query) {
@@ -518,22 +697,19 @@ class FeeController extends Controller
                 ->exists();
 
             if ($alreadyCharged) {
-                // If they already have the blue "Term Fees Charged", SKIP them completely!
                 $skippedCount++;
                 continue; 
             }
 
-            // Calculate total fee owed for this term
             $gradeFees = $structures->where('grade', $student->grade)->whereNull('student_id')->sum('amount');
             $specialFees = $structures->where('student_id', $student->id)->sum('amount');
             $totalTermFee = $gradeFees + $specialFees;
 
             if ($totalTermFee > 0) {
-                // Post the initial invoice as a negative ledger entry
                 Payment::create([
                     'student_id'     => $student->id,
                     'term_id'        => $term->id,
-                    'amount_paid'    => -$totalTermFee, // Negative posts it to the Charge (Dr) column
+                    'amount_paid'    => -$totalTermFee,
                     'payment_date'   => now()->format('Y-m-d'),
                     'payment_method' => 'Term Invoice',
                     'remarks'        => 'Term Fees Charged (' . $term->term_name . ')',

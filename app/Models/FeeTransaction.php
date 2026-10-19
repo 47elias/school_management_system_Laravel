@@ -15,10 +15,12 @@ class FeeTransaction extends Model
         'student_id',
         'term_id',
         'amount',
+        'currency',
         'channel',
         'status',
         'poll_url',
-        'paynow_reference',
+        'pesepay_reference',
+        'reference',
         'payer_phone',
         'payer_email',
         'remarks',
@@ -51,7 +53,6 @@ class FeeTransaction extends Model
         return $this->belongsTo(Term::class);
     }
 
-    // The row created in `payments` once Paynow confirms this transaction was paid.
     public function payment()
     {
         return $this->belongsTo(Payment::class);
