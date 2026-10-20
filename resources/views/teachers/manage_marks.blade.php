@@ -1,233 +1,348 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Manage Marks | {{ $assignment->subject->subject_name }}</title>
-    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
-    @include('components.adminlte')
+{{-- resources/views/teacher/marks/manage.blade.php --}}
+@extends('layouts.admin.app')
 
-    <style>
-        /* Modern Web UI */
-        .content-wrapper { background-color: #f1f5f9 !important; }
-        .box { border-radius: 12px; border: none; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); overflow: hidden; }
-        .table thead th {
-            background-color: #f8fafc;
-            text-transform: uppercase;
-            font-size: 11px;
-            letter-spacing: 0.05em;
-            color: #64748b;
-            border-bottom: 2px solid #e2e8f0 !important;
+@section('title', 'Manage Marks | ' . ($assignment->subject->subject_name ?? $assignment->subject->name ?? 'Subject'))
+
+@push('styles')
+<style>
+    /* Printing Layout Styles */
+    @media print {
+        @page {
+            size: A4 portrait;
+            margin: 1.5cm;
         }
-
-        /* --- PRINT MASTER STYLING --- */
-        @media print {
-            @page { size: portrait; margin: 1.5cm; }
-
-            /* Hide UI Elements */
-            .main-sidebar, .main-header, .content-header, .main-footer,
-            .no-print, .btn, .box-footer, .input-group-addon {
-                display: none !important;
-            }
-
-            .content-wrapper, .wrapper {
-                margin-left: 0 !important;
-                background: white !important;
-                border: none !important;
-            }
-
-            .box { border: 1px solid #000 !important; box-shadow: none !important; }
-
-            /* Professional Document Header */
-            .print-header { display: block !important; border-bottom: 2px solid #000; margin-bottom: 25px; padding-bottom: 15px; }
-            .print-header h2 { margin: 0; font-weight: 800; text-transform: uppercase; }
-
-            /* Table Formatting for Ink-Friendly Print */
-            .table-bordered { border: 1px solid #000 !important; width: 100% !important; }
-            .table-bordered > thead > tr > th,
-            .table-bordered > tbody > tr > td {
-                border: 1px solid #000 !important;
-                color: #000 !important;
-                padding: 8px !important;
-                background-color: transparent !important;
-            }
-
-            /* Clean up Input appearance for Paper */
-            .score-input {
-                border: none !important;
-                background: transparent !important;
-                font-weight: bold !important;
-                text-align: center !important;
-                font-size: 14px !important;
-            }
-            .remarks-input { border: none !important; font-style: italic !important; }
-
-            /* Signature Section */
-            .print-signatures { display: flex !important; justify-content: space-between; margin-top: 60px; }
-            .sig-box { border-top: 1.5px solid #000; width: 30%; text-align: center; padding-top: 8px; font-size: 11px; font-weight: bold; }
+        body {
+            background: white !important;
+            color: black !important;
+            font-family: Arial, sans-serif !important;
         }
+        .no-print, header, nav, sidebar, footer, .sidebar, .navbar, .main-header, .main-footer {
+            display: none !important;
+        }
+        .print-only {
+            display: block !important;
+        }
+        .print-container {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+            background: white !important;
+        }
+        table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+        }
+        th, td {
+            border: 1px solid #000 !important;
+            padding: 8px 10px !important;
+            color: #000 !important;
+            background: transparent !important;
+            font-size: 11pt !important;
+        }
+        th {
+            background-color: #f2f2f2 !important;
+            font-weight: bold !important;
+            text-transform: uppercase !important;
+        }
+        input.score-input, input.remarks-input {
+            border: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            outline: none !important;
+            padding: 0 !important;
+            font-size: 11pt !important;
+            color: black !important;
+        }
+        .print-header {
+            display: block !important;
+            border-bottom: 2px solid #000;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+        }
+        .print-signatures {
+            display: flex !important;
+            justify-content: space-between !important;
+            margin-top: 50px !important;
+            page-break-inside: avoid;
+        }
+        .sig-box {
+            border-top: 1.5px solid #000;
+            width: 30%;
+            text-align: center;
+            padding-top: 6px;
+            font-size: 10pt;
+            font-weight: bold;
+        }
+    }
 
-        .print-header, .print-signatures { display: none; }
-    </style>
-</head>
-<body class="hold-transition skin-blue sidebar-mini">
-    <div class="wrapper">
-        @include('layouts.topbar')
-        @include('layouts.teacher_sidebar')
+    .print-only {
+        display: none;
+    }
+</style>
+@endpush
 
-        <div class="content-wrapper">
+@section('header')
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full no-print">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2">
+                <i class="fa-solid fa-pen-to-square text-indigo-600 dark:text-indigo-400"></i>
+                <span>Manage Student Marks</span>
+            </h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Class: <strong class="text-slate-700 dark:text-slate-200">{{ $assignment->schoolClass->class_name ?? $assignment->schoolClass->name ?? 'Class' }}</strong> &bull; 
+                Subject: <strong class="text-slate-700 dark:text-slate-200">{{ $assignment->subject->subject_name ?? $assignment->subject->name ?? 'Subject' }}</strong>
+            </p>
+        </div>
+        <div class="mt-4 sm:mt-0 flex items-center space-x-3">
+            <a href="{{ route('teacher.subjects') }}" 
+               class="inline-flex items-center px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold transition-all border border-slate-200 dark:border-slate-700 shadow-xs">
+                <i class="fa-solid fa-arrow-left mr-2"></i> Back to Subjects
+            </a>
+            <button type="button" onclick="window.print()" 
+                    class="inline-flex items-center px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-black dark:bg-slate-700 dark:hover:bg-slate-600 text-white text-xs font-bold transition-all shadow-sm">
+                <i class="fa-solid fa-print mr-2 text-amber-400"></i> Print Marksheet
+            </button>
+        </div>
+    </div>
+@endsection
 
-            {{-- HIDDEN PRINT HEADER --}}
-            <div class="print-header">
-                <div style="float: right; text-align: right;">
-                    <p><strong>Academic Year:</strong> {{ $assignment->academic_year }}</p>
-                    <p><strong>Date:</strong> {{ date('d M Y') }}</p>
+@section('content')
+<div x-data="{
+    passMark: {{ $assignment->subject->pass_mark ?? 50 }},
+    scores: {
+        @foreach($students as $student)
+            @php
+                $existingMark = $marks->where('student_id', $student->id)->first();
+                $scoreVal = $existingMark ? $existingMark->score : '';
+            @endphp
+            '{{ $student->id }}': '{{ $scoreVal }}',
+        @endforeach
+    },
+    getStatus(score) {
+        if (score === '' || score === null || isNaN(score)) return 'PENDING';
+        return parseFloat(score) >= this.passMark ? 'PASSED' : 'FAILED';
+    }
+}" class="space-y-6">
+
+    {{-- PRINT HEADER (ONLY VISIBLE WHEN PRINTING) --}}
+    <div class="print-only print-header">
+        <div style="float: right; text-align: right;">
+            <p style="margin: 0;"><strong>Academic Year:</strong> {{ $assignment->academic_year ?? date('Y') }}</p>
+            <p style="margin: 0;"><strong>Date:</strong> {{ date('d M Y') }}</p>
+        </div>
+        <h2 style="margin: 0; font-size: 18pt; font-weight: 800; text-transform: uppercase;">
+            {{ config('app.name', 'Portal') }} - Official Marksheet
+        </h2>
+        <p style="margin: 4px 0 0 0;">
+            Subject: <strong>{{ $assignment->subject->subject_name ?? $assignment->subject->name ?? 'N/A' }}</strong> | 
+            Class: <strong>{{ $assignment->schoolClass->class_name ?? $assignment->schoolClass->name ?? 'N/A' }}</strong>
+        </p>
+        <p style="margin: 2px 0 0 0;">
+            Instructor: <strong>{{ Auth::user()->name }}</strong>
+        </p>
+    </div>
+
+    {{-- System Flash Notifications --}}
+    @if(session('success'))
+        <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-200 flex items-center justify-between shadow-xs no-print">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-circle-check text-emerald-600 dark:text-emerald-400 text-lg"></i>
+                <div>
+                    <h4 class="text-xs font-bold uppercase tracking-wider">Success</h4>
+                    <p class="text-xs font-medium mt-0.5">{{ session('success') }}</p>
                 </div>
-                <h2>{{ config('app.name') }} - Official Marksheet</h2>
-                <p>Subject: <strong>{{ $assignment->subject->subject_name }}</strong> | Class: <strong>{{ $assignment->schoolClass->class_name }}</strong></p>
-                <p>Instructor: {{ Auth::user()->name }}</p>
             </div>
+            <button type="button" @click="$el.parentElement.remove()" class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-800">
+                <i class="fa-solid fa-xmark text-sm"></i>
+            </button>
+        </div>
+    @endif
 
-            <section class="content-header p-8 no-print">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="text-3xl font-black text-slate-800 tracking-tight">Manage Student Marks</h1>
-                        <p class="text-slate-500 font-medium">Class: {{ $assignment->schoolClass->class_name }} &bull; Subject: {{ $assignment->subject->subject_name }}</p>
-                    </div>
-                    {{-- PRIMARY PRINT BUTTON --}}
-                    <button type="button" onclick="window.print()" class="bg-slate-800 hover:bg-black text-white px-6 py-3 rounded-lg font-bold shadow-lg flex items-center transition-all">
-                        <i class="fa fa-print mr-3"></i> PRINT MARKSHEET
-                    </button>
+    @if($errors->any())
+        <div class="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 text-rose-800 dark:text-rose-200 shadow-xs no-print">
+            <div class="flex items-start space-x-3">
+                <i class="fa-solid fa-triangle-exclamation text-rose-600 dark:text-rose-400 text-lg mt-0.5"></i>
+                <div>
+                    <h4 class="text-xs font-bold uppercase tracking-wider">Please check form errors:</h4>
+                    <ul class="mt-1 space-y-0.5 list-disc list-inside text-xs font-medium">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
                 </div>
-            </section>
+            </div>
+        </div>
+    @endif
 
-            <section class="content px-8">
-                {{-- QUICK STATS --}}
-                <div class="row mb-6 no-print">
-                    <div class="col-md-4">
-                        <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-blue-500">
-                            <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Pass Mark</span>
-                            <div class="text-2xl font-black text-blue-600">{{ $assignment->subject->pass_mark }}%</div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-emerald-500">
-                            <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Class Size</span>
-                            <div class="text-2xl font-black text-emerald-600">{{ $students->count() }} Students</div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-amber-500">
-                            <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Max Score</span>
-                            <div class="text-2xl font-black text-amber-600">100</div>
-                        </div>
-                    </div>
+    {{-- Quick Stat Widgets --}}
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 no-print">
+        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-xs flex items-center justify-between">
+            <div>
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Pass Mark</span>
+                <div class="text-2xl font-black text-indigo-600 dark:text-indigo-400 mt-1">
+                    {{ $assignment->subject->pass_mark ?? 50 }}%
                 </div>
-
-                <form action="{{ route('teacher.marks.store') }}" method="POST">
-                    @csrf
-                    <input type="hidden" name="subject_assignment_id" value="{{ $assignment->id }}">
-
-                    <div class="box box-primary">
-                        <div class="box-body no-padding">
-                            <table class="table table-hover table-bordered m-0">
-                                <thead>
-                                    <tr>
-                                        <th class="text-center p-4" style="width: 50px">#</th>
-                                        <th class="p-4">Student Details</th>
-                                        <th class="p-4 text-center" style="width: 150px">Score / 100</th>
-                                        <th class="p-4 text-center no-print" style="width: 120px">Status</th>
-                                        <th class="p-4">Teacher's Remarks</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($students as $index => $student)
-                                        @php
-                                            $existingMark = $marks->where('student_id', $student->id)->first();
-                                            $score = $existingMark ? $existingMark->score : null;
-                                            $isPassed = $score >= $assignment->subject->pass_mark;
-                                        @endphp
-                                        <tr>
-                                            <td class="text-center p-4 align-middle font-bold text-slate-400">{{ $index + 1 }}</td>
-                                            <td class="p-4 align-middle">
-                                                <div class="font-black text-slate-800 uppercase text-sm">{{ $student->name }} {{ $student->surname }}</div>
-                                                <div class="text-xs font-mono font-bold text-blue-600">{{ $student->student_number }}</div>
-                                            </td>
-                                            <td class="p-4 align-middle">
-                                                <input type="number"
-                                                       name="marks[{{ $student->id }}][score]"
-                                                       class="form-control score-input text-center font-black text-lg h-10 border-slate-300 rounded-md shadow-sm"
-                                                       value="{{ $score }}" min="0" max="100"
-                                                       data-passmark="{{ $assignment->subject->pass_mark }}">
-                                            </td>
-                                            <td class="p-4 align-middle text-center status-cell no-print">
-                                                @if($score !== null)
-                                                    <span class="px-3 py-1 rounded-full text-xs font-black {{ $isPassed ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}">
-                                                        {{ $isPassed ? 'PASSED' : 'FAILED' }}
-                                                    </span>
-                                                @else
-                                                    <span class="px-3 py-1 rounded-full text-xs font-black bg-slate-100 text-slate-400">PENDING</span>
-                                                @endif
-                                            </td>
-                                            <td class="p-4 align-middle">
-                                                <input type="text" name="marks[{{ $student->id }}][remarks]"
-                                                       class="form-control remarks-input bg-slate-50 border-none shadow-none text-sm italic"
-                                                       value="{{ $existingMark->remarks ?? '' }}" placeholder="Enter feedback...">
-                                            </td>
-                                        </tr>
-                                    @empty
-                                        <tr><td colspan="5" class="text-center p-10 font-bold text-slate-400 uppercase tracking-widest">No Student Records Found</td></tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div class="box-footer p-8 bg-slate-50 no-print flex justify-between items-center">
-                            {{-- SECONDARY PRINT BUTTON --}}
-                            <button type="button" onclick="window.print()" class="btn btn-default font-bold px-6">
-                                <i class="fa fa-print mr-2"></i> Print Layout
-                            </button>
-
-                            <div class="flex gap-4">
-                                <a href="{{ route('teacher.subjects') }}" class="btn btn-link text-slate-400 font-bold">Cancel</a>
-                                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-black px-10 py-3 rounded-lg shadow-lg uppercase tracking-wider transition-all">
-                                    <i class="fa fa-save mr-2"></i> Save All Marks
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-
-                {{-- HIDDEN PRINT SIGNATURES --}}
-                <div class="print-signatures">
-                    <div class="sig-box">Teacher's Signature</div>
-                    <div class="sig-box">Verified By (HOD)</div>
-                    <div class="sig-box">Principal's Approval</div>
-                </div>
-            </section>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/50 flex items-center justify-center text-xl shrink-0">
+                <i class="fa-solid fa-bullseye"></i>
+            </div>
         </div>
 
-        @include('layouts.footer')
+        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-xs flex items-center justify-between">
+            <div>
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">Class Size</span>
+                <div class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
+                    {{ $students->count() }} Students
+                </div>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 flex items-center justify-center text-xl shrink-0">
+                <i class="fa-solid fa-users"></i>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-xs flex items-center justify-between">
+            <div>
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">Max Score</span>
+                <div class="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">
+                    100 Marks
+                </div>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 flex items-center justify-center text-xl shrink-0">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+        </div>
     </div>
-    @include('components.scripts')
 
-    <script>
-        // Real-time status update
-        document.querySelectorAll('.score-input').forEach(input => {
-            input.addEventListener('input', function() {
-                const score = parseFloat(this.value);
-                const passMark = parseFloat(this.dataset.passmark);
-                const statusCell = this.closest('tr').querySelector('.status-cell');
+    {{-- Main Marks Entry Card --}}
+    <form action="{{ route('teacher.marks.store') }}" method="POST">
+        @csrf
+        <input type="hidden" name="subject_assignment_id" value="{{ $assignment->id }}">
 
-                if (isNaN(score)) {
-                    statusCell.innerHTML = '<span class="px-3 py-1 rounded-full text-xs font-black bg-slate-100 text-slate-400">PENDING</span>';
-                } else if (score >= passMark) {
-                    statusCell.innerHTML = '<span class="px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-700">PASSED</span>';
-                } else {
-                    statusCell.innerHTML = '<span class="px-3 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-700">FAILED</span>';
-                }
-            });
-        });
-    </script>
-</body>
-</html>
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-xs overflow-hidden transition-colors">
+            
+            <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 no-print">
+                <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center space-x-2">
+                    <i class="fa-solid fa-list-check text-indigo-500"></i>
+                    <span>Student Assessment Roster</span>
+                </h3>
+
+                <button type="submit" 
+                        class="inline-flex items-center px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-xs">
+                    <i class="fa-solid fa-floppy-disk mr-2"></i> Save All Marks
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-50/80 dark:bg-slate-800/50 border-b border-slate-200/80 dark:border-slate-700/60">
+                        <tr>
+                            <th class="py-3.5 px-4 text-center text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-12">#</th>
+                            <th class="py-3.5 px-4 text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Student Details</th>
+                            <th class="py-3.5 px-4 text-center text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-40">Score / 100</th>
+                            <th class="py-3.5 px-4 text-center text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-32 no-print">Status</th>
+                            <th class="py-3.5 px-4 text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Comment</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-700/60 bg-white dark:bg-slate-800">
+                        @forelse($students as $index => $student)
+                            @php
+                                $existingMark = $marks->where('student_id', $student->id)->first();
+                            @endphp
+                            <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors">
+                                <td class="py-3.5 px-4 text-center align-middle font-bold text-slate-400 dark:text-slate-500 text-xs">
+                                    {{ $index + 1 }}
+                                </td>
+
+                                <td class="py-3.5 px-4 align-middle">
+                                    <div class="font-bold text-slate-800 dark:text-slate-100 uppercase text-xs">
+                                        {{ $student->name }} {{ $student->surname }}
+                                    </div>
+                                    <div class="text-[11px] font-mono font-semibold text-indigo-600 dark:text-indigo-400 mt-0.5">
+                                        {{ $student->student_number ?? $student->ec_number ?? $student->student_id ?? 'STU-'.$student->id }}
+                                    </div>
+                                </td>
+
+                                <td class="py-3.5 px-4 align-middle text-center">
+                                    <input type="number"
+                                           name="marks[{{ $student->id }}][score]"
+                                           x-model="scores['{{ $student->id }}']"
+                                           min="0" 
+                                           max="100"
+                                           placeholder="0-100"
+                                           class="score-input w-24 text-center font-black text-sm py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                                </td>
+
+                                <td class="py-3.5 px-4 align-middle text-center no-print">
+                                    <template x-if="getStatus(scores['{{ $student->id }}']) === 'PASSED'">
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-black bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
+                                            <i class="fa-solid fa-check text-[9px] mr-1"></i> Pass
+                                        </span>
+                                    </template>
+
+                                    <template x-if="getStatus(scores['{{ $student->id }}']) === 'FAILED'">
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-black bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50">
+                                            <i class="fa-solid fa-xmark text-[9px] mr-1"></i> Below pass mark
+                                        </span>
+                                    </template>
+
+                                    <template x-if="getStatus(scores['{{ $student->id }}']) === 'PENDING'">
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
+                                            Not entered
+                                        </span>
+                                    </template>
+                                </td>
+
+                                <td class="py-3.5 px-4 align-middle">
+                                    <input type="text" 
+                                           name="marks[{{ $student->id }}][remarks]"
+                                           value="{{ $existingMark->remarks ?? '' }}" 
+                                           placeholder="Enter feedback or performance remarks..."
+                                           class="remarks-input w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 italic">
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="py-12 text-center text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
+                                    No Student Records Found For This Subject
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            {{-- Footer Controls --}}
+            <div class="px-6 py-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200/80 dark:border-slate-700/60 flex flex-col sm:flex-row items-center justify-between gap-4 no-print">
+                <button type="button" onclick="window.print()" 
+                        class="px-4 py-2.5 text-xs font-bold rounded-xl text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-colors shadow-xs">
+                    <i class="fa-solid fa-print mr-2 text-slate-500"></i> Print Marksheet Layout
+                </button>
+
+                <div class="flex items-center space-x-3">
+                    <a href="{{ route('teacher.subjects') }}" 
+                       class="px-4 py-2.5 text-xs font-bold rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-700 transition-colors">
+                        Cancel
+                    </a>
+
+                    <button type="submit" 
+                            class="px-8 py-2.5 text-xs font-bold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 transition-all shadow-xs flex items-center space-x-2">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Save All Marks</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </form>
+
+    {{-- PRINT SIGNATURES BLOCK (ONLY VISIBLE ON PRINTED PAPER) --}}
+    <div class="print-only print-signatures">
+        <div class="sig-box">Teacher's Signature</div>
+        <div class="sig-box">Verified By (HOD)</div>
+        <div class="sig-box">Principal's Approval</div>
+    </div>
+
+</div>
+@endsection

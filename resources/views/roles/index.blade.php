@@ -7,7 +7,7 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
         <div>
             <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Roles & Permissions</h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage system access levels, security credentials, and user roles</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage system access levels, security credentials, and role-based permissions</p>
         </div>
         <div class="mt-4 sm:mt-0">
             <nav class="flex text-xs text-slate-500 dark:text-slate-400">
@@ -15,7 +15,7 @@
                     <i class="fa-solid fa-house mr-1"></i> Home
                 </a>
                 <span class="mx-2">/</span>
-                <span class="text-slate-800 dark:text-slate-200 font-semibold">Roles</span>
+                <span class="text-slate-800 dark:text-slate-200 font-semibold">Roles & Permissions</span>
             </nav>
         </div>
     </div>
@@ -23,8 +23,9 @@
 
 @section('content')
     <div x-data="{ 
-        activeTab: 'manage', 
-        activeRole: {{ $roles->first()?->id ?? 0 }},
+        activeTab: 'matrix', 
+        selectedRole: {{ $roles->first()?->id ?? 0 }},
+        activeUserRole: {{ $roles->first()?->id ?? 0 }},
         showRoleModal: false,
         showPermissionModal: false
     }" class="space-y-6">
@@ -64,21 +65,30 @@
         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
             
             {{-- Navigation Tabs --}}
-            <div class="border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/80 px-6 pt-3 flex space-x-2">
+            <div class="border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/80 px-6 pt-3 flex space-x-2 overflow-x-auto">
+                <button @click="activeTab = 'matrix'" 
+                        :class="activeTab === 'matrix' 
+                            ? 'border-indigo-600 dark:border-indigo-400 text-indigo-600 dark:text-indigo-400 bg-white dark:bg-slate-800 font-bold shadow-sm' 
+                            : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-semibold hover:bg-slate-100 dark:hover:bg-slate-700/40'"
+                        class="px-4 py-3 text-xs rounded-t-xl border-b-2 flex items-center space-x-2 transition-all whitespace-nowrap">
+                    <i class="fa-solid fa-sliders text-sm"></i>
+                    <span>Assign Permissions to Roles</span>
+                </button>
+
                 <button @click="activeTab = 'manage'" 
                         :class="activeTab === 'manage' 
                             ? 'border-indigo-600 dark:border-indigo-400 text-indigo-600 dark:text-indigo-400 bg-white dark:bg-slate-800 font-bold shadow-sm' 
                             : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-semibold hover:bg-slate-100 dark:hover:bg-slate-700/40'"
-                        class="px-4 py-3 text-xs rounded-t-xl border-b-2 flex items-center space-x-2 transition-all">
-                    <i class="fa-solid fa-gears text-sm"></i>
-                    <span>Manage Roles & Permissions</span>
+                        class="px-4 py-3 text-xs rounded-t-xl border-b-2 flex items-center space-x-2 transition-all whitespace-nowrap">
+                    <i class="fa-solid fa-shield-halved text-sm"></i>
+                    <span>Manage Roles & Keys</span>
                 </button>
 
                 <button @click="activeTab = 'users'" 
                         :class="activeTab === 'users' 
                             ? 'border-indigo-600 dark:border-indigo-400 text-indigo-600 dark:text-indigo-400 bg-white dark:bg-slate-800 font-bold shadow-sm' 
                             : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-semibold hover:bg-slate-100 dark:hover:bg-slate-700/40'"
-                        class="px-4 py-3 text-xs rounded-t-xl border-b-2 flex items-center space-x-2 transition-all">
+                        class="px-4 py-3 text-xs rounded-t-xl border-b-2 flex items-center space-x-2 transition-all whitespace-nowrap">
                     <i class="fa-solid fa-users text-sm"></i>
                     <span>Users by Role</span>
                 </button>
@@ -86,8 +96,133 @@
 
             <div class="p-6">
                 
-                {{-- TAB 1: Manage Roles & Permissions --}}
-                <div x-show="activeTab === 'manage'" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {{-- TAB 1: Assign Permissions Matrix --}}
+                <div x-show="activeTab === 'matrix'" class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    
+                    {{-- Role Selection Panel --}}
+                    <div class="lg:col-span-1 space-y-2 bg-slate-50/80 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200/80 dark:border-slate-700/60">
+                        <div class="flex items-center justify-between px-2 py-1">
+                            <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Select Role</span>
+                            <button @click="showRoleModal = true" class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
+                                + New Role
+                            </button>
+                        </div>
+                        
+                        @foreach($roles as $role)
+                            <button @click="selectedRole = {{ $role->id }}" 
+                                    type="button"
+                                    :class="selectedRole === {{ $role->id }} 
+                                        ? 'bg-indigo-600 text-white font-bold shadow-md dark:bg-indigo-600' 
+                                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800 font-semibold'"
+                                    class="w-full flex items-center justify-between px-3.5 py-3 text-xs rounded-xl transition-all">
+                                <div class="flex items-center space-x-2.5 min-w-0">
+                                    <i class="fa-solid fa-shield-halved text-xs opacity-80 shrink-0"></i>
+                                    <span class="truncate uppercase tracking-wider text-[11px]">{{ $role->name }}</span>
+                                </div>
+                                <span :class="selectedRole === {{ $role->id }} ? 'bg-white/20 text-white' : 'bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400'"
+                                      class="px-2 py-0.5 text-[10px] rounded-full font-extrabold shrink-0">
+                                    {{ $role->permissions->count() }} Perms
+                                </span>
+                            </button>
+                        @endforeach
+                    </div>
+
+                    {{-- Permission Assignment Form Container --}}
+                    <div class="lg:col-span-3">
+                        @foreach($roles as $role)
+                            <div x-show="selectedRole === {{ $role->id }}" x-cloak class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700/60 overflow-hidden shadow-sm">
+                                
+                                <form action="{{ route('roles.assign_permissions') }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="role_id" value="{{ $role->id }}">
+
+                                    <div class="px-5 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/90 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                        <div>
+                                            <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center space-x-2">
+                                                <span>Configure Permissions for</span>
+                                                <span class="px-2.5 py-0.5 rounded-lg bg-indigo-100 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 uppercase text-xs font-black">
+                                                    {{ $role->name }}
+                                                </span>
+                                            </h3>
+                                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                                Toggle access rights granted to users with the {{ $role->name }} role.
+                                            </p>
+                                        </div>
+
+                                        <div class="flex items-center space-x-2">
+                                            <button type="submit" class="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 rounded-xl shadow-sm transition-all flex items-center space-x-1.5">
+                                                <i class="fa-solid fa-floppy-disk"></i>
+                                                <span>Save Changes</span>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="p-6 space-y-6">
+                                        @if($permissions->count() > 0)
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                @foreach($permissions as $permission)
+                                                    @php
+                                                        $hasPerm = $role->hasPermissionTo($permission->name);
+                                                    @endphp
+                                                    <label class="flex items-start p-3.5 rounded-xl border border-slate-200 dark:border-slate-700/80 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors group">
+                                                        <input type="checkbox" 
+                                                               name="permissions[]" 
+                                                               value="{{ $permission->name }}" 
+                                                               {{ $hasPerm ? 'checked' : '' }}
+                                                               class="mt-0.5 rounded border-slate-300 dark:border-slate-600 text-indigo-600 focus:ring-indigo-500 dark:bg-slate-900 w-4 h-4 transition-all">
+                                                        <div class="ml-3 min-w-0 flex-1">
+                                                            <span class="text-xs font-bold font-mono text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 block truncate">
+                                                                {{ $permission->name }}
+                                                            </span>
+                                                            <span class="text-[11px] text-slate-400 dark:text-slate-500 block mt-0.5">
+                                                                Guard: {{ $permission->guard_name }}
+                                                            </span>
+                                                        </div>
+                                                        @if($hasPerm)
+                                                            <span class="px-2 py-0.5 text-[9px] font-bold rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 shrink-0">
+                                                                Granted
+                                                            </span>
+                                                        @endif
+                                                    </label>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <div class="py-12 text-center space-y-3">
+                                                <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700/60 text-slate-400 dark:text-slate-500 flex items-center justify-center mx-auto">
+                                                    <i class="fa-solid fa-key text-xl"></i>
+                                                </div>
+                                                <h4 class="text-sm font-bold text-slate-700 dark:text-slate-200">No Permissions Configured</h4>
+                                                <p class="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+                                                    Create system permission keys first before assigning them to roles.
+                                                </p>
+                                                <button type="button" @click="showPermissionModal = true" class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-slate-900 bg-amber-400 hover:bg-amber-500 rounded-lg shadow-sm transition-colors">
+                                                    <i class="fa-solid fa-plus mr-1.5"></i> Add First Permission
+                                                </button>
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    @if($permissions->count() > 0)
+                                        <div class="px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200/80 dark:border-slate-700/60 flex items-center justify-between">
+                                            <span class="text-xs text-slate-500 dark:text-slate-400">
+                                                Select all permissions required for <strong class="text-slate-700 dark:text-slate-300">{{ $role->name }}</strong>
+                                            </span>
+                                            <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 rounded-xl shadow-sm transition-all flex items-center space-x-1.5">
+                                                <i class="fa-solid fa-floppy-disk"></i>
+                                                <span>Save Permission Assignment</span>
+                                            </button>
+                                        </div>
+                                    @endif
+                                </form>
+
+                            </div>
+                        @endforeach
+                    </div>
+
+                </div>
+
+                {{-- TAB 2: Manage Roles & Permissions Lists --}}
+                <div x-show="activeTab === 'manage'" x-cloak class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     
                     {{-- ROLES PANEL --}}
                     <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700/60 overflow-hidden shadow-sm flex flex-col">
@@ -120,8 +255,13 @@
                                         <td class="px-5 py-3.5 text-xs">
                                             <span class="font-mono bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-600">{{ $role->guard_name }}</span>
                                         </td>
-                                        <td class="px-5 py-3.5 text-xs text-right">
-                                            @if(!in_array($role->name, ['admin', 'teacher', 'receptionist']))
+                                        <td class="px-5 py-3.5 text-xs text-right space-x-2">
+                                            <button @click="activeTab = 'matrix'; selectedRole = {{ $role->id }}" 
+                                                    class="p-1.5 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors"
+                                                    title="Assign Permissions">
+                                                <i class="fa-solid fa-key text-sm"></i>
+                                            </button>
+                                            @if(!in_array($role->name, ['admin', 'teacher', 'receptionist', 'super-admin']))
                                                 <form action="{{ route('roles.destroy_role', $role->id) }}" method="POST" class="inline-block">
                                                     @csrf @method('DELETE')
                                                     <button type="submit" 
@@ -144,7 +284,7 @@
                         </div>
                     </div>
 
-                    {{-- PERMISSIONS PANEL (Protected - Non-deletable) --}}
+                    {{-- PERMISSIONS PANEL --}}
                     <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700/60 overflow-hidden shadow-sm flex flex-col">
                         <div class="px-5 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/90 flex items-center justify-between">
                             <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center">
@@ -162,7 +302,7 @@
                                 <thead class="bg-slate-50/50 dark:bg-slate-800/50">
                                     <tr>
                                         <th scope="col" class="px-5 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Permission Key</th>
-                                        <th scope="col" class="px-5 py-3 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Access Level</th>
+                                        <th scope="col" class="px-5 py-3 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Access Status</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100 dark:divide-slate-700/60 bg-white dark:bg-slate-800">
@@ -171,7 +311,7 @@
                                         <td class="px-5 py-3.5 text-xs font-bold text-slate-700 dark:text-slate-200 font-mono">{{ $permission->name }}</td>
                                         <td class="px-5 py-3.5 text-xs text-right">
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/50">
-                                                <i class="fa-solid fa-lock text-[9px] mr-1"></i> Protected
+                                                <i class="fa-solid fa-lock text-[9px] mr-1"></i> Protected System Key
                                             </span>
                                         </td>
                                     </tr>
@@ -189,16 +329,16 @@
 
                 </div>
 
-                {{-- TAB 2: Users by Role --}}
+                {{-- TAB 3: Users by Role --}}
                 <div x-show="activeTab === 'users'" x-cloak class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                     
                     {{-- Vertical Navigation for Roles --}}
                     <div class="lg:col-span-1 space-y-1 bg-slate-50/80 dark:bg-slate-900/50 p-2 rounded-xl border border-slate-200/80 dark:border-slate-700/60">
                         <div class="px-3 py-2 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Select Role</div>
                         @foreach($roles as $role)
-                            <button @click="activeRole = {{ $role->id }}" 
+                            <button @click="activeUserRole = {{ $role->id }}" 
                                     type="button"
-                                    :class="activeRole === {{ $role->id }} 
+                                    :class="activeUserRole === {{ $role->id }} 
                                         ? 'bg-indigo-600 text-white font-bold shadow-sm dark:bg-indigo-600' 
                                         : 'text-slate-700 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800 font-medium'"
                                     class="w-full flex items-center justify-between px-3 py-2.5 text-xs rounded-lg transition-colors">
@@ -206,7 +346,7 @@
                                     <i class="fa-solid fa-shield-halved text-xs opacity-80"></i>
                                     <span>{{ strtoupper($role->name) }}</span>
                                 </div>
-                                <span :class="activeRole === {{ $role->id }} ? 'bg-white/20 text-white' : 'bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400'"
+                                <span :class="activeUserRole === {{ $role->id }} ? 'bg-white/20 text-white' : 'bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400'"
                                       class="px-2 py-0.5 text-[10px] rounded-full font-bold">
                                     {{ $role->users->count() }}
                                 </span>
@@ -217,7 +357,7 @@
                     {{-- Dynamic Users Panel --}}
                     <div class="lg:col-span-3">
                         @foreach($roles as $role)
-                            <div x-show="activeRole === {{ $role->id }}" x-cloak class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700/60 overflow-hidden shadow-sm">
+                            <div x-show="activeUserRole === {{ $role->id }}" x-cloak class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700/60 overflow-hidden shadow-sm">
                                 <div class="px-5 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/90">
                                     <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">
                                         Users assigned to '<span class="text-indigo-600 dark:text-indigo-400">{{ ucfirst($role->name) }}</span>' Role
@@ -369,9 +509,9 @@
                         @csrf
                         <div>
                             <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Permission Name</label>
-                            <input type="text" name="name" placeholder="e.g. edit grades" required
+                            <input type="text" name="name" placeholder="e.g. edit_grades, manage-fees" required
                                    class="w-full px-3 py-2 text-xs rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500">
-                            <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Formatted automatically (e.g., <code>edit_grades</code>)</p>
+                            <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Key used for route checks and directives (e.g., <code>manage-fees</code>)</p>
                         </div>
 
                         <div class="pt-2 flex justify-end space-x-2">

@@ -20,6 +20,27 @@ class SubjectAssignment extends Model
         'academic_year',
     ];
 
+    /** Human-readable target used by teacher pages. */
+    public function getClassLabelAttribute(): string
+    {
+        if ($this->schoolClass) {
+            return $this->schoolClass->class_name;
+        }
+
+        if ($this->grade) {
+            $classes = $this->relationLoaded('gradeClasses')
+                ? $this->gradeClasses
+                : $this->gradeClasses()->orderBy('class_name')->get();
+            $classNames = $classes->pluck('class_name')->filter()->values();
+
+            if ($classNames->isNotEmpty()) {
+                return $classNames->join(', ');
+            }
+        }
+
+        return $this->grade ?: 'Class not assigned';
+    }
+
     /**
      * Spatie Activity Log Options configuration.
      */
@@ -54,6 +75,19 @@ class SubjectAssignment extends Model
     public function schoolClass()
     {
         return $this->belongsTo(SchoolClass::class, 'class_id');
+    }
+
+    /** Streams belonging to a grade-wide allocation. */
+    public function gradeClasses()
+    {
+        return $this->hasManyThrough(
+            SchoolClass::class,
+            GradeLevel::class,
+            'name',
+            'grade_level_id',
+            'grade',
+            'id'
+        );
     }
 
     /**

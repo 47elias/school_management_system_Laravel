@@ -1,174 +1,65 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>My Students | {{ env('SCHOOL_ACRONYM') }}</title>
-    @include('components.adminlte')
-    <style>
-        .student-avatar {
-            width: 35px;
-            height: 35px;
-            border: 2px solid #d2d6de;
-            padding: 2px;
-        }
-        .table > tbody > tr > td {
-            vertical-align: middle;
-        }
-        .search-container {
-            margin-bottom: 15px;
-        }
-    </style>
-</head>
-<body class="hold-transition skin-blue sidebar-mini">
-    <div class="wrapper">
-        @include('layouts.topbar')
-        @include('layouts.teacher_sidebar')
+@extends('layouts.admin.app')
 
-        <div class="content-wrapper">
-            <section class="content-header">
-                <h1>
-                    <i class="fa fa-users text-muted"></i> Class Directory
-                    <small>Academic Session {{ date('Y') }}</small>
-                </h1>
-                <ol class="breadcrumb">
-                    <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
-                    <li class="active">My Class</li>
-                </ol>
-            </section>
+@section('title', 'My Students')
 
-            <section class="content">
-
-                <div class="row">
-                    <div class="col-md-3 col-sm-6 col-xs-12">
-                        <div class="info-box">
-                            <span class="info-box-icon bg-aqua"><i class="fa fa-graduation-cap"></i></span>
-                            <div class="info-box-content">
-                                <span class="info-box-text">Current Class</span>
-                                <span class="info-box-number">{{ $myClass->class_name ?? 'N/A' }}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-sm-6 col-xs-12">
-                        <div class="info-box">
-                            <span class="info-box-icon bg-green"><i class="fa fa-user-check"></i></span>
-                            <div class="info-box-content">
-                                <span class="info-box-text">Total Students</span>
-                                <span class="info-box-number">{{ $students->count() }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-xs-12">
-                        <div class="box box-primary shadow-sm">
-                            <div class="box-header with-border">
-                                <h3 class="box-title text-bold"><i class="fa fa-list"></i> Registered Students</h3>
-
-                                <div class="box-tools">
-                                    <form action="" method="GET" class="input-group input-group-sm" style="width: 250px;">
-                                        <input type="text" name="search" class="form-control" placeholder="Search by name or ID...">
-                                        <span class="input-group-btn">
-                                            <button type="submit" class="btn btn-primary btn-flat"><i class="fa fa-search"></i></button>
-                                        </span>
-                                    </form>
-                                </div>
-                            </div>
-
-                            <div class="box-body table-responsive no-padding">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr class="bg-gray-light">
-                                            <th class="text-center" style="width: 50px">#</th>
-                                            <th style="width: 120px">Student ID</th>
-                                            <th>Full Name</th>
-                                            <th>Gender</th>
-                                            <th>Guardian Contact</th>
-                                            <th class="text-center">Status</th>
-                                            <th class="text-center" style="width: 200px">Academic Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse($students as $index => $student)
-                                        <tr>
-                                            <td class="text-center text-muted">{{ $index + 1 }}</td>
-                                            <td>
-                                                <span class="label label-default" style="font-size: 11px;">
-                                                    {{ $student->student_number ?? $student->id }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div class="flex items-center">
-                                                    <img src="https://ui-avatars.com/api/?name={{ urlencode($student->name.' '.$student->surname) }}&background=3c8dbc&color=fff&size=35"
-                                                         class="img-circle student-avatar shadow-sm" alt="User Image">
-                                                    <span class="ml-2 text-bold">{{ $student->name }} {{ $student->surname }}</span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                @if(strtolower($student->gender) == 'male')
-                                                    <i class="fa fa-mars text-blue"></i> Male
-                                                @else
-                                                    <i class="fa fa-venus text-red"></i> Female
-                                                @endif
-                                            </td>
-                                            <td>
-                                                @if($student->guardian_phone)
-                                                    <a href="tel:{{ $student->guardian_phone }}" class="btn btn-xs btn-default btn-flat">
-                                                        <i class="fa fa-phone text-success"></i> {{ $student->guardian_phone }}
-                                                    </a>
-                                                @else
-                                                    <span class="text-muted small"><em>Not Provided</em></span>
-                                                @endif
-                                            </td>
-                                            <td class="text-center">
-                                                <span class="badge {{ ($student->status ?? 'active') == 'active' ? 'bg-green' : 'bg-red' }}">
-                                                    {{ strtoupper($student->status ?? 'active') }}
-                                                </span>
-                                            </td>
-                                            <td class="text-center">
-                                                <div class="btn-group">
-                                                    <a href="{{ route('teacher.students.show', $student->id) }}"
-                                                       class="btn btn-info btn-sm btn-flat" title="View Academic Profile">
-                                                        <i class="fa fa-user"></i> View
-                                                    </a>
-                                                    <a href="#" class="btn btn-warning btn-sm btn-flat" title="Record Marks">
-                                                        <i class="fa fa-pencil"></i> Marks
-                                                    </a>
-                                                    <a href="#" class="btn btn-default btn-sm btn-flat" title="Attendance Record">
-                                                        <i class="fa fa-calendar-check-o"></i>
-                                                    </a>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        @empty
-                                        <tr>
-                                            <td colspan="7" class="text-center" style="padding: 60px;">
-                                                <img src="https://cdn-icons-png.flaticon.com/512/5058/5058432.png" style="width: 80px; opacity: 0.5;">
-                                                <h4 class="text-muted mt-3">No students found in this class</h4>
-                                                <p class="text-gray small">Assigned students will appear here once registered by the administrator.</p>
-                                            </td>
-                                        </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="box-footer">
-                                <div class="pull-left">
-                                    <span class="text-sm text-gray text-uppercase">End of List</span>
-                                </div>
-                                <div class="pull-right">
-                                    {{-- Pagination if needed --}}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+@section('header')
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2">
+                <i class="fa-solid fa-users text-indigo-600 dark:text-indigo-400"></i>
+                <span>My Students</span>
+            </h1>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Students in the classes assigned to you.</p>
         </div>
-
-        @include('layouts.footer')
+        <a href="{{ route('teacher.dashboard') }}" class="inline-flex items-center px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700">
+            <i class="fa-solid fa-arrow-left mr-2"></i> Dashboard
+        </a>
     </div>
-    @include('components.scripts')
-</body>
-</html>
+@endsection
+
+@section('content')
+<div class="space-y-6" x-data="{ search: '' }">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="rounded-2xl border border-slate-200/80 dark:border-slate-700/60 bg-white dark:bg-slate-800 p-5 shadow-xs flex items-center gap-4">
+            <span class="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xl"><i class="fa-solid fa-school"></i></span>
+            <div><p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Your Class</p><p class="mt-1 font-bold text-slate-800 dark:text-slate-100">{{ $myClass->class_name ?? 'More than one class' }}</p></div>
+        </div>
+        <div class="rounded-2xl border border-slate-200/80 dark:border-slate-700/60 bg-white dark:bg-slate-800 p-5 shadow-xs flex items-center gap-4">
+            <span class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl"><i class="fa-solid fa-user-graduate"></i></span>
+            <div><p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Active Students</p><p class="mt-1 text-2xl font-black text-slate-800 dark:text-slate-100">{{ $students->count() }}</p></div>
+        </div>
+    </div>
+
+    <section class="overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-700/60 bg-white dark:bg-slate-800 shadow-xs">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-4 border-b border-slate-200/80 dark:border-slate-700/60">
+            <div><h2 class="font-bold text-sm text-slate-800 dark:text-slate-100">Class List</h2><p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ $students->count() }} active {{ \Illuminate\Support\Str::plural('student', $students->count()) }}</p></div>
+            <label class="relative block w-full sm:w-72">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input type="search" x-model="search" placeholder="Search name or student ID" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 py-2.5 pl-9 pr-3 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </label>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[760px] text-left">
+                <thead class="bg-slate-50/80 dark:bg-slate-900/50 text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <tr><th class="px-5 py-3">Student</th><th class="px-5 py-3">Student ID</th><th class="px-5 py-3">Class</th><th class="px-5 py-3">Gender</th><th class="px-5 py-3">Guardian contact</th><th class="px-5 py-3 text-right">Profile</th></tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-700/60">
+                    @forelse($students as $student)
+                        @php $studentNumber = $student->student_number ?? $student->id; $guardianPhone = $student->parent_contact ?? $student->guardian_phone ?? $student->phone; @endphp
+                        <tr x-show="!search || $el.dataset.search.includes(search.toLowerCase())" data-search="{{ strtolower($student->name.' '.$student->surname.' '.$studentNumber) }}" class="hover:bg-slate-50/80 dark:hover:bg-slate-700/30">
+                            <td class="px-5 py-3.5"><div class="flex items-center gap-3"><img src="https://ui-avatars.com/api/?name={{ urlencode($student->name.' '.$student->surname) }}&background=4f46e5&color=fff&size=80" class="w-9 h-9 rounded-full" alt=""><div><p class="font-bold text-xs text-slate-800 dark:text-slate-100">{{ $student->name }} {{ $student->surname }}</p><p class="text-[10px] text-slate-400">{{ ucfirst($student->status ?? 'active') }}</p></div></div></td>
+                            <td class="px-5 py-3.5 font-mono text-xs text-slate-600 dark:text-slate-300">{{ $studentNumber }}</td>
+                            <td class="px-5 py-3.5 text-xs font-semibold text-slate-600 dark:text-slate-300">{{ $student->schoolClass->class_name ?? '—' }}</td>
+                            <td class="px-5 py-3.5 text-xs text-slate-600 dark:text-slate-300">{{ $student->gender ? ucfirst($student->gender) : '—' }}</td>
+                            <td class="px-5 py-3.5 text-xs">@if($guardianPhone)<a href="tel:{{ $guardianPhone }}" class="text-indigo-600 dark:text-indigo-400 hover:underline"><i class="fa-solid fa-phone mr-1"></i>{{ $guardianPhone }}</a>@else<span class="text-slate-400">Not provided</span>@endif</td>
+                            <td class="px-5 py-3.5 text-right"><a href="{{ route('teacher.students.show', $student->id) }}" class="inline-flex items-center px-3 py-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 text-[11px] font-bold hover:bg-indigo-100 dark:hover:bg-indigo-900/60"><i class="fa-solid fa-arrow-up-right-from-square mr-1.5"></i>View</a></td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="6" class="px-5 py-14 text-center"><span class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400"><i class="fa-solid fa-user-group"></i></span><p class="font-bold text-sm text-slate-700 dark:text-slate-200">No students in your assigned classes</p><p class="mt-1 text-xs text-slate-500">Students will appear here when they are enrolled in one of your classes.</p></td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+@endsection

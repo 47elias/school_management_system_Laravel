@@ -25,10 +25,25 @@ class RolePermissionController extends Controller
     public function storePermission(Request $request)
     {
         $request->validate(['name' => 'required|unique:permissions,name']);
-        // Format permission name automatically (e.g. "Edit Users" -> "edit_users")
         $permissionName = strtolower(str_replace(' ', '_', $request->name));
         Permission::create(['name' => $permissionName]);
         return back()->with('success', 'Permission created successfully.');
+    }
+
+    /**
+     * Assign and sync permissions for a specific role
+     */
+    public function assignPermissions(Request $request)
+    {
+        $request->validate([
+            'role_id' => 'required|exists:roles,id',
+            'permissions' => 'nullable|array'
+        ]);
+
+        $role = Role::findOrFail($request->role_id);
+        $role->syncPermissions($request->permissions ?? []);
+
+        return back()->with('success', 'Permissions updated successfully for ' . strtoupper($role->name) . '.');
     }
 
     public function destroyRole($id)

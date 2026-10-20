@@ -17,6 +17,7 @@ class SchoolClass extends Model
         'room_number',
         'capacity',
         'teacher_id',
+        'class_teacher_id',
     ];
 
     /**
@@ -36,11 +37,11 @@ class SchoolClass extends Model
     }
 
     /**
-     * Alias for teacher relationship for backward compatibility across views.
+     * Get the class teacher assigned to this class.
      */
     public function classTeacher()
     {
-        return $this->belongsTo(User::class, 'teacher_id');
+        return $this->belongsTo(User::class, 'class_teacher_id');
     }
 
     /**
@@ -49,6 +50,12 @@ class SchoolClass extends Model
     public function students()
     {
         return $this->hasMany(Student::class, 'class_id');
+    }
+
+    /** Teaching allocations for this specific class stream. */
+    public function subjectAssignments()
+    {
+        return $this->hasMany(SubjectAssignment::class, 'class_id');
     }
 
     /**

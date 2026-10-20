@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
-    <title>@yield('title', config('app.name', 'School Portal')) | Admin</title>
+    <title>@yield('title', config('app.name', 'School Portal')) | {{ request()->is('teacher*') ? 'Teacher Portal' : 'Admin' }}</title>
 
     <!-- Tailwind CSS with Dark Mode Class Strategy -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -41,6 +41,14 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         [x-cloak] { display: none !important; }
+
+        /* Give teacher pages a softer, warmer light background while keeping
+           the shared admin layout and dark theme intact. */
+        html:not(.dark) .teacher-portal > div.flex.h-screen { background-color: #f1efe7; }
+        html:not(.dark) .teacher-portal main { background-color: #f1efe7 !important; }
+        html:not(.dark) .teacher-portal main .bg-white { background-color: #faf9f4; }
+        html:not(.dark) .teacher-portal main .bg-slate-50 { background-color: #f4f2eb; }
+        html:not(.dark) .teacher-portal main [class~="bg-white/70"] { background-color: rgb(250 249 244 / 0.8); }
         
         /* Smooth Custom Scrollbar */
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
@@ -51,7 +59,7 @@
 
     @stack('styles')
 </head>
-<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 antialiased overflow-hidden h-full" 
+<body class="{{ request()->is('teacher*') ? 'teacher-portal' : '' }} bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 antialiased overflow-hidden h-full" 
       x-data="{ 
           sidebarOpen: true, 
           isFullscreen: false,

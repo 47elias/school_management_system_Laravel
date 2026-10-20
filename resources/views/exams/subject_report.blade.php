@@ -1,14 +1,14 @@
 {{-- resources/views/exams/subject_report.blade.php --}}
 @extends('layouts.admin.app')
 
-@section('title', 'Subject Analytics Report | ' . $subject->subject_name)
+@section('title', ($teacherView ? 'Subject Marks' : 'Subject Report') . ' | ' . $subject->subject_name)
 
 @section('header')
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full gap-4 no-print">
         <div>
             <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2">
                 <i class="fa-solid fa-book-open text-indigo-600 dark:text-indigo-400"></i>
-                <span>{{ $subject->subject_name }} Performance Analytics</span>
+                <span>{{ $subject->subject_name }} {{ $teacherView ? 'Marks' : 'Performance Report' }}</span>
             </h1>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
                 Subject Code: <strong class="text-indigo-600 dark:text-indigo-400 font-mono">{{ $subject->subject_code }}</strong> &bull; 
@@ -18,7 +18,7 @@
 
         <div class="flex items-center space-x-3">
             {{-- Academic Session Selector --}}
-            <form method="GET" action="{{ route('exams.subject_report', $subject->id) }}" class="flex items-center space-x-2">
+            <form method="GET" action="{{ $teacherView ? route('teacher.subjects.marks', $subject->id) : route('exams.subject_report', $subject->id) }}" class="flex items-center space-x-2">
                 <select name="term_id" onchange="this.form.submit()" 
                         class="px-3.5 py-2 text-xs font-bold rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
                     @foreach($terms as $t)
@@ -33,7 +33,7 @@
                 <i class="fa-solid fa-print mr-2"></i> Print Report
             </button>
 
-            <a href="{{ route('exams.index') }}" 
+            <a href="{{ $teacherView ? route('teacher.exams.index') : route('exams.index') }}" 
                class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all border border-slate-200 dark:border-slate-700">
                 <i class="fa-solid fa-arrow-left mr-2"></i> Back
             </a>

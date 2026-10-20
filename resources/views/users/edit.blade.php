@@ -7,11 +7,11 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
         <div>
             <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Edit Staff Member</h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Modify account details, roles, and direct permissions for <strong class="text-slate-700 dark:text-slate-200">{{ $staff->name }}</strong></p>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Modify account details, roles, and permissions for <strong class="text-slate-700 dark:text-slate-200">{{ $staff->name }}</strong></p>
         </div>
         <div class="mt-4 sm:mt-0">
             <a href="{{ route('users.index') }}" 
-               class="inline-flex items-center px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold transition-all border border-slate-200 dark:border-slate-700">
+               class="inline-flex items-center px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold transition-all border border-slate-200 dark:border-slate-700 shadow-sm">
                 <i class="fa-solid fa-arrow-left mr-2"></i> Back to Staff Directory
             </a>
         </div>
@@ -19,7 +19,29 @@
 @endsection
 
 @section('content')
-    <div x-data="{ activeTab: 'account' }" class="max-w-4xl mx-auto space-y-6">
+    <div x-data="{ 
+        activeTab: 'account',
+        selectedRoles: {{ json_encode(old('roles', $staff->roles->pluck('name')->toArray())) }},
+        directPermissions: {{ json_encode(old('permissions', $staff->permissions->pluck('name')->toArray())) }},
+        rolesMap: {{ json_encode($roles->mapWithKeys(fn($r) => [$r->name => $r->permissions->pluck('name')->toArray()])) }},
+        permissionSearch: '',
+
+        isRoleInherited(permName) {
+            return this.selectedRoles.some(roleName => {
+                return this.rolesMap[roleName] && this.rolesMap[roleName].includes(permName);
+            });
+        },
+
+        get totalInheritedCount() {
+            let set = new Set();
+            this.selectedRoles.forEach(r => {
+                if (this.rolesMap[r]) {
+                    this.rolesMap[r].forEach(p => set.add(p));
+                }
+            });
+            return set.size;
+        }
+    }" class="max-w-5xl mx-auto space-y-6">
 
         {{-- Validation Errors --}}
         @if ($errors->any())
@@ -44,7 +66,7 @@
 
             <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
                 
-                {{-- Tabs Bar --}}
+                {{-- Navigation Tabs --}}
                 <div class="border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/80 px-6 pt-3 flex space-x-2">
                     <button type="button" 
                             @click="activeTab = 'account'" 
@@ -63,7 +85,7 @@
                                 : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-semibold hover:bg-slate-100 dark:hover:bg-slate-700/40'"
                             class="px-4 py-3 text-xs rounded-t-xl border-b-2 flex items-center space-x-2 transition-all">
                         <i class="fa-solid fa-shield-halved text-sm"></i>
-                        <span>Roles & Permissions</span>
+                        <span>Roles & Access Matrix</span>
                     </button>
                 </div>
 
@@ -123,45 +145,167 @@
                         </div>
                     </div>
 
-                    {{-- TAB 2: Roles & Permissions --}}
-                    <div x-show="activeTab === 'roles'" x-cloak class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {{-- TAB 2: Roles & Permissions Matrix --}}
+                    <div x-show="activeTab === 'roles'" x-cloak class="space-y-6">
                         
-                        {{-- Roles Selection --}}
-                        <div class="space-y-4">
-                            <h4 class="text-sm font-bold text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 pb-2 flex items-center">
-                                <i class="fa-solid fa-users-gear text-indigo-500 mr-2"></i> Assign System Roles
-                            </h4>
-                            <div class="space-y-2">
-                                @foreach($roles as $role)
-                                    <label class="flex items-center space-x-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/60 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/40 transition-colors">
-                                        <input type="checkbox" name="roles[]" value="{{ $role->name }}"
-                                               {{ $staff->hasRole($role->name) ? 'checked' : '' }}
-                                               class="w-4 h-4 text-indigo-600 rounded border-slate-300 dark:border-slate-700 focus:ring-indigo-500">
-                                        <span class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">{{ ucfirst($role->name) }}</span>
-                                    </label>
-                                @endforeach
+                        {{-- Summary Metric Bar --}}
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
+                                <div>
+                                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Assigned Roles</span>
+                                    <span class="text-lg font-black text-indigo-600 dark:text-indigo-400" x-text="selectedRoles.length"></span>
+                                </div>
+                                <div class="w-9 h-9 rounded-lg bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-sm">
+                                    <i class="fa-solid fa-users-gear"></i>
+                                </div>
+                            </div>
+
+                            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
+                                <div>
+                                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Role Inherited Perms</span>
+                                    <span class="text-lg font-black text-emerald-600 dark:text-emerald-400" x-text="totalInheritedCount"></span>
+                                </div>
+                                <div class="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm">
+                                    <i class="fa-solid fa-lock"></i>
+                                </div>
+                            </div>
+
+                            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
+                                <div>
+                                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Direct Overrides</span>
+                                    <span class="text-lg font-black text-amber-600 dark:text-amber-400" x-text="directPermissions.length"></span>
+                                </div>
+                                <div class="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-sm">
+                                    <i class="fa-solid fa-key"></i>
+                                </div>
                             </div>
                         </div>
 
-                        {{-- Direct Permissions --}}
-                        <div class="space-y-4">
-                            <h4 class="text-sm font-bold text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 pb-2 flex items-center">
-                                <i class="fa-solid fa-key text-amber-500 mr-2"></i> Direct Permissions (Overrides)
-                            </h4>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">Permissions granted directly to this staff user, overriding role settings.</p>
+                        {{-- Align items at top to prevent stretch --}}
+                        <div class="grid grid-cols-1 lg:grid-cols-12 items-start gap-6">
                             
-                            <div class="space-y-2 max-h-72 overflow-y-auto custom-scrollbar pr-1">
-                                @forelse($permissions as $permission)
-                                    <label class="flex items-center space-x-3 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/60 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/40 transition-colors">
-                                        <input type="checkbox" name="permissions[]" value="{{ $permission->name }}"
-                                               {{ $staff->hasDirectPermission($permission->name) ? 'checked' : '' }}
-                                               class="w-4 h-4 text-indigo-600 rounded border-slate-300 dark:border-slate-700 focus:ring-indigo-500">
-                                        <span class="text-xs font-medium text-slate-700 dark:text-slate-200 font-mono">{{ $permission->name }}</span>
-                                    </label>
-                                @empty
-                                    <p class="text-xs text-slate-500 dark:text-slate-400">No direct permissions available.</p>
-                                @endforelse
+                            {{-- Roles Panel (Left Side - 4 Columns) --}}
+                            <div class="lg:col-span-4 bg-slate-50/80 dark:bg-slate-900/40 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 space-y-3">
+                                <div class="border-b border-slate-200 dark:border-slate-700/80 pb-2.5">
+                                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center">
+                                        <i class="fa-solid fa-users-gear text-indigo-500 mr-2"></i> 1. Select Roles
+                                    </h4>
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Role permissions automatically unlock access below.</p>
+                                </div>
+
+                                <div class="space-y-2">
+                                    @foreach($roles as $role)
+                                        @php $permCount = $role->permissions->count(); @endphp
+                                        <label :class="selectedRoles.includes('{{ $role->name }}') ? 'bg-indigo-50/80 dark:bg-indigo-950/50 border-indigo-300 dark:border-indigo-700/80 shadow-xs' : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700/60 hover:bg-slate-100 dark:hover:bg-slate-700/40'"
+                                               class="flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all">
+                                            <div class="flex items-center space-x-3 min-w-0">
+                                                <input type="checkbox" 
+                                                       name="roles[]" 
+                                                       value="{{ $role->name }}"
+                                                       x-model="selectedRoles"
+                                                       class="w-4 h-4 text-indigo-600 rounded border-slate-300 dark:border-slate-600 focus:ring-indigo-500 transition-all">
+                                                <span class="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider truncate">
+                                                    {{ ucfirst($role->name) }}
+                                                </span>
+                                            </div>
+                                            <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700/80 text-slate-600 dark:text-slate-300 shrink-0">
+                                                {{ $permCount }} perms
+                                            </span>
+                                        </label>
+                                    @endforeach
+                                </div>
                             </div>
+
+                            {{-- Permissions Panel (Right Side - 8 Columns) --}}
+                            <div class="lg:col-span-8 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 space-y-4 shadow-sm">
+                                
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-slate-200/80 dark:border-slate-700/60 gap-3">
+                                    <div>
+                                        <h4 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center">
+                                            <i class="fa-solid fa-key text-amber-500 mr-2"></i> 2. Permissions Access Matrix
+                                        </h4>
+                                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                            Role permissions are locked (<i class="fa-solid fa-lock text-[9px] text-emerald-500"></i>). Tick open boxes for direct overrides.
+                                        </p>
+                                    </div>
+
+                                    {{-- Search Box --}}
+                                    <div class="relative w-full sm:w-48 shrink-0">
+                                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-[11px] text-slate-400"></i>
+                                        <input type="text" 
+                                               x-model="permissionSearch" 
+                                               placeholder="Filter permissions..." 
+                                               class="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                    </div>
+                                </div>
+
+                                {{-- Natural Dynamic Height Grid (No max-h constraint or forced empty void) --}}
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    @forelse($permissions as $permission)
+                                        @php $permName = $permission->name; @endphp
+                                        <div x-show="!permissionSearch || '{{ strtolower($permName) }}'.includes(permissionSearch.toLowerCase())"
+                                             :class="{
+                                                'bg-emerald-50/60 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/50 opacity-90 cursor-not-allowed': isRoleInherited('{{ $permName }}'),
+                                                'bg-amber-50/60 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/50': !isRoleInherited('{{ $permName }}') && directPermissions.includes('{{ $permName }}'),
+                                                'bg-slate-50/50 dark:bg-slate-900/40 border-slate-200/80 dark:border-slate-700/60 hover:bg-slate-100/80 dark:hover:bg-slate-700/40': !isRoleInherited('{{ $permName }}') && !directPermissions.includes('{{ $permName }}')
+                                             }"
+                                             class="flex items-start p-3 rounded-xl border transition-all">
+                                            
+                                            {{-- Role-Inherited Checkbox (Read Only / Locked Ticked) --}}
+                                            <template x-if="isRoleInherited('{{ $permName }}')">
+                                                <input type="checkbox" 
+                                                       checked 
+                                                       disabled 
+                                                       class="mt-0.5 w-4 h-4 text-emerald-600 rounded border-emerald-300 dark:border-emerald-700 cursor-not-allowed">
+                                            </template>
+
+                                            {{-- Direct Override Checkbox (Interactive) --}}
+                                            <template x-if="!isRoleInherited('{{ $permName }}')">
+                                                <input type="checkbox" 
+                                                       name="permissions[]" 
+                                                       value="{{ $permName }}"
+                                                       x-model="directPermissions"
+                                                       class="mt-0.5 w-4 h-4 text-amber-600 rounded border-slate-300 dark:border-slate-600 focus:ring-amber-500 cursor-pointer">
+                                            </template>
+
+                                            <div class="ml-3 min-w-0 flex-1">
+                                                <span class="text-xs font-bold font-mono text-slate-800 dark:text-slate-200 block truncate">
+                                                    {{ $permName }}
+                                                </span>
+
+                                                <div class="mt-1 flex items-center space-x-1.5">
+                                                    {{-- Role Inherited Badge --}}
+                                                    <template x-if="isRoleInherited('{{ $permName }}')">
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
+                                                            <i class="fa-solid fa-lock text-[8px] mr-1"></i> Role Inherited
+                                                        </span>
+                                                    </template>
+
+                                                    {{-- Direct Override Badge --}}
+                                                    <template x-if="!isRoleInherited('{{ $permName }}') && directPermissions.includes('{{ $permName }}')">
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50">
+                                                            <i class="fa-solid fa-plus text-[8px] mr-1"></i> Direct Override
+                                                        </span>
+                                                    </template>
+
+                                                    {{-- Unassigned Badge --}}
+                                                    <template x-if="!isRoleInherited('{{ $permName }}') && !directPermissions.includes('{{ $permName }}')">
+                                                        <span class="text-[9px] text-slate-400 font-semibold">
+                                                            Not Granted
+                                                        </span>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @empty
+                                        <div class="col-span-2 py-8 text-center text-xs text-slate-500 dark:text-slate-400">
+                                            No system permissions configured.
+                                        </div>
+                                    @endforelse
+                                </div>
+
+                            </div>
+
                         </div>
 
                     </div>
@@ -175,8 +319,9 @@
                         Cancel
                     </a>
                     <button type="submit" 
-                            class="px-6 py-2.5 text-xs font-bold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 transition-all shadow-sm hover:shadow">
-                        <i class="fa-solid fa-floppy-disk mr-2"></i> Update Staff Member
+                            class="px-6 py-2.5 text-xs font-bold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 transition-all shadow-sm hover:shadow flex items-center space-x-2">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Update Staff Account</span>
                     </button>
                 </div>
 

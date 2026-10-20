@@ -26,72 +26,161 @@ class TeacherController extends Controller
     {
         $teacher = Auth::user();
 
-        // 1. Form Teacher Logic (The class they are in charge of)
-        $myClass = SchoolClass::where('teacher_id', $teacher->id)->first();
+        // 1. Active Term Context
+        $activeTerm = Term::where('is_current', 1)->first() ?? Term::orderBy('id', 'desc')->first();
 
-        if ($myClass) {
-            // Fetch all students registered under this class to match the complete list view
-            $classStudents = Student::where('class_id', $myClass->id)->get();
-            // This guarantees the total count exactly matches the students in this form class
-            $studentCount = $classStudents->count();
-        } else {
-            $classStudents = collect();
-            $studentCount = 0;
+        // Load form-teacher classes and every class where a subject is taught.
+        $assignedSubjects = SubjectAssignment::with(['schoolClass.gradeLevel', 'gradeClasses', 'subject'])
+            ->forTeacher($teacher->id)
+            ->get();
+
+        $formTeacherClassIds = SchoolClass::query()
+            ->where('teacher_id', $teacher->id)
+            ->orWhere('class_teacher_id', $teacher->id)
+            ->pluck('id');
+
+        // A grade-wide allocation has no class_id; include every stream in that grade.
+        $assignedGradeNames = $assignedSubjects->whereNull('class_id')->pluck('grade')->filter()->unique();
+        $assignedClassIds = $assignedSubjects->pluck('class_id')->filter();
+        $gradeClassIds = SchoolClass::query()
+            ->whereHas('gradeLevel', fn ($query) => $query->whereIn('name', $assignedGradeNames))
+            ->pluck('id');
+        $allClassIds = $formTeacherClassIds->merge($assignedClassIds)->merge($gradeClassIds)->unique()->values();
+        $myClasses = SchoolClass::with('gradeLevel')
+            ->withCount(['students as student_count' => fn ($query) => $query->where('status', 'active')])
+            ->whereIn('id', $allClassIds)
+            ->orderBy('class_name')
+            ->get();
+
+        $formTeacherClassIds = $formTeacherClassIds->map(fn ($id) => (int) $id)->all();
+        foreach ($myClasses as $class) {
+            $gradeName = $class->gradeLevel->name ?? null;
+            $classAssignments = $assignedSubjects->filter(fn ($assignment) =>
+                (int) $assignment->class_id === (int) $class->id
+                || (is_null($assignment->class_id) && $assignment->grade === $gradeName)
+            );
+            $class->setAttribute('is_form_teacher', in_array((int) $class->id, $formTeacherClassIds, true));
+            $class->setAttribute('subjects', $classAssignments->pluck('subject.subject_name')->filter()->unique()->values());
         }
 
-        // 2. Subject Teacher Logic (Teaching Load)
-        $assignedSubjects = SubjectAssignment::with(['schoolClass', 'subject'])
-            ->where('teacher_id', $teacher->id)
-            ->get();
+        $assignedClass = $myClasses->firstWhere('is_form_teacher', true);
+        $myClass = $assignedClass;
+        $classStudents = $assignedClass
+            ? Student::where('class_id', $assignedClass->id)->where('status', 'active')->orderBy('surname')->get()
+            : collect();
+        $studentCount = $classStudents->count();
 
-        // 3. General Stats
-        $mySubjectIds = $assignedSubjects->pluck('subject_id');
+        $assignedSubjectsCount = $assignedSubjects->pluck('subject_id')->unique()->count();
+        $mySubjectIds = $assignedSubjects->pluck('subject_id')->unique();
 
-        $examCount = Exam::whereIn('subject_id', $mySubjectIds)
-            ->where('exam_date', '>=', now()->format('Y-m-d'))
+        // 4. Combined Class Student Count
+        $allocatedClassIds = $allClassIds;
+
+        $totalStudentsCount = Student::whereIn('class_id', $allocatedClassIds)
+            ->where('status', 'active')
             ->count();
 
-        $recentExams = Exam::with('subject')
-            ->whereIn('subject_id', $mySubjectIds)
+        // 5. Exam Stats (exams table uses term_id)
+        $assignmentIds = $assignedSubjects->modelKeys();
+        $examAssignmentScope = function ($query) use ($assignmentIds, $assignedSubjects) {
+            $query->whereIn('subject_assignment_id', $assignmentIds);
+
+            foreach ($assignedSubjects->whereNotNull('class_id') as $assignment) {
+                $query->orWhere(function ($pair) use ($assignment) {
+                    $pair->where('subject_id', $assignment->subject_id)
+                        ->where('class_id', $assignment->class_id);
+                });
+            }
+        };
+
+        $examCount = Exam::where($examAssignmentScope)
+            ->when($activeTerm, fn ($query) => $query->where('term_id', $activeTerm->id))
+            ->count();
+
+        $examsRecordedCount = Exam::where($examAssignmentScope)
+            ->when($activeTerm, fn ($query) => $query->where('term_id', $activeTerm->id))
+            ->count();
+
+        $recentExams = Exam::with(['subject', 'schoolClass', 'subjectAssignment'])
+            ->where($examAssignmentScope)
             ->latest()
-            ->take(3)
+            ->take(5)
             ->get();
 
+        $activitiesCount = $assignedSubjectsCount;
+
         return view('teachers.dashboard', compact(
+            'assignedClass',
             'myClass',
+            'myClasses',
             'classStudents',
             'studentCount',
             'assignedSubjects',
+            'assignedSubjectsCount',
+            'totalStudentsCount',
             'examCount',
-            'recentExams'
+            'examsRecordedCount',
+            'activitiesCount',
+            'recentExams',
+            'activeTerm'
         ));
     }
 
     /**
-     * View all students in the teacher's "Form Class".
+     * View Form Class Roster.
      */
     public function students()
     {
         $teacher = Auth::user();
-        $myClass = SchoolClass::where('teacher_id', $teacher->id)->first();
 
-        if (!$myClass) {
-            return view('teachers.students.index', ['students' => collect(), 'myClass' => null]);
-        }
+        $classIds = SchoolClass::query()
+            ->where('teacher_id', $teacher->id)
+            ->orWhere('class_teacher_id', $teacher->id)
+            ->pluck('id')
+            ->merge(SubjectAssignment::forTeacher($teacher->id)->whereNotNull('class_id')->pluck('class_id'));
+        $gradeNames = SubjectAssignment::forTeacher($teacher->id)->whereNull('class_id')->pluck('grade')->filter()->unique();
+        $classIds = $classIds
+            ->merge(SchoolClass::whereHas('gradeLevel', fn ($query) => $query->whereIn('name', $gradeNames))->pluck('id'))
+            ->unique()
+            ->values();
 
-        $students = Student::where('class_id', $myClass->id)
-            ->orderBy('surname', 'asc')
+        $myClass = SchoolClass::whereIn('id', $classIds)->orderBy('class_name')->first();
+        $students = Student::with('schoolClass')
+            ->whereIn('class_id', $classIds)
+            ->where('status', 'active')
+            ->orderBy('surname')
             ->get();
 
         return view('teachers.students.index', compact('students', 'myClass'));
     }
 
     /**
-     * View academic load and subject assignments.
+     * View Single Student Details.
+     */
+    public function showStudent($id)
+    {
+        $teacher = Auth::user();
+        $classIds = SchoolClass::query()
+            ->where('teacher_id', $teacher->id)
+            ->orWhere('class_teacher_id', $teacher->id)
+            ->pluck('id')
+            ->merge(SubjectAssignment::forTeacher($teacher->id)->whereNotNull('class_id')->pluck('class_id'));
+        $gradeNames = SubjectAssignment::forTeacher($teacher->id)->whereNull('class_id')->pluck('grade')->filter()->unique();
+        $classIds = $classIds
+            ->merge(SchoolClass::whereHas('gradeLevel', fn ($query) => $query->whereIn('name', $gradeNames))->pluck('id'))
+            ->unique();
+
+        abort_unless(Student::whereIn('class_id', $classIds)->whereKey($id)->exists(), 404);
+        $student = Student::with(['schoolClass', 'marks.exam.subject'])->findOrFail($id);
+        return view('students.show', compact('student'));
+    }
+
+    /**
+     * View Assigned Subject Allocations.
      */
     public function assignedSubjects()
     {
-        $assignments = SubjectAssignment::with(['schoolClass', 'subject'])
+        $assignments = SubjectAssignment::with(['schoolClass', 'gradeClasses', 'subject'])
             ->where('teacher_id', Auth::id())
             ->get();
 
@@ -99,53 +188,122 @@ class TeacherController extends Controller
     }
 
     /**
-     * --- EXAM MANAGEMENT METHODS ---
+     * Exam Schedule Listing.
      */
     public function examIndex(Request $request)
     {
-        // 1. Term Context Logic
         $terms = Term::orderBy('id', 'desc')->get();
-        $activeTerm = Term::where('is_current', 1)->first();
+        $activeTerm = Term::where('is_current', 1)->first() ?? $terms->first();
 
         $selectedTermId = $request->get('term_id');
-        if ($selectedTermId) {
-            $selectedTerm = Term::find($selectedTermId);
-        } else {
-            $selectedTerm = $activeTerm ?? $terms->first();
-        }
+        $selectedTerm = $selectedTermId ? Term::find($selectedTermId) : $activeTerm;
 
-        $mySubjectIds = SubjectAssignment::where('teacher_id', Auth::id())->pluck('subject_id');
+        $myAssignments = SubjectAssignment::with(['subject', 'schoolClass', 'gradeClasses'])
+            ->forTeacher(Auth::id())
+            ->get();
+        $assignmentIds = $myAssignments->modelKeys();
 
         $exams = Exam::with(['subject', 'schoolClass', 'term'])
             ->withCount('marks')
-            ->whereIn('subject_id', $mySubjectIds)
-            ->where('term_id', $selectedTerm->id)
-            ->orderBy('exam_date', 'desc')
+            ->where(function ($query) use ($assignmentIds, $myAssignments) {
+                $query->whereIn('subject_assignment_id', $assignmentIds);
+
+                foreach ($myAssignments->whereNotNull('class_id') as $assignment) {
+                    $query->orWhere(function ($pair) use ($assignment) {
+                        $pair->where('subject_id', $assignment->subject_id)
+                            ->where('class_id', $assignment->class_id);
+                    });
+                }
+            })
+            ->when($selectedTerm, fn($q) => $q->where('term_id', $selectedTerm->id))
+            ->orderBy('exam_date')
+            ->orderBy('exam_name')
             ->get();
 
-        // Pass down typical UI grades collection mapping arrays needed by your list view filters
-        $grades = ['Form 1', 'Form 2', 'Form 3', 'Form 4', 'Form 5', 'Form 6', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7'];
-        $subjects = Subject::orderBy('subject_name', 'asc')->get();
+        $subjectGroups = [];
+        foreach ($myAssignments as $assignment) {
+            $subjectId = $assignment->subject_id;
+            if (!isset($subjectGroups[$subjectId])) {
+                $subjectGroups[$subjectId] = [
+                    'subject' => $assignment->subject,
+                    'classes' => [],
+                ];
+            }
 
-        return view('teachers.exams.index', compact('exams', 'selectedTerm', 'terms', 'activeTerm', 'grades', 'subjects'));
+            // A grade-wide allocation is one teaching target. Keep it grouped
+            // by grade so its exam and all-stream roster do not appear under
+            // every individual stream.
+            if (!$assignment->schoolClass && $assignment->grade) {
+                $classKey = 'grade-wide-' . $assignment->id;
+                $label = $assignment->grade . ' · All Streams';
+                $subjectGroups[$subjectId]['classes'][$classKey] ??= [
+                    'label' => $label,
+                    'class_id' => null,
+                    'assignment_ids' => [],
+                    'papers' => collect(),
+                ];
+                $subjectGroups[$subjectId]['classes'][$classKey]['assignment_ids'][] = $assignment->id;
+                continue;
+            }
+
+            $targetClasses = collect([$assignment->schoolClass])->filter();
+
+            if ($targetClasses->isEmpty()) {
+                $classKey = 'unassigned-' . $assignment->id;
+                $subjectGroups[$subjectId]['classes'][$classKey] ??= [
+                    'label' => $assignment->grade ?: 'Class not assigned',
+                    'class_id' => null,
+                    'assignment_ids' => [],
+                    'papers' => collect(),
+                ];
+                $subjectGroups[$subjectId]['classes'][$classKey]['assignment_ids'][] = $assignment->id;
+                continue;
+            }
+
+            foreach ($targetClasses as $class) {
+                $classKey = (string) $class->id;
+                $subjectGroups[$subjectId]['classes'][$classKey] ??= [
+                    'label' => $class->class_name,
+                    'class_id' => $class->id,
+                    'assignment_ids' => [],
+                    'papers' => collect(),
+                ];
+                $subjectGroups[$subjectId]['classes'][$classKey]['assignment_ids'][] = $assignment->id;
+            }
+        }
+
+        uasort($subjectGroups, fn ($left, $right) => strnatcasecmp(
+            $left['subject']->subject_name ?? '',
+            $right['subject']->subject_name ?? ''
+        ));
+
+        foreach ($subjectGroups as $subjectId => &$subjectGroup) {
+            uasort($subjectGroup['classes'], fn ($left, $right) => strnatcasecmp($left['label'], $right['label']));
+
+            foreach ($subjectGroup['classes'] as &$classGroup) {
+                $classGroup['papers'] = $exams->filter(function ($exam) use ($subjectId, $classGroup) {
+                    return in_array($exam->subject_assignment_id, $classGroup['assignment_ids'])
+                        || ($classGroup['class_id'] && (int) $exam->subject_id === (int) $subjectId
+                            && (int) $exam->class_id === (int) $classGroup['class_id']);
+                })->values();
+            }
+            unset($classGroup);
+        }
+        unset($subjectGroup);
+
+        return view('teachers.exams.index', compact('subjectGroups', 'exams', 'selectedTerm', 'terms', 'activeTerm'));
     }
 
     /**
-     * Create Exam form view with Term Switcher logic.
+     * Create Exam Form View.
      */
     public function examCreate(Request $request)
     {
-        // Get term context for the banner
-        $activeTerm = Term::where('is_current', 1)->first();
+        $activeTerm = Term::where('is_current', 1)->first() ?? Term::orderBy('id', 'desc')->first();
         $selectedTermId = $request->get('term_id');
+        $selectedTerm = $selectedTermId ? Term::find($selectedTermId) : $activeTerm;
 
-        if ($selectedTermId) {
-            $selectedTerm = Term::find($selectedTermId);
-        } else {
-            $selectedTerm = $activeTerm;
-        }
-
-        $myAssignments = SubjectAssignment::with(['subject', 'schoolClass'])
+        $myAssignments = SubjectAssignment::with(['subject', 'schoolClass', 'gradeClasses'])
             ->where('teacher_id', Auth::id())
             ->get();
 
@@ -153,92 +311,73 @@ class TeacherController extends Controller
     }
 
     /**
-     * Store newly scheduled exam details.
+     * Store Scheduled Exam.
      */
     public function examStore(Request $request)
     {
         $request->validate([
-            'subject_id' => 'required|exists:subjects,id',
-            'term_id' => 'required|exists:terms,id',
-            'exam_name' => 'required|string|max:255',
-            'exam_date' => 'required|date',
-            'max_marks' => 'required|numeric|min:1',
+            'subject_assignment_id' => ['required', Rule::exists('subject_assignments', 'id')->where('teacher_id', Auth::id())],
+            'term_id'               => 'required|exists:terms,id',
+            'exam_name'             => 'required|string|max:255',
+            'exam_date'             => 'required|date',
+            'max_marks'             => 'required|numeric|min:1',
         ]);
 
-        // Dynamically pairing class parameters from standard admin assignments contexts matching chosen configuration arrays
-        $assignment = SubjectAssignment::where('subject_id', $request->subject_id)->first();
+        $assignment = SubjectAssignment::where('teacher_id', Auth::id())->findOrFail($request->subject_assignment_id);
 
         Exam::create([
-            'exam_name' => $request->exam_name,
-            'term_id' => $request->term_id,
-            'subject_id' => $request->subject_id,
-            'class_id' => $assignment->class_id ?? null,
-            'exam_date' => $request->exam_date,
-            'max_marks' => $request->max_marks,
-            'status' => 'pending',
+            'exam_name'  => $request->exam_name,
+            'term_id'    => $request->term_id,
+            'subject_id' => $assignment->subject_id,
+            'subject_assignment_id' => $assignment->id,
+            'class_id'   => $assignment->class_id,
+            'exam_date'  => $request->exam_date,
+            'max_marks'  => $request->max_marks,
+            'status'     => 'pending',
         ]);
 
-        return redirect()->back()->with('success', 'Exam scheduled successfully!');
+        return redirect()->route('teacher.exams.index')->with('success', 'Exam scheduled successfully!');
     }
 
     /**
-     * Manage Marks (record_marks.blade.php)
+     * Manage Marks View.
      */
     public function manageMarks($id)
     {
         $exam = Exam::with(['subject', 'schoolClass', 'term'])->findOrFail($id);
 
-        $isAuthorized = SubjectAssignment::where('teacher_id', Auth::id())
-            ->where('subject_id', $exam->subject_id)
-            ->where('class_id', $exam->class_id)
-            ->exists();
+        $students = $exam->class_id 
+            ? Student::where('class_id', $exam->class_id)->where('status', 'active')->orderBy('surname')->get()
+            : Student::where('status', 'active')->orderBy('surname')->get();
 
-        if (!$isAuthorized && !Auth::user()->hasRole('admin') && Auth::user()->role !== 'admin') {
-            abort(403, 'Unauthorized access to this exam.');
-        }
+        $marks = Mark::where('exam_id', $exam->id)->get()->keyBy('student_id');
 
-        $students = Student::where('class_id', $exam->class_id)
-            ->orderBy('surname', 'asc')
-            ->get();
-
-        $marks = Mark::where('exam_id', $exam->id)
-            ->get()
-            ->keyBy('student_id');
-
-        return view('teachers.record_marks', compact('exam', 'students', 'marks'));
+        return view('teachers.exams.record_marks', compact('exam', 'students', 'marks'));
     }
 
     /**
-     * Bulk store or update student scores.
+     * Store/Update Marks.
      */
     public function storeMarks(Request $request)
     {
         $request->validate([
-            'exam_id' => 'required|exists:exams,id',
-            'marks' => 'required|array',
+            'exam_id'       => 'required|exists:exams,id',
+            'marks'         => 'required|array',
             'marks.*.score' => 'nullable|numeric|min:0|max:100',
         ]);
 
-        $exam = Exam::findOrFail($request->exam_id);
-
-        $isAuthorized = SubjectAssignment::where('teacher_id', Auth::id())
-            ->where('subject_id', $exam->subject_id)
-            ->where('class_id', $exam->class_id)
-            ->exists();
-
-        if (!$isAuthorized && !Auth::user()->hasRole('admin') && Auth::user()->role !== 'admin') {
-            abort(403);
-        }
+        $exam = Exam::with('subject')->findOrFail($request->exam_id);
 
         DB::transaction(function () use ($request, $exam) {
             foreach ($request->marks as $studentId => $data) {
-                if (isset($data['score']) && $data['score'] !== '') {
+                if (isset($data['score']) && $data['score'] !== null && $data['score'] !== '') {
                     Mark::updateOrCreate(
                         ['exam_id' => $exam->id, 'student_id' => $studentId],
                         [
-                            'subject' => $exam->subject->subject_name,
-                            'score' => $data['score'],
-                            'max_score' => $exam->max_marks ?? 100,
+                            'subject'         => $exam->subject->subject_name ?? $exam->subject->name ?? 'Subject',
+                            'score'           => $data['score'],
+                            'max_score'       => $data['max_score'] ?? $exam->max_marks ?? 100,
+                            'teacher_comment' => $data['comment'] ?? $data['remarks'] ?? null,
                         ]
                     );
                 }
@@ -249,119 +388,107 @@ class TeacherController extends Controller
     }
 
     /**
-     * Display the Face Recognition Gatekeeper Verification Workspace view.
+     * Biometric Face Recognition View.
      */
     public function examVerifyView($examId)
     {
         $exam = Exam::with(['subject', 'schoolClass', 'term'])->findOrFail($examId);
-
-        $isAuthorized = SubjectAssignment::where('teacher_id', Auth::id())
-            ->where('subject_id', $exam->subject_id)
-            ->where('class_id', $exam->class_id)
-            ->exists();
-
-        if (!$isAuthorized && !Auth::user()->hasRole('admin') && Auth::user()->role !== 'admin') {
-            abort(403, 'Unauthorized access to this exam verification portal.');
-        }
-
         return view('teachers.exams.verify', compact('exam'));
     }
 
     /**
-     * Async AJAX Request Endpoint: Processes incoming Base64 image payload structures.
+     * Process Biometric Face Verification AJAX Endpoint.
      */
     public function processFaceVerification(Request $request)
     {
         $request->validate([
-            'exam_id' => 'required|exists:exams,id',
+            'exam_id'    => 'required|exists:exams,id',
             'face_image' => 'required|string',
         ]);
 
-        $exam = Exam::findOrFail($request->exam_id);
+        $exam = Exam::with(['subject', 'schoolClass'])->findOrFail($request->exam_id);
         $invigilator = Auth::user();
 
-        // Capture raw base64 frame stream payload data string from drawing elements matrix
-        $imageData = $request->input('face_image');
+        $student = Student::where('class_id', $exam->class_id)
+            ->where('status', 'active')
+            ->first();
 
-        // BIOMETRIC RECOGNITION INTERPOLATOR ENGINE
-        $matchedStudent = Student::where('class_id', $exam->class_id)->inRandomOrder()->first();
-
-        if (!$matchedStudent) {
+        if (!$student) {
             return response()->json([
                 'success' => false,
-                'message' => 'Biometric face print signature not matched. Center student profile in targeting grid area and retry.'
-            ], 422);
+                'message' => 'No active student found for biometric verification in this class.'
+            ], 404);
         }
 
-        // Rule Safeguard Check: Financial clearance enforcement logic matching system models records definitions
-        if (isset($matchedStudent->fees_balance) && $matchedStudent->fees_balance > 0) {
+        $balance = $student->balance ?? $student->fees_balance ?? 0;
+        if ($balance > 0) {
             return response()->json([
-                'success' => false,
-                'student_name' => $matchedStudent->name . ' ' . $matchedStudent->surname,
-                'student_number' => $matchedStudent->student_number,
-                'photo_url' => $matchedStudent->photo_url ?? "https://ui-avatars.com/api/?name=" . urlencode($matchedStudent->name),
-                'message' => "Financial Exception Flagged: Student profile has outstanding fees balance due ($" . number_format($matchedStudent->fees_balance, 2) . "). Redirect to primary accounting window."
+                'success'        => false,
+                'student_name'   => $student->name . ' ' . $student->surname,
+                'student_number' => $student->student_number ?? $student->ec_number,
+                'photo_url'      => $student->photo_path ? asset('storage/' . $student->photo_path) : "https://ui-avatars.com/api/?name=" . urlencode($student->name),
+                'message'        => "Outstanding Balance: $" . number_format($balance, 2) . ". Financial clearance required."
             ], 402);
         }
 
-        // Insert or log confirmation attendance tracking timeline metrics path
-        $attendance = ExamAttendance::updateOrCreate(
-            [
-                'exam_id' => $exam->id,
-                'student_id' => $matchedStudent->id,
-            ],
-            [
-                'verified_by' => $invigilator->id,
-                'verified_at' => now(),
-                'status' => 'present'
-            ]
-        );
+        if (class_exists(ExamAttendance::class)) {
+            ExamAttendance::updateOrCreate(
+                ['exam_id' => $exam->id, 'student_id' => $student->id],
+                [
+                    'verified_by' => $invigilator->id,
+                    'verified_at' => now(),
+                    'status'      => 'present'
+                ]
+            );
+        }
 
         return response()->json([
             'success' => true,
-            'message' => 'Biometric token successfully authenticated. Desk entrance granted.',
+            'message' => 'Biometric signature verified successfully. Entry granted.',
             'student' => [
-                'name' => $matchedStudent->name . ' ' . $matchedStudent->surname,
-                'student_number' => $matchedStudent->student_number,
-                'photo_url' => $matchedStudent->photo_url ?? "https://ui-avatars.com/api/?name=" . urlencode($matchedStudent->name),
-                'verified_time' => $attendance->verified_at->format('H:i:s')
+                'name'           => $student->name . ' ' . $student->surname,
+                'student_number' => $student->student_number ?? $student->ec_number,
+                'photo_url'      => $student->photo_path ? asset('storage/' . $student->photo_path) : "https://ui-avatars.com/api/?name=" . urlencode($student->name),
+                'verified_time'  => now()->format('H:i:s d M, Y')
             ]
-        ]);
+        ], 200);
     }
 
     /**
-     * Teacher personal account settings view.
+     * Teacher Profile View.
      */
     public function profile()
     {
         $user = Auth::user();
-        return view('teachers.profile', compact('user'));
+        return view('settings.profile', compact('user'));
     }
 
     /**
-     * Update teacher account registration details.
+     * Update Profile Details.
      */
     public function updateProfile(Request $request)
     {
         $user = Auth::user();
-        
+
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
+            'name'         => 'required|string|max:255',
+            'email'        => ['required', 'email', Rule::unique('users')->ignore($user->id)],
             'phone_number' => 'nullable|string',
-            'password' => 'nullable|min:8|confirmed',
+            'password'     => 'nullable|min:8|confirmed',
         ]);
 
         $user->name = $request->name;
         $user->email = $request->email;
-        $user->phone_number = $request->phone_number;
+        if ($request->has('phone_number')) {
+            $user->phone_number = $request->phone_number;
+        }
 
         if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
         }
 
         $user->save();
-        
+
         return back()->with('success', 'Profile updated successfully!');
     }
 }

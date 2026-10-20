@@ -181,8 +181,8 @@
                                             <a href="{{ Route::has('exams.subject_report') ? route('exams.subject_report', ['subject_id' => $subjectId, 'term_id' => $selectedTerm->id ?? null]) : url('/exams/subject-report/' . $subjectId . '?term_id=' . ($selectedTerm->id ?? '')) }}" 
                                                @click.stop
                                                class="inline-flex items-center px-2.5 py-1 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold shadow-sm transition-all"
-                                               title="View Subject Overview & Performance Analytics">
-                                                <i class="fa-solid fa-chart-line mr-1.5"></i> Subject Overview
+                                               title="View marks and subject performance">
+                                                <i class="fa-solid fa-chart-line mr-1.5"></i> Subject Marks
                                             </a>
                                         @endif
 

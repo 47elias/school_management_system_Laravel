@@ -86,11 +86,11 @@
 
                             <div>
                                 <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">Form Teacher</label>
-                                <select name="teacher_id" 
+                                <select name="class_teacher_id" 
                                         class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                     <option value="">-- No Teacher Assigned --</option>
                                     @foreach($teachers as $teacher)
-                                        <option value="{{ $teacher->id }}" {{ ($class->teacher_id == $teacher->id) ? 'selected' : '' }}>
+                                        <option value="{{ $teacher->id }}" {{ (($class->class_teacher_id ?? $class->teacher_id) == $teacher->id) ? 'selected' : '' }}>
                                             {{ $teacher->name }}
                                         </option>
                                     @endforeach

@@ -124,6 +124,24 @@ class User extends Authenticatable
         return $this->hasMany(Payslip::class);
     }
 
+    /** Teaching assignments connecting this teacher to a subject and class/grade. */
+    public function subjectAssignments()
+    {
+        return $this->hasMany(SubjectAssignment::class, 'teacher_id');
+    }
+
+    /** Classes where this user is the primary form teacher. */
+    public function teachingClasses()
+    {
+        return $this->hasMany(SchoolClass::class, 'teacher_id');
+    }
+
+    /** Classes where this user is assigned as class teacher. */
+    public function classTeacherClasses()
+    {
+        return $this->hasMany(SchoolClass::class, 'class_teacher_id');
+    }
+
     /**
      * Link back to student profile if user is a student
      */

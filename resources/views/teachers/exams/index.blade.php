@@ -1,190 +1,74 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Exam Schedule | {{ env('SCHOOL_ACRONYM') }}</title>
-    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+@extends('layouts.admin.app')
 
-    @include('components.adminlte')
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+@section('title', 'My Exams')
 
-    <style>
-        body { font-family: 'Inter', sans-serif !important; }
-        .table-vcenter td { vertical-align: middle !important; }
-        .exam-date-box {
-            background: #f4f4f4;
-            border-left: 3px solid #3c8dbc;
-            padding: 5px 10px;
-            display: inline-block;
-            font-weight: 600;
-            color: #333;
-        }
-        .subject-title {
-            font-size: 14px;
-            font-weight: 700;
-            display: block;
-            color: #333;
-        }
-        .subject-code {
-            font-family: monospace;
-            color: #777;
-        }
-        .empty-state {
-            padding: 60px 0;
-            color: #999;
-        }
-        .empty-state i {
-            font-size: 64px;
-            margin-bottom: 15px;
-            display: block;
-        }
-        /* Term Switcher Alert styling */
-        .context-banner {
-            background: #fff;
-            padding: 10px 15px;
-            border-bottom: 1px solid #d2d6de;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-    </style>
-</head>
-<body class="hold-transition skin-blue sidebar-mini">
-    <div class="wrapper">
-        @include('layouts.topbar')
-        @include('layouts.teacher_sidebar')
+@section('header')
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2"><i class="fa-solid fa-file-signature text-indigo-600 dark:text-indigo-400"></i><span>My Exams</span></h1>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Choose a subject and class to see its exam papers and enter marks.</p>
+        </div>
+        <a href="{{ route('teacher.exams.create') }}" class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-indigo-700"><i class="fa-solid fa-plus mr-2"></i>Add an Exam</a>
+    </div>
+@endsection
 
-        <div class="content-wrapper">
-            <section class="content-header">
-                <h1>
-                    <i class="fa fa-file-text-o text-blue"></i> My Exam Schedule
-                    <small>Assessment Planning & Grading</small>
-                </h1>
-                <ol class="breadcrumb">
-                    <li><a href="{{ route('teacher.dashboard') }}"><i class="fa fa-dashboard"></i> Home</a></li>
-                    <li class="active">Exams</li>
-                </ol>
-            </section>
+@section('content')
+<div class="space-y-6">
+    @if(session('success'))<div class="flex items-center gap-3 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 p-4 text-sm font-semibold text-emerald-800 dark:text-emerald-200"><i class="fa-solid fa-circle-check text-lg"></i><span>{{ session('success') }}</span></div>@endif
+    @if(session('error'))<div class="flex items-center gap-3 rounded-xl border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 p-4 text-sm font-semibold text-rose-800 dark:text-rose-200"><i class="fa-solid fa-circle-exclamation text-lg"></i><span>{{ session('error') }}</span></div>@endif
 
-            <section class="content">
-                {{-- Context Banner to show which Term is currently selected --}}
-                <div class="context-banner btn-flat">
-                    <span><i class="fa fa-filter text-blue"></i> Showing exams for: <strong>{{ $selectedTerm->term_name }} ({{ $selectedTerm->academic_year }})</strong></span>
-                    @if($selectedTerm->is_current)
-                        <span class="label label-success">ACTIVE TERM</span>
-                    @endif
-                </div>
+    <section class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 bg-white dark:bg-slate-800 px-5 py-4 shadow-xs">
+        <div class="flex items-center gap-3"><span class="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400"><i class="fa-solid fa-calendar-days"></i></span><div><p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">School Term</p><p class="mt-1 text-sm font-bold text-slate-800 dark:text-slate-100">{{ $selectedTerm->term_name ?? 'All terms' }} @if($selectedTerm) · {{ $selectedTerm->academic_year ?? '' }} @endif</p></div></div>
+        <form method="GET" action="{{ route('teacher.exams.index') }}" class="flex items-center gap-2">
+            <label for="term_id" class="sr-only">Filter by term</label>
+            <select id="term_id" name="term_id" onchange="this.form.submit()" class="min-w-48 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                @foreach($terms as $term)<option value="{{ $term->id }}" @selected(($selectedTerm->id ?? null) == $term->id)>{{ $term->term_name }} {{ $term->academic_year ? '· '.$term->academic_year : '' }}</option>@endforeach
+            </select>
+            @if(request()->filled('term_id'))<a href="{{ route('teacher.exams.index') }}" class="rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Reset</a>@endif
+        </form>
+    </section>
 
-                @if(session('success'))
-                    <div class="alert alert-success alert-dismissible btn-flat">
-                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-                        <h4><i class="icon fa fa-check"></i> Success!</h4>
-                        {{ session('success') }}
+    <div class="flex flex-wrap items-center gap-2 text-[11px] font-semibold text-slate-500 dark:text-slate-400"><span class="rounded-full bg-indigo-50 dark:bg-indigo-950/50 px-3 py-1.5 text-indigo-700 dark:text-indigo-300">{{ count($subjectGroups) }} assigned {{ \Illuminate\Support\Str::plural('subject', count($subjectGroups)) }}</span><span class="rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1.5">{{ $exams->count() }} papers in this term</span></div>
+
+    @forelse($subjectGroups as $subjectGroup)
+        <details class="group overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-700/60 bg-white dark:bg-slate-800 shadow-xs">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 bg-slate-50/70 dark:bg-slate-800/90 px-5 py-4 hover:bg-slate-100 dark:hover:bg-slate-700/40">
+                <span class="flex min-w-0 items-center gap-3"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-100 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300"><i class="fa-solid fa-book-open"></i></span><span class="min-w-0"><span class="block font-bold text-slate-800 dark:text-slate-100">{{ $subjectGroup['subject']->subject_name ?? 'Assigned subject' }}</span><span class="mt-0.5 block text-[11px] text-slate-500 dark:text-slate-400">{{ $subjectGroup['subject']->subject_code ?? 'Subject allocation' }}</span></span></span>
+                <span class="flex shrink-0 items-center gap-3"><span class="rounded-full bg-indigo-100 dark:bg-indigo-950/70 px-2.5 py-1 text-[10px] font-bold text-indigo-700 dark:text-indigo-300">{{ count($subjectGroup['classes']) }} {{ \Illuminate\Support\Str::plural('class', count($subjectGroup['classes'])) }}</span><i class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform group-open:rotate-180"></i></span>
+            </summary>
+
+            <div class="space-y-4 border-t border-slate-200/80 dark:border-slate-700/60 p-4 sm:p-5">
+                @if($subjectGroup['subject'])
+                    <div class="flex justify-end">
+                        <a href="{{ route('teacher.subjects.marks', $subjectGroup['subject']->id) }}" class="inline-flex items-center rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-700"><i class="fa-solid fa-chart-column mr-2"></i>View All Marks for {{ $subjectGroup['subject']->subject_name }}</a>
                     </div>
                 @endif
-
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="box box-primary">
-                            <div class="box-header with-border">
-                                <h3 class="box-title">Scheduled Assessments</h3>
-                                <div class="box-tools pull-right">
-                                    <a href="{{ route('teacher.exams.create') }}" class="btn btn-primary btn-sm btn-flat">
-                                        <i class="fa fa-plus"></i> Schedule New Exam
-                                    </a>
+                @foreach($subjectGroup['classes'] as $classGroup)
+                    <details open class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                        <summary class="flex cursor-pointer list-none items-center justify-between gap-4 bg-white dark:bg-slate-800 px-4 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-700/40">
+                            <span class="flex min-w-0 items-center gap-3"><span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300"><i class="fa-solid fa-school"></i></span><span class="truncate text-sm font-bold text-slate-800 dark:text-slate-100">{{ $classGroup['label'] }}</span></span>
+                            <span class="shrink-0 rounded-full bg-slate-100 dark:bg-slate-700 px-2.5 py-1 text-[10px] font-bold text-slate-600 dark:text-slate-300">{{ $classGroup['papers']->count() }} {{ \Illuminate\Support\Str::plural('paper', $classGroup['papers']->count()) }}</span>
+                        </summary>
+                        <div class="border-t border-slate-200 dark:border-slate-700">
+                            @forelse($classGroup['papers'] as $exam)
+                                <div class="flex flex-col gap-3 border-b border-slate-100 dark:border-slate-700/60 px-4 py-4 last:border-b-0 lg:flex-row lg:items-center lg:justify-between hover:bg-slate-50/70 dark:hover:bg-slate-700/20">
+                                    <div class="flex min-w-0 items-start gap-3"><span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300"><i class="fa-solid fa-file-lines"></i></span><div class="min-w-0"><h3 class="truncate text-sm font-bold text-slate-800 dark:text-slate-100">{{ $exam->exam_name }}</h3><p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{{ $exam->exam_date->format('d M Y') }} <span class="mx-1">·</span> Out of {{ $exam->max_marks ?? 100 }} marks <span class="mx-1">·</span> Marks entered for {{ $exam->marks_count }} students</p></div></div>
+                                    <div class="flex flex-wrap items-center gap-2 lg:justify-end">
+                                        @if($exam->marks_count > 0)<span class="rounded-full bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 text-[10px] font-extrabold text-emerald-700 dark:text-emerald-300">Marks entered</span>@else<span class="rounded-full bg-amber-50 dark:bg-amber-950/50 px-2.5 py-1 text-[10px] font-extrabold text-amber-700 dark:text-amber-300">No marks yet</span>@endif
+                                        <a href="{{ route('teacher.marks.manage', $exam->id) }}" class="rounded-lg bg-indigo-600 px-3 py-2 text-[11px] font-bold text-white hover:bg-indigo-700"><i class="fa-solid fa-pen-to-square mr-1.5"></i>{{ $exam->marks_count ? 'View or edit marks' : 'Enter marks' }}</a>
+                                        <form action="{{ route('teacher.exams.destroy', $exam->id) }}" method="POST" onsubmit="return confirm('Delete this paper and all recorded marks?');">@csrf @method('DELETE')<button type="submit" aria-label="Delete {{ $exam->exam_name }}" class="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-slate-500 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/30"><i class="fa-solid fa-trash-can"></i></button></form>
+                                    </div>
                                 </div>
-                            </div>
-
-                            <div class="box-body table-responsive no-padding">
-                                <table class="table table-hover table-striped table-vcenter">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 150px">Date</th>
-                                            <th>Subject</th>
-                                            <th>Class</th>
-                                            <th>Exam Details</th>
-                                            <th class="text-center">Status</th>
-                                            <th class="text-right" style="padding-right: 20px">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse($exams as $exam)
-                                        <tr>
-                                            <td>
-                                                <div class="exam-date-box">
-                                                    {{ \Carbon\Carbon::parse($exam->exam_date)->format('d M, Y') }}
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <span class="subject-title">{{ $exam->subject->subject_name ?? 'N/A' }}</span>
-                                                <small class="subject-code">{{ $exam->subject->subject_code ?? '' }}</small>
-                                            </td>
-                                            <td>
-                                                <span class="label label-info btn-flat" style="font-size: 11px">
-                                                    {{ $exam->schoolClass->class_name ?? 'N/A' }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <strong>{{ $exam->exam_name }}</strong>
-                                                <div class="text-muted small">Max Marks: {{ $exam->max_marks ?? '100' }}</div>
-                                            </td>
-                                            <td class="text-center">
-                                                @if($exam->marks_count > 0)
-                                                    <span class="label label-success btn-flat">GRADED ({{ $exam->marks_count }})</span>
-                                                @else
-                                                    <span class="label label-warning btn-flat">NO MARKS YET</span>
-                                                @endif
-                                            </td>
-                                            <td class="text-right" style="padding-right: 20px">
-                                                <div class="btn-group">
-                                                    <a href="{{ route('teacher.marks.manage', $exam->id) }}"
-                                                       class="btn btn-sm btn-info btn-flat">
-                                                        <i class="fa fa-pencil"></i> Enter Marks
-                                                    </a>
-
-                                                    <form action="{{ route('teacher.exams.destroy', $exam->id) }}" method="POST" style="display:inline;">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="btn btn-sm btn-default btn-flat"
-                                                                onclick="return confirm('Delete this exam and all associated marks? This cannot be undone.')"
-                                                                title="Delete">
-                                                            <i class="fa fa-trash text-red"></i>
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        @empty
-                                        <tr>
-                                            <td colspan="6" class="text-center empty-state">
-                                                <i class="fa fa-calendar-times-o"></i>
-                                                <p>No scheduled exams found for this term.</p>
-                                                <a href="{{ route('teacher.exams.create') }}" class="btn btn-sm btn-primary btn-flat">
-                                                    Create your first exam
-                                                </a>
-                                            </td>
-                                        </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <div class="box-footer">
-                                <div class="callout callout-info btn-flat" style="margin-bottom: 0;">
-                                    <h4><i class="fa fa-info"></i> Teacher Portal Info</h4>
-                                    <p>The "Enter Marks" section allows you to record scores for students. Ensure all marks are recorded before the term ends. For student list discrepancies, contact the Registrar.</p>
-                                </div>
-                            </div>
+                            @empty
+                                <div class="px-4 py-7 text-center"><p class="text-xs font-semibold text-slate-500 dark:text-slate-400">No exams for this class and term.</p><a href="{{ route('teacher.exams.create') }}" class="mt-3 inline-flex items-center text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"><i class="fa-solid fa-plus mr-1.5"></i>Add an Exam</a></div>
+                            @endforelse
                         </div>
-                    </div>
-                </div>
-            </section>
-        </div>
-
-        @include('layouts.footer')
-    </div>
-    @include('components.scripts')
-</body>
-</html>
+                    </details>
+                @endforeach
+            </div>
+        </details>
+    @empty
+        <section class="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-white/70 dark:bg-slate-800/50 px-6 py-14 text-center"><span class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400"><i class="fa-solid fa-book-open"></i></span><h2 class="font-bold text-slate-800 dark:text-slate-100">No subjects assigned yet</h2><p class="mx-auto mt-1 max-w-md text-sm text-slate-500 dark:text-slate-400">Ask the school administrator to assign your subjects and classes.</p></section>
+    @endforelse
+</div>
+@endsection

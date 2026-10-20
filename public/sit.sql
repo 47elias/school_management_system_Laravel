@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 17, 2026 at 03:07 PM
+-- Generation Time: Oct 20, 2026 at 09:36 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -190,7 +190,27 @@ INSERT INTO `activity_log` (`id`, `log_name`, `description`, `subject_type`, `ev
 (141, 'default', 'Subject Assignment record has been updated', 'App\\Models\\SubjectAssignment', 'updated', 52, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":13},\"old\":{\"teacher_id\":null}}', NULL, '2026-10-17 10:58:12', '2026-10-17 10:58:12'),
 (142, 'default', 'Subject Assignment record has been updated', 'App\\Models\\SubjectAssignment', 'updated', 52, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":null},\"old\":{\"teacher_id\":13}}', NULL, '2026-10-17 11:02:45', '2026-10-17 11:02:45'),
 (143, 'default', 'Subject Assignment record has been created', 'App\\Models\\SubjectAssignment', 'created', 64, 'App\\Models\\User', 5, '{\"attributes\":{\"grade\":null,\"teacher_id\":13,\"subject_id\":15,\"class_id\":18,\"academic_year\":\"2026\"}}', NULL, '2026-10-17 11:03:23', '2026-10-17 11:03:23'),
-(144, 'default', 'Subject Assignment record has been updated', 'App\\Models\\SubjectAssignment', 'updated', 52, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":13},\"old\":{\"teacher_id\":null}}', NULL, '2026-10-17 11:03:57', '2026-10-17 11:03:57');
+(144, 'default', 'Subject Assignment record has been updated', 'App\\Models\\SubjectAssignment', 'updated', 52, 'App\\Models\\User', 5, '{\"attributes\":{\"teacher_id\":13},\"old\":{\"teacher_id\":null}}', NULL, '2026-10-17 11:03:57', '2026-10-17 11:03:57'),
+(145, 'default', 'Exam record has been created', 'App\\Models\\Exam', 'created', 17, 'App\\Models\\User', 5, '{\"attributes\":{\"exam_name\":\"Paper 1\",\"term_id\":3,\"subject_id\":7,\"exam_date\":\"2026-10-17T00:00:00.000000Z\",\"status\":\"pending\",\"subject_assignment_id\":null,\"class_id\":null}}', NULL, '2026-10-17 11:34:03', '2026-10-17 11:34:03'),
+(146, 'default', 'Exam record has been created', 'App\\Models\\Exam', 'created', 18, 'App\\Models\\User', 5, '{\"attributes\":{\"exam_name\":\"Paper 1\",\"term_id\":3,\"subject_id\":7,\"exam_date\":\"2026-10-17T00:00:00.000000Z\",\"status\":\"pending\",\"subject_assignment_id\":null,\"class_id\":null}}', NULL, '2026-10-17 11:37:37', '2026-10-17 11:37:37'),
+(147, 'default', 'Exam record has been created', 'App\\Models\\Exam', 'created', 19, 'App\\Models\\User', 5, '{\"attributes\":{\"exam_name\":\"Paper 1\",\"term_id\":3,\"subject_id\":7,\"exam_date\":\"2026-10-17T00:00:00.000000Z\",\"status\":\"pending\",\"subject_assignment_id\":null,\"class_id\":null}}', NULL, '2026-10-17 11:38:29', '2026-10-17 11:38:29'),
+(148, 'default', 'Exam record has been created', 'App\\Models\\Exam', 'created', 20, 'App\\Models\\User', 5, '{\"attributes\":{\"exam_name\":\"Paper 1\",\"term_id\":3,\"subject_id\":7,\"exam_date\":\"2026-10-17T00:00:00.000000Z\",\"status\":\"pending\",\"subject_assignment_id\":null,\"class_id\":18}}', NULL, '2026-10-17 11:43:05', '2026-10-17 11:43:05'),
+(149, 'default', 'Mark record has been created', 'App\\Models\\Mark', 'created', 13, 'App\\Models\\User', 5, '{\"attributes\":{\"exam_id\":20,\"student_id\":179,\"subject\":\"MATHEMATICS\",\"score\":76,\"max_score\":100,\"teacher_comment\":\"\"}}', NULL, '2026-10-17 13:06:49', '2026-10-17 13:06:49'),
+(150, 'default', 'Mark record has been updated', 'App\\Models\\Mark', 'updated', 13, 'App\\Models\\User', 5, '{\"attributes\":{\"score\":11,\"teacher_comment\":\"work hard\"},\"old\":{\"score\":76,\"teacher_comment\":\"\"}}', NULL, '2026-10-17 13:14:04', '2026-10-17 13:14:04'),
+(151, 'default', 'Mark record has been updated', 'App\\Models\\Mark', 'updated', 13, 'App\\Models\\User', 5, '{\"attributes\":{\"score\":76,\"teacher_comment\":\"\"},\"old\":{\"score\":11,\"teacher_comment\":\"work hard\"}}', NULL, '2026-10-17 13:14:39', '2026-10-17 13:14:39'),
+(152, 'default', 'Exam record has been updated', 'App\\Models\\Exam', 'updated', 20, 'App\\Models\\User', 5, '{\"attributes\":{\"status\":\"published\"},\"old\":{\"status\":\"pending\"}}', NULL, '2026-10-17 13:33:14', '2026-10-17 13:33:14'),
+(153, 'default', 'Exam record has been updated', 'App\\Models\\Exam', 'updated', 20, 'App\\Models\\User', 5, '{\"attributes\":{\"status\":\"pending\"},\"old\":{\"status\":\"published\"}}', NULL, '2026-10-17 13:33:18', '2026-10-17 13:33:18');
+INSERT INTO `activity_log` (`id`, `log_name`, `description`, `subject_type`, `event`, `subject_id`, `causer_type`, `causer_id`, `properties`, `batch_uuid`, `created_at`, `updated_at`) VALUES
+(154, 'default', 'Exam record has been updated', 'App\\Models\\Exam', 'updated', 20, 'App\\Models\\User', 5, '{\"attributes\":{\"status\":\"published\"},\"old\":{\"status\":\"pending\"}}', NULL, '2026-10-17 13:56:39', '2026-10-17 13:56:39'),
+(155, 'default', 'Fee Transaction record has been created', 'App\\Models\\FeeTransaction', 'created', 2, 'App\\Models\\User', 5, '{\"attributes\":{\"student_id\":178,\"term_id\":3,\"amount\":\"10.00\",\"channel\":\"card\",\"status\":\"pending\",\"poll_url\":null,\"paynow_reference\":null,\"payer_phone\":null,\"payer_email\":null,\"remarks\":null,\"payment_id\":null}}', NULL, '2026-10-17 13:59:52', '2026-10-17 13:59:52'),
+(156, 'default', 'Fee Transaction record has been created', 'App\\Models\\FeeTransaction', 'created', 3, 'App\\Models\\User', 5, '{\"attributes\":{\"student_id\":178,\"term_id\":3,\"amount\":\"10.00\",\"channel\":\"ecocash_push\",\"status\":\"pending\",\"poll_url\":null,\"paynow_reference\":null,\"payer_phone\":null,\"payer_email\":null,\"remarks\":null,\"payment_id\":null}}', NULL, '2026-10-17 14:00:15', '2026-10-17 14:00:15'),
+(157, 'default', 'Payment record has been created', 'App\\Models\\Payment', 'created', 103, 'App\\Models\\User', 5, '{\"attributes\":{\"student_id\":175,\"term_id\":3,\"amount_paid\":\"10.00\",\"payment_date\":\"2026-10-18T00:00:00.000000Z\",\"payment_method\":\"EcoCash\",\"reference_no\":null,\"received_by\":null,\"remarks\":null}}', NULL, '2026-10-18 14:46:10', '2026-10-18 14:46:10'),
+(158, 'default', 'created', 'App\\Models\\Student', 'created', 180, 'App\\Models\\User', 5, '{\"attributes\":{\"student_number\":\"EAC260180\",\"name\":\"adam\",\"surname\":\"moyo\",\"balance\":0,\"date_of_birth\":\"2011-10-19T00:00:00.000000Z\",\"gender\":\"Male\",\"national_id\":\"N\\/A\",\"grade\":\"Form 1 A\",\"address\":\"3094 Budiriro 2\\r\\nOnline\",\"parent_contact\":\"Musa Elias Mukahlera\",\"email\":\"eac260180@eac.cac.zw\",\"phone\":\"+263787247792\",\"enrollment_date\":\"2026-10-19T00:00:00.000000Z\",\"status\":\"active\",\"emergency_contact\":\"Musa Elias Mukahlera\",\"password\":\"$2y$12$Ur.3zeXNUOwESJlvgXVH2eeyF0EGzEzW5U2F0BTfoSEcDOUo8INe.\",\"face_path\":null,\"term_id\":3,\"enrollment_status\":\"active\",\"class_id\":18,\"face_descriptor\":null}}', NULL, '2026-10-19 13:05:39', '2026-10-19 13:05:39'),
+(159, 'default', 'User record has been created', 'App\\Models\\User', 'created', 38, 'App\\Models\\User', 5, '{\"attributes\":{\"name\":\"adam moyo\",\"email\":\"amoyo5@student.local\",\"password\":\"$2y$12$DpoKLJbi4CigXdO0nCtq.uhYukZfU00PF4oOFzB9e\\/eql9SMKqR\\/W\",\"role\":\"student\",\"national_id\":\"N\\/A\",\"employee_id\":null,\"phone_number\":null,\"ec_number\":\"N\\/A\",\"base_salary\":\"0.00\",\"dob\":null,\"bank_name\":null,\"bank_account_no\":null}}', NULL, '2026-10-19 13:05:40', '2026-10-19 13:05:40'),
+(160, 'default', 'User record has been updated', 'App\\Models\\User', 'updated', 12, 'App\\Models\\User', 5, '{\"attributes\":{\"role\":\"admin\"},\"old\":{\"role\":\"teacher\"}}', NULL, '2026-10-19 13:49:43', '2026-10-19 13:49:43'),
+(161, 'default', 'User record has been updated', 'App\\Models\\User', 'updated', 5, 'App\\Models\\User', 5, '{\"attributes\":{\"role\":\"super_admin\"},\"old\":{\"role\":\"admin\"}}', NULL, '2026-10-19 20:13:54', '2026-10-19 20:13:54'),
+(162, 'default', 'User record has been updated', 'App\\Models\\User', 'updated', 5, 'App\\Models\\User', 5, '{\"attributes\":{\"role\":\"admin\"},\"old\":{\"role\":\"super_admin\"}}', NULL, '2026-10-19 20:36:10', '2026-10-19 20:36:10'),
+(163, 'default', 'User record has been updated', 'App\\Models\\User', 'updated', 12, 'App\\Models\\User', 5, '{\"attributes\":{\"role\":\"teacher\"},\"old\":{\"role\":\"admin\"}}', NULL, '2026-10-19 20:36:30', '2026-10-19 20:36:30');
 
 -- --------------------------------------------------------
 
@@ -279,7 +299,7 @@ CREATE TABLE `cache` (
 --
 
 INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
-('elias-academy-college-portal-cache-spatie.permission.cache', 'a:3:{s:5:\"alias\";a:3:{s:1:\"a\";s:2:\"id\";s:1:\"b\";s:4:\"name\";s:1:\"c\";s:10:\"guard_name\";}s:11:\"permissions\";a:14:{i:0;a:3:{s:1:\"a\";i:1;s:1:\"b\";s:10:\"admissions\";s:1:\"c\";s:3:\"web\";}i:1;a:3:{s:1:\"a\";i:2;s:1:\"b\";s:12:\"manage-users\";s:1:\"c\";s:3:\"web\";}i:2;a:3:{s:1:\"a\";i:3;s:1:\"b\";s:21:\"roles_and_permissions\";s:1:\"c\";s:3:\"web\";}i:3;a:3:{s:1:\"a\";i:4;s:1:\"b\";s:18:\"student_management\";s:1:\"c\";s:3:\"web\";}i:4;a:3:{s:1:\"a\";i:6;s:1:\"b\";s:11:\"manage-fees\";s:1:\"c\";s:3:\"web\";}i:5;a:3:{s:1:\"a\";i:7;s:1:\"b\";s:15:\"term_management\";s:1:\"c\";s:3:\"web\";}i:6;a:3:{s:1:\"a\";i:8;s:1:\"b\";s:7:\"payroll\";s:1:\"c\";s:3:\"web\";}i:7;a:3:{s:1:\"a\";i:9;s:1:\"b\";s:16:\"manage-inventory\";s:1:\"c\";s:3:\"web\";}i:8;a:3:{s:1:\"a\";i:10;s:1:\"b\";s:14:\"manage-payroll\";s:1:\"c\";s:3:\"web\";}i:9;a:3:{s:1:\"a\";i:11;s:1:\"b\";s:15:\"manage-expenses\";s:1:\"c\";s:3:\"web\";}i:10;a:3:{s:1:\"a\";i:12;s:1:\"b\";s:10:\"audit-logs\";s:1:\"c\";s:3:\"web\";}i:11;a:3:{s:1:\"a\";i:13;s:1:\"b\";s:16:\"exams_management\";s:1:\"c\";s:3:\"web\";}i:12;a:3:{s:1:\"a\";i:14;s:1:\"b\";s:21:\"activities_management\";s:1:\"c\";s:3:\"web\";}i:13;a:3:{s:1:\"a\";i:15;s:1:\"b\";s:16:\"promote-students\";s:1:\"c\";s:3:\"web\";}}s:5:\"roles\";a:0:{}}', 1792242421);
+('elias-academy-college-portal-cache-spatie.permission.cache', 'a:3:{s:5:\"alias\";a:4:{s:1:\"a\";s:2:\"id\";s:1:\"b\";s:4:\"name\";s:1:\"c\";s:10:\"guard_name\";s:1:\"r\";s:5:\"roles\";}s:11:\"permissions\";a:26:{i:0;a:4:{s:1:\"a\";i:1;s:1:\"b\";s:10:\"admissions\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:1;i:1;i:4;}}i:1;a:4:{s:1:\"a\";i:2;s:1:\"b\";s:12:\"manage-users\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:1;i:1;i:4;}}i:2;a:4:{s:1:\"a\";i:3;s:1:\"b\";s:21:\"roles_and_permissions\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:4;}}i:3;a:4:{s:1:\"a\";i:4;s:1:\"b\";s:18:\"student_management\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:1;i:1;i:4;}}i:4;a:4:{s:1:\"a\";i:6;s:1:\"b\";s:11:\"manage-fees\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:1;i:1;i:4;}}i:5;a:4:{s:1:\"a\";i:7;s:1:\"b\";s:15:\"term_management\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:1;i:1;i:4;}}i:6;a:4:{s:1:\"a\";i:8;s:1:\"b\";s:7:\"payroll\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:1;i:1;i:4;}}i:7;a:4:{s:1:\"a\";i:9;s:1:\"b\";s:16:\"manage-inventory\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:1;i:1;i:4;}}i:8;a:4:{s:1:\"a\";i:10;s:1:\"b\";s:14:\"manage-payroll\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:1;i:1;i:4;}}i:9;a:4:{s:1:\"a\";i:11;s:1:\"b\";s:15:\"manage-expenses\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:1;i:1;i:4;}}i:10;a:4:{s:1:\"a\";i:12;s:1:\"b\";s:10:\"audit-logs\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:1;i:1;i:4;}}i:11;a:4:{s:1:\"a\";i:13;s:1:\"b\";s:16:\"exams_management\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:1;i:1;i:4;}}i:12;a:4:{s:1:\"a\";i:14;s:1:\"b\";s:21:\"activities_management\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:1;i:1;i:4;}}i:13;a:4:{s:1:\"a\";i:15;s:1:\"b\";s:16:\"promote-students\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:1;i:1;i:4;}}i:14;a:4:{s:1:\"a\";i:16;s:1:\"b\";s:21:\"newsletter_management\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:1;i:1;i:4;}}i:15;a:4:{s:1:\"a\";i:17;s:1:\"b\";s:23:\"announcement_management\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:1;i:1;i:4;}}i:16;a:4:{s:1:\"a\";i:18;s:1:\"b\";s:17:\"manage-admissions\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:1;i:1;i:4;}}i:17;a:4:{s:1:\"a\";i:19;s:1:\"b\";s:22:\"view-assigned-subjects\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:3:{i:0;i:1;i:1;i:3;i:2;i:4;}}i:18;a:4:{s:1:\"a\";i:20;s:1:\"b\";s:17:\"manage-timetables\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:1;i:1;i:4;}}i:19;a:4:{s:1:\"a\";i:21;s:1:\"b\";s:15:\"manage-subjects\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:1;i:1;i:4;}}i:20;a:4:{s:1:\"a\";i:22;s:1:\"b\";s:13:\"view-subjects\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:3:{i:0;i:1;i:1;i:3;i:2;i:4;}}i:21;a:4:{s:1:\"a\";i:23;s:1:\"b\";s:20:\"view-admin-dashboard\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:1;i:1;i:4;}}i:22;a:4:{s:1:\"a\";i:24;s:1:\"b\";s:22:\"view-teacher-dashboard\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:3:{i:0;i:1;i:1;i:3;i:2;i:4;}}i:23;a:4:{s:1:\"a\";i:25;s:1:\"b\";s:21:\"attendance_management\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:1;i:1;i:4;}}i:24;a:4:{s:1:\"a\";i:26;s:1:\"b\";s:15:\"edit-activities\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:3:{i:0;i:1;i:1;i:3;i:2;i:4;}}i:25;a:4:{s:1:\"a\";i:27;s:1:\"b\";s:14:\"manage-classes\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:4;}}}s:5:\"roles\";a:3:{i:0;a:3:{s:1:\"a\";i:1;s:1:\"b\";s:5:\"admin\";s:1:\"c\";s:3:\"web\";}i:1;a:3:{s:1:\"a\";i:4;s:1:\"b\";s:11:\"super_admin\";s:1:\"c\";s:3:\"web\";}i:2;a:3:{s:1:\"a\";i:3;s:1:\"b\";s:7:\"teacher\";s:1:\"c\";s:3:\"web\";}}}', 1792538792);
 
 -- --------------------------------------------------------
 
@@ -352,7 +372,8 @@ CREATE TABLE `exams` (
 --
 
 INSERT INTO `exams` (`id`, `exam_name`, `term_id`, `subject_id`, `exam_date`, `status`, `created_at`, `updated_at`, `subject_assignment_id`, `class_id`) VALUES
-(16, 'Paper 1', 3, 1, '2026-10-15', 'pending', '2026-10-15 11:07:20', '2026-10-15 11:07:20', NULL, NULL);
+(19, 'Paper 1', 3, 7, '2026-10-17', 'pending', '2026-10-17 11:38:29', '2026-10-17 11:38:29', NULL, NULL),
+(20, 'Paper 1', 3, 7, '2026-10-17', 'published', '2026-10-17 11:43:05', '2026-10-17 13:56:39', NULL, 18);
 
 -- --------------------------------------------------------
 
@@ -467,6 +488,14 @@ CREATE TABLE `fee_transactions` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `fee_transactions`
+--
+
+INSERT INTO `fee_transactions` (`id`, `student_id`, `term_id`, `amount`, `channel`, `status`, `poll_url`, `paynow_reference`, `payer_phone`, `payer_email`, `remarks`, `payment_id`, `created_at`, `updated_at`) VALUES
+(2, 178, 3, 10.00, 'card', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-17 13:59:52', '2026-10-17 13:59:52'),
+(3, 178, 3, 10.00, 'ecocash_push', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-17 14:00:15', '2026-10-17 14:00:15');
 
 -- --------------------------------------------------------
 
@@ -621,6 +650,13 @@ CREATE TABLE `marks` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `marks`
+--
+
+INSERT INTO `marks` (`id`, `exam_id`, `student_id`, `subject`, `score`, `max_score`, `teacher_comment`, `created_at`, `updated_at`) VALUES
+(13, 20, 179, 'MATHEMATICS', 76, 100, '', '2026-10-17 13:06:49', '2026-10-17 13:14:39');
+
 -- --------------------------------------------------------
 
 --
@@ -699,7 +735,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (65, '2026_10_16_100249_create_grade_scales_table', 47),
 (66, '2026_10_16_113813_create_grade_levels_and_update_classes', 48),
 (67, '2026_10_17_115156_create_subject_combinations_table', 49),
-(68, '2026_10_17_115244_create_subject_combination_subject_table', 49);
+(68, '2026_10_17_115244_create_subject_combination_subject_table', 49),
+(69, '2026_10_19_232307_add_class_teacher_id_to_school_classes_table', 50);
 
 -- --------------------------------------------------------
 
@@ -718,43 +755,30 @@ CREATE TABLE `model_has_permissions` (
 --
 
 INSERT INTO `model_has_permissions` (`permission_id`, `model_type`, `model_id`) VALUES
-(1, 'App\\Models\\User', 5),
 (1, 'App\\Models\\User', 34),
 (1, 'App\\Models\\User', 35),
 (1, 'App\\Models\\User', 36),
-(2, 'App\\Models\\User', 5),
 (2, 'App\\Models\\User', 36),
-(3, 'App\\Models\\User', 5),
 (3, 'App\\Models\\User', 36),
-(4, 'App\\Models\\User', 5),
 (4, 'App\\Models\\User', 34),
 (4, 'App\\Models\\User', 35),
 (4, 'App\\Models\\User', 36),
-(6, 'App\\Models\\User', 5),
 (6, 'App\\Models\\User', 34),
 (6, 'App\\Models\\User', 35),
 (6, 'App\\Models\\User', 36),
-(7, 'App\\Models\\User', 5),
 (7, 'App\\Models\\User', 35),
 (7, 'App\\Models\\User', 36),
-(8, 'App\\Models\\User', 5),
 (8, 'App\\Models\\User', 35),
 (8, 'App\\Models\\User', 36),
-(9, 'App\\Models\\User', 5),
 (9, 'App\\Models\\User', 35),
 (9, 'App\\Models\\User', 36),
-(10, 'App\\Models\\User', 5),
 (10, 'App\\Models\\User', 34),
 (10, 'App\\Models\\User', 35),
 (10, 'App\\Models\\User', 36),
-(11, 'App\\Models\\User', 5),
 (11, 'App\\Models\\User', 34),
 (11, 'App\\Models\\User', 35),
 (11, 'App\\Models\\User', 36),
-(12, 'App\\Models\\User', 5),
-(13, 'App\\Models\\User', 5),
-(14, 'App\\Models\\User', 5),
-(15, 'App\\Models\\User', 5);
+(19, 'App\\Models\\User', 12);
 
 -- --------------------------------------------------------
 
@@ -780,6 +804,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (2, 'App\\Models\\User', 21),
 (3, 'App\\Models\\User', 12),
 (3, 'App\\Models\\User', 13),
+(4, 'App\\Models\\User', 5),
 (4, 'App\\Models\\User', 35),
 (4, 'App\\Models\\User', 36),
 (5, 'App\\Models\\User', 34),
@@ -857,7 +882,8 @@ INSERT INTO `payments` (`id`, `student_id`, `term_id`, `amount_paid`, `payment_d
 (96, 175, 2, 150.00, '2026-09-04', 'Cash', '123', NULL, '123', '2026-09-04 08:39:56', '2026-09-04 08:39:56'),
 (100, 178, 3, 150.00, '2026-09-04', 'Cash', 'querty123', NULL, 'grrwwgfwg', '2026-09-04 08:44:46', '2026-09-04 08:44:46'),
 (101, 176, 3, 69.79, '2026-09-04', 'Cash', 'owvnwv', NULL, NULL, '2026-09-04 08:47:21', '2026-09-04 08:47:21'),
-(102, 176, 2, 69.79, '2026-09-04', 'Cash', 'owvnwv', NULL, NULL, '2026-09-04 08:47:41', '2026-09-04 08:47:41');
+(102, 176, 2, 69.79, '2026-09-04', 'Cash', 'owvnwv', NULL, NULL, '2026-09-04 08:47:41', '2026-09-04 08:47:41'),
+(103, 175, 3, 10.00, '2026-10-18', 'EcoCash', NULL, NULL, NULL, '2026-10-18 14:46:09', '2026-10-18 14:46:09');
 
 -- --------------------------------------------------------
 
@@ -919,7 +945,19 @@ INSERT INTO `permissions` (`id`, `name`, `guard_name`, `created_at`, `updated_at
 (12, 'audit-logs', 'web', '2026-10-05 12:17:03', '2026-10-05 12:17:03'),
 (13, 'exams_management', 'web', '2026-10-15 10:59:17', '2026-10-15 10:59:17'),
 (14, 'activities_management', 'web', '2026-10-15 11:23:12', '2026-10-15 11:23:12'),
-(15, 'promote-students', 'web', '2026-10-16 11:07:00', '2026-10-16 11:07:00');
+(15, 'promote-students', 'web', '2026-10-16 11:07:00', '2026-10-16 11:07:00'),
+(16, 'newsletter_management', 'web', '2026-10-19 13:57:55', '2026-10-19 13:57:55'),
+(17, 'announcement_management', 'web', '2026-10-19 13:58:17', '2026-10-19 13:58:17'),
+(18, 'manage-admissions', 'web', '2026-10-19 14:12:30', '2026-10-19 14:12:30'),
+(19, 'view-assigned-subjects', 'web', '2026-10-19 14:26:09', '2026-10-19 14:26:09'),
+(20, 'manage-timetables', 'web', '2026-10-19 14:26:20', '2026-10-19 14:26:20'),
+(21, 'manage-subjects', 'web', '2026-10-19 14:37:54', '2026-10-19 14:37:54'),
+(22, 'view-subjects', 'web', '2026-10-19 19:31:39', '2026-10-19 19:31:39'),
+(23, 'view-admin-dashboard', 'web', '2026-10-19 19:38:50', '2026-10-19 19:38:50'),
+(24, 'view-teacher-dashboard', 'web', '2026-10-19 19:41:00', '2026-10-19 19:41:00'),
+(25, 'attendance_management', 'web', '2026-10-19 19:48:44', '2026-10-19 19:48:44'),
+(26, 'edit-activities', 'web', '2026-10-19 19:50:57', '2026-10-19 19:50:57'),
+(27, 'manage-classes', 'web', '2026-10-19 21:00:56', '2026-10-19 21:00:56');
 
 -- --------------------------------------------------------
 
@@ -962,6 +1000,66 @@ CREATE TABLE `role_has_permissions` (
   `role_id` bigint(20) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `role_has_permissions`
+--
+
+INSERT INTO `role_has_permissions` (`permission_id`, `role_id`) VALUES
+(1, 1),
+(1, 4),
+(2, 1),
+(2, 4),
+(3, 4),
+(4, 1),
+(4, 4),
+(6, 1),
+(6, 4),
+(7, 1),
+(7, 4),
+(8, 1),
+(8, 4),
+(9, 1),
+(9, 4),
+(10, 1),
+(10, 4),
+(11, 1),
+(11, 4),
+(12, 1),
+(12, 4),
+(13, 1),
+(13, 4),
+(14, 1),
+(14, 4),
+(15, 1),
+(15, 4),
+(16, 1),
+(16, 4),
+(17, 1),
+(17, 4),
+(18, 1),
+(18, 4),
+(19, 1),
+(19, 3),
+(19, 4),
+(20, 1),
+(20, 4),
+(21, 1),
+(21, 4),
+(22, 1),
+(22, 3),
+(22, 4),
+(23, 1),
+(23, 4),
+(24, 1),
+(24, 3),
+(24, 4),
+(25, 1),
+(25, 4),
+(26, 1),
+(26, 3),
+(26, 4),
+(27, 4);
+
 -- --------------------------------------------------------
 
 --
@@ -977,6 +1075,7 @@ CREATE TABLE `school_classes` (
   `room_number` varchar(255) DEFAULT NULL,
   `capacity` int(11) NOT NULL DEFAULT 100,
   `teacher_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `class_teacher_id` bigint(20) UNSIGNED DEFAULT NULL,
   `status` varchar(255) NOT NULL DEFAULT 'active',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
@@ -986,17 +1085,17 @@ CREATE TABLE `school_classes` (
 -- Dumping data for table `school_classes`
 --
 
-INSERT INTO `school_classes` (`id`, `grade_level_id`, `class_name`, `stream`, `class_code`, `room_number`, `capacity`, `teacher_id`, `status`, `created_at`, `updated_at`) VALUES
-(15, NULL, 'Form 1', NULL, 'F1', '1', 40, 12, 'active', '2026-02-06 09:31:42', '2026-07-07 13:36:37'),
-(16, NULL, 'Form 2', NULL, 'F2', '2', 60, NULL, 'active', '2026-02-06 09:52:40', '2026-02-06 09:52:40'),
-(17, NULL, 'Form 3', NULL, 'F3', '3', 80, 13, 'active', '2026-02-11 07:52:36', '2026-02-11 10:42:04'),
-(18, 8, 'Form 1 A', 'A', 'FORM1A', NULL, 40, 13, 'active', '2026-10-16 09:59:58', '2026-10-16 09:59:58'),
-(19, 8, 'Form 1 B', 'B', 'FORM1B', NULL, 40, 12, 'active', '2026-10-16 10:00:50', '2026-10-16 10:00:50'),
-(20, 8, 'Form 1 C', 'C', 'FORM1C', NULL, 40, NULL, 'active', '2026-10-16 10:01:18', '2026-10-16 10:01:18'),
-(21, 9, 'Form 2 A', 'A', 'FORM2A', NULL, 40, NULL, 'active', '2026-10-16 10:02:22', '2026-10-16 10:02:22'),
-(22, 9, 'Form 2 B', 'B', 'FORM2B', NULL, 40, NULL, 'active', '2026-10-16 10:02:31', '2026-10-16 10:02:31'),
-(23, 9, 'Form 2 C', 'C', 'FORM2C', NULL, 40, NULL, 'active', '2026-10-16 10:02:41', '2026-10-16 10:02:41'),
-(24, 8, 'Form 1 D', 'D', 'FORM1D', NULL, 40, NULL, 'active', '2026-10-17 10:22:08', '2026-10-17 10:22:08');
+INSERT INTO `school_classes` (`id`, `grade_level_id`, `class_name`, `stream`, `class_code`, `room_number`, `capacity`, `teacher_id`, `class_teacher_id`, `status`, `created_at`, `updated_at`) VALUES
+(15, NULL, 'Form 1', NULL, 'F1', '1', 40, 12, NULL, 'active', '2026-02-06 09:31:42', '2026-07-07 13:36:37'),
+(16, NULL, 'Form 2', NULL, 'F2', '2', 60, NULL, NULL, 'active', '2026-02-06 09:52:40', '2026-02-06 09:52:40'),
+(17, NULL, 'Form 3', NULL, 'F3', '3', 80, 13, NULL, 'active', '2026-02-11 07:52:36', '2026-02-11 10:42:04'),
+(18, 8, 'Form 1 A', 'A', 'FORM1A', NULL, 40, 12, 12, 'active', '2026-10-16 09:59:58', '2026-10-19 21:32:46'),
+(19, 8, 'Form 1 B', 'B', 'FORM1B', NULL, 40, 13, NULL, 'active', '2026-10-16 10:00:50', '2026-10-19 21:13:33'),
+(20, 8, 'Form 1 C', 'C', 'FORM1C', NULL, 40, NULL, NULL, 'active', '2026-10-16 10:01:18', '2026-10-16 10:01:18'),
+(21, 9, 'Form 2 A', 'A', 'FORM2A', NULL, 40, NULL, NULL, 'active', '2026-10-16 10:02:22', '2026-10-16 10:02:22'),
+(22, 9, 'Form 2 B', 'B', 'FORM2B', NULL, 40, NULL, NULL, 'active', '2026-10-16 10:02:31', '2026-10-16 10:02:31'),
+(23, 9, 'Form 2 C', 'C', 'FORM2C', NULL, 40, NULL, NULL, 'active', '2026-10-16 10:02:41', '2026-10-16 10:02:41'),
+(24, 8, 'Form 1 D', 'D', 'FORM1D', NULL, 40, NULL, NULL, 'active', '2026-10-17 10:22:08', '2026-10-17 10:22:08');
 
 -- --------------------------------------------------------
 
@@ -1018,7 +1117,10 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('20E5Dvk5LEWhnewg9ELpHlQyNxwJsaUFa9qm0gAl', 5, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'YTo2OntzOjY6Il90b2tlbiI7czo0MDoiZXFreXhXbnhLOERUQmE4NmZNQ0NDQkJQRUZySXRRcVZVSW1KcFBBbiI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czozODoiaHR0cDovLzEyNy4wLjAuMTo4MDAwL3BheXJvbGwvcHJpbnQvMTIiO31zOjk6Il9wcmV2aW91cyI7YToyOntzOjM6InVybCI7czo0NzoiaHR0cDovLzEyNy4wLjAuMTo4MDAwL3N1YmplY3RzL2FsbG9jYXRlLWNsYXNzZXMiO3M6NToicm91dGUiO3M6MjU6InN1YmplY3RzLmFsbG9jYXRlX2NsYXNzZXMiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX1zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aTo1O3M6MTc6InBhc3N3b3JkX2hhc2hfd2ViIjtzOjY0OiJlOTc2YTFjZWI2YTFlNDBiNGY0YTUwNzVlMTE5NzY1MDU1MTA0NzU4MjhiZjBiZTc4Y2RjZDI3NDRiMDk4ODVjIjt9', 1792242283);
+('2JtXV1rwXsf7sf5VgmIlG6Q0fFywsrNJR6ZK94Kn', 12, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'YTo2OntzOjY6Il90b2tlbiI7czo0MDoiaktuNDhzalNlMUJ3VHJ6TnVFQjJ1YnV2TVhUYllzQkRsZ3REcnhrOCI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czozMDoiaHR0cDovLzEyNy4wLjAuMTo4MDAwL3N1YmplY3RzIjt9czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6Mzg6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC90ZWFjaGVyL215LWNsYXNzIjtzOjU6InJvdXRlIjtzOjE2OiJ0ZWFjaGVyLm15X2NsYXNzIjt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MTI7czoxNzoicGFzc3dvcmRfaGFzaF93ZWIiO3M6NjQ6IjliZDMxMmQxNzc3NGJhZGEwMzg0ZmIwMjIyMWYwNzliNGE5ODUyMzkxZDViNzY3ZWNjYmE0MWM3YmZhMjU3MGYiO30=', 1792454108),
+('3i7bb8UB03vdoe1uGcZuQ6qDTGXlfkzGhBpB07fR', 12, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoicTBrbUZLTm55OXVtSWZjT3hZZXF2dFhZamZZMDdCMkJ6dnhJcW5KdSI7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6NDE6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC90ZWFjaGVyL215LXN1YmplY3RzIjtzOjU6InJvdXRlIjtzOjE2OiJ0ZWFjaGVyLnN1YmplY3RzIjt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MTI7czoxNzoicGFzc3dvcmRfaGFzaF93ZWIiO3M6NjQ6IjliZDMxMmQxNzc3NGJhZGEwMzg0ZmIwMjIyMWYwNzliNGE5ODUyMzkxZDViNzY3ZWNjYmE0MWM3YmZhMjU3MGYiO30=', 1792481641),
+('Au9FzR2EfwjpQnUwVnd9q1dMgkPBaBEWyIGlvTem', 5, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'YTo2OntzOjY6Il90b2tlbiI7czo0MDoiS2dyMlBIZGw2NWtRM0x6ckNjdXdmeHo5TmkxTVR4M2lLekN0SXNFMiI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czozMToiaHR0cDovLzEyNy4wLjAuMTo4MDAwL2Rhc2hib2FyZCI7fXM6OToiX3ByZXZpb3VzIjthOjI6e3M6MzoidXJsIjtzOjI5OiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvY2xhc3NlcyI7czo1OiJyb3V0ZSI7czoxMzoiY2xhc3Nlcy5pbmRleCI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjU7czoxNzoicGFzc3dvcmRfaGFzaF93ZWIiO3M6NjQ6ImU5NzZhMWNlYjZhMWU0MGI0ZjRhNTA3NWUxMTk3NjUwNTUxMDQ3NTgyOGJmMGJlNzhjZGNkMjc0NGIwOTg4NWMiO30=', 1792454301),
+('L117pxFVreB5kxMcPccoqbY4Y4AnVQP2Nd2kfQEf', 5, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoic0hGaTZ6cVNHaElSNEdFT2JOQTVJdWk1TkpWakdQWHA0SUl3MmlSSSI7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6Mjk6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9jbGFzc2VzIjtzOjU6InJvdXRlIjtzOjEzOiJjbGFzc2VzLmluZGV4Ijt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6NTtzOjE3OiJwYXNzd29yZF9oYXNoX3dlYiI7czo2NDoiZTk3NmExY2ViNmExZTQwYjRmNGE1MDc1ZTExOTc2NTA1NTEwNDc1ODI4YmYwYmU3OGNkY2QyNzQ0YjA5ODg1YyI7fQ==', 1792481349);
 
 -- --------------------------------------------------------
 
@@ -1076,7 +1178,8 @@ INSERT INTO `students` (`id`, `class_id`, `term_id`, `student_number`, `name`, `
 (175, 22, 3, 'EAC260001', 'Musa Elias', 'Mukahlera', '2004-09-24', 'Male', '222042235E22', 'Form 2 B', 'active', '3094 Budiriro 2\r\nOnline', 'Musa Elias Mukahlera', 'eac260001@eac.cac.zw', '+263787247792', '2026-09-03', NULL, 'active', NULL, 'Musa Elias Mukahlera', '$2y$12$pnV2tIL3Y3ogDAJp5xLsz.J53kr8EWBeaYJLeSIyxG0kbP/ZrRilm', '2026-09-03 11:30:25', '2026-10-16 11:02:49', NULL, 0.00, NULL, NULL),
 (176, 23, 3, 'EAC260176', 'Hamamunashe', 'Tirekerwi', '2001-01-01', 'Male', '12121212D12', 'Form 2 C', 'active', '3094 Budiriro 2\r\nOnline', 'Musa Elias Mukahlera', 'eac260176@eac.cac.zw', '+263787247792', '2026-09-03', NULL, 'active', NULL, 'Musa Elias Mukahlera', '$2y$12$w7JioqHbY.aUUDG3q5mS2ONOD2p..d4Z430g2bvDp7a0his3wXQMO', '2026-09-03 11:33:57', '2026-10-16 11:02:49', NULL, 0.00, NULL, NULL),
 (178, 21, 3, 'EAC260178', 'John', 'Doe', '2007-12-01', 'Male', '18621122Q11', 'Form 2 A', 'active', 'Somewhere in Mars', 'Mr Moyo 0787247792 Parent', 'eac260178@eac.cac.zw', '+263112233445566', '2026-09-04', NULL, 'active', NULL, 'Mr Moyo 0787247792 Parent', '$2y$12$wXrUt0embMCGVbEG26nKfuQvI7qpJn80t5uP/Uo3F7/XLmSNUq2py', '2026-09-04 07:01:00', '2026-10-16 11:02:49', NULL, 0.00, NULL, NULL),
-(179, 18, 3, 'EAC260179', 'Sarah', 'Corner', '2009-01-24', 'Female', '12121212D121', 'Form 1 A', 'active', '3094 Budiriro 2\r\nOnline', 'Musa Elias Mukahlera', 'eac260179@eac.cac.zw', '+263787247792', '2026-10-17', NULL, 'active', NULL, 'Musa Elias Mukahlera', '$2y$12$wHh.9pLit8zWPtSR2uZ6oej.ienBOGGsW3NysYEpc5wVNXVFP2zlO', '2026-10-17 07:49:10', '2026-10-17 07:49:10', NULL, 0.00, NULL, NULL);
+(179, 18, 3, 'EAC260179', 'Sarah', 'Corner', '2009-01-24', 'Female', '12121212D121', 'Form 1 A', 'active', '3094 Budiriro 2\r\nOnline', 'Musa Elias Mukahlera', 'eac260179@eac.cac.zw', '+263787247792', '2026-10-17', NULL, 'active', NULL, 'Musa Elias Mukahlera', '$2y$12$wHh.9pLit8zWPtSR2uZ6oej.ienBOGGsW3NysYEpc5wVNXVFP2zlO', '2026-10-17 07:49:10', '2026-10-17 07:49:10', NULL, 0.00, NULL, NULL),
+(180, 18, 3, 'EAC260180', 'adam', 'moyo', '2011-10-19', 'Male', 'N/A', 'Form 1 A', 'active', '3094 Budiriro 2\r\nOnline', 'Musa Elias Mukahlera', 'eac260180@eac.cac.zw', '+263787247792', '2026-10-19', NULL, 'active', NULL, 'Musa Elias Mukahlera', '$2y$12$Ur.3zeXNUOwESJlvgXVH2eeyF0EGzEzW5U2F0BTfoSEcDOUo8INe.', '2026-10-19 13:05:39', '2026-10-19 13:05:39', NULL, 0.00, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1260,8 +1363,8 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `dob`, `employee_id`, `name`, `email`, `national_id`, `base_salary`, `role`, `phone_number`, `email_verified_at`, `password`, `remember_token`, `created_at`, `updated_at`, `ec_number`, `bank_name`, `bank_account_no`) VALUES
-(5, '2004-09-24', '12', 'Musa Elias Mukahlera', 'musamukahlera@gmail.com', '22042235E22', 0.00, 'admin', '0787247792', NULL, '$2y$12$Y73mf57FNoxkJKNpl3Yoj.4gzMrhdXl3OsfYHM/fdluy0XHbbbmzm', NULL, '2026-01-27 19:44:44', '2026-02-27 11:24:23', 'admin', NULL, NULL),
-(12, '2001-11-11', '222042244E22', 'Wilson Mafuriranwa', 'wilson@eac.co.zw', '202020', 0.00, 'teacher', NULL, NULL, '$2y$12$dj1PRzPN1Kfbg6QqjSZrBuuAm0sOzHHkSkArp5jq7WpmrsyZ8iK9u', NULL, '2026-02-09 11:28:38', '2026-09-06 16:42:28', '1234', NULL, NULL),
+(5, '2004-09-24', '12', 'Musa Elias Mukahlera', 'musamukahlera@gmail.com', '22042235E22', 0.00, 'admin', '0787247792', NULL, '$2y$12$Y73mf57FNoxkJKNpl3Yoj.4gzMrhdXl3OsfYHM/fdluy0XHbbbmzm', NULL, '2026-01-27 19:44:44', '2026-10-19 20:36:10', 'admin', NULL, NULL),
+(12, '2001-11-11', '222042244E22', 'Wilson Mafuriranwa', 'wilson@eac.co.zw', '202020', 0.00, 'teacher', NULL, NULL, '$2y$12$dj1PRzPN1Kfbg6QqjSZrBuuAm0sOzHHkSkArp5jq7WpmrsyZ8iK9u', NULL, '2026-02-09 11:28:38', '2026-10-19 20:36:30', '1234', NULL, NULL),
 (13, '2004-09-27', 'eac15', 'Takudzwa Masiwa', 'tmasiwa@eac.ac.zw', '632580686B44', 0.00, 'teacher', '0712070344', NULL, '$2y$12$NDz87.YcOZeu7VJA5qWkde8QaKBG6aYXCvNZjCcQxc5TryNAkym3S', NULL, '2026-02-11 07:02:21', '2026-03-04 18:13:02', '1212', NULL, NULL),
 (16, NULL, NULL, 'Sailas Benza', 'st20266885@school.com', NULL, 0.00, 'student', NULL, NULL, '$2y$12$uzW4ZGUxSwdg2sUMkriSLeYbmHdLo8XB0lZZzF9fhSl310p3QYkpi', NULL, '2026-02-12 16:15:20', '2026-02-12 16:15:20', NULL, NULL, NULL),
 (17, NULL, NULL, 'Neville Mupasa', 'st20261705@school.com', NULL, 0.00, 'student', NULL, NULL, '$2y$12$PQQ04xKZfLr5Z0/ehjsu7eM7Fw/aJ4/YZrxI5D9Ws.bDB4H9RRpju', NULL, '2026-02-12 16:38:35', '2026-02-12 16:38:35', NULL, NULL, NULL),
@@ -1272,7 +1375,8 @@ INSERT INTO `users` (`id`, `dob`, `employee_id`, `name`, `email`, `national_id`,
 (34, '2004-09-21', NULL, 'TATENDA MUKUNYADZE', 'tatenda@eac.ac.zw', 'Tatenda@123', 0.00, 'admin', '+263787247792', NULL, '$2y$12$KALjjt.I7GL44i2LrjD2sOPqVv.wc/POT58GoDQXF/YE.a32lAIaK', NULL, '2026-10-05 09:00:05', '2026-10-05 09:01:32', '1862', NULL, NULL),
 (35, '2001-01-01', NULL, 'Tapiwanashe Manyara', 'tapiwanashemanyara079@gmail.com', '1234567890A112', 0.00, 'admin', '0788243582', NULL, '$2y$12$5vmbeDJrUJHwA6qdhtrVXu0OkrdXIYNUhK93.Jmamc/TUyuFa21Ni', NULL, '2026-10-05 09:06:30', '2026-10-05 09:06:30', '1863', NULL, NULL),
 (36, '2001-09-09', NULL, 'Christine Munaki', 'cmunanki@eac.ac.zw', '11223344', 0.00, 'admin', '+263789781392', NULL, '$2y$12$E/bQsAo5lme/CNYL882Kw.Nqxx0HanjoBKvB8EV9jaMGg/V704.L.', NULL, '2026-10-05 09:12:40', '2026-10-05 09:12:40', '1864', NULL, NULL),
-(37, NULL, NULL, 'Sarah Corner', 'scorner4@student.local', '12121212D121', 0.00, 'student', NULL, NULL, '$2y$12$RNPpzMENjbH3kgKnqIaZquOMlbrs1CAuemrYxCA1D4tvP4Kvwo.LO', NULL, '2026-10-17 07:49:11', '2026-10-17 07:49:11', '12121212D121', NULL, NULL);
+(37, NULL, NULL, 'Sarah Corner', 'scorner4@student.local', '12121212D121', 0.00, 'student', NULL, NULL, '$2y$12$RNPpzMENjbH3kgKnqIaZquOMlbrs1CAuemrYxCA1D4tvP4Kvwo.LO', NULL, '2026-10-17 07:49:11', '2026-10-17 07:49:11', '12121212D121', NULL, NULL),
+(38, NULL, NULL, 'adam moyo', 'amoyo5@student.local', 'N/A', 0.00, 'student', NULL, NULL, '$2y$12$DpoKLJbi4CigXdO0nCtq.uhYukZfU00PF4oOFzB9e/eql9SMKqR/W', NULL, '2026-10-19 13:05:39', '2026-10-19 13:05:39', 'N/A', NULL, NULL);
 
 --
 -- Indexes for dumped tables
@@ -1508,7 +1612,8 @@ ALTER TABLE `role_has_permissions`
 ALTER TABLE `school_classes`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `school_classes_class_code_unique` (`class_code`),
-  ADD KEY `school_classes_grade_level_id_foreign` (`grade_level_id`);
+  ADD KEY `school_classes_grade_level_id_foreign` (`grade_level_id`),
+  ADD KEY `school_classes_class_teacher_id_foreign` (`class_teacher_id`);
 
 --
 -- Indexes for table `sessions`
@@ -1595,7 +1700,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `activity_log`
 --
 ALTER TABLE `activity_log`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=145;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=164;
 
 --
 -- AUTO_INCREMENT for table `activity_marks`
@@ -1631,7 +1736,7 @@ ALTER TABLE `class_subject`
 -- AUTO_INCREMENT for table `exams`
 --
 ALTER TABLE `exams`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `exam_attendances`
@@ -1661,7 +1766,7 @@ ALTER TABLE `fee_structures`
 -- AUTO_INCREMENT for table `fee_transactions`
 --
 ALTER TABLE `fee_transactions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `grade_levels`
@@ -1697,13 +1802,13 @@ ALTER TABLE `jobs`
 -- AUTO_INCREMENT for table `marks`
 --
 ALTER TABLE `marks`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=69;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=70;
 
 --
 -- AUTO_INCREMENT for table `newsletters`
@@ -1715,7 +1820,7 @@ ALTER TABLE `newsletters`
 -- AUTO_INCREMENT for table `payments`
 --
 ALTER TABLE `payments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=103;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=104;
 
 --
 -- AUTO_INCREMENT for table `payslips`
@@ -1727,7 +1832,7 @@ ALTER TABLE `payslips`
 -- AUTO_INCREMENT for table `permissions`
 --
 ALTER TABLE `permissions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `roles`
@@ -1751,7 +1856,7 @@ ALTER TABLE `settings`
 -- AUTO_INCREMENT for table `students`
 --
 ALTER TABLE `students`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=180;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=181;
 
 --
 -- AUTO_INCREMENT for table `subjects`
@@ -1793,7 +1898,7 @@ ALTER TABLE `timetables`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- Constraints for dumped tables
@@ -1902,6 +2007,7 @@ ALTER TABLE `role_has_permissions`
 -- Constraints for table `school_classes`
 --
 ALTER TABLE `school_classes`
+  ADD CONSTRAINT `school_classes_class_teacher_id_foreign` FOREIGN KEY (`class_teacher_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `school_classes_grade_level_id_foreign` FOREIGN KEY (`grade_level_id`) REFERENCES `grade_levels` (`id`) ON DELETE CASCADE;
 
 --

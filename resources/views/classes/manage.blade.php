@@ -84,11 +84,11 @@
             </div>
         </div>
 
-        {{-- Collapsible Grade Level Sections (Collapsed by Default) --}}
+        {{-- Collapsible Grade Level Sections --}}
         @forelse($gradeLevels as $grade)
             @php
                 $streamSearchTerms = $grade->schoolClasses->map(function($c) {
-                    $teacherName = $c->teacher->name ?? $c->classTeacher->name ?? '';
+                    $teacherName = $c->classTeacher->name ?? $c->teacher->name ?? '';
                     return strtolower($c->class_name . ' ' . $c->class_code . ' ' . $c->stream . ' ' . $teacherName);
                 })->values()->toJson();
             @endphp
@@ -158,7 +158,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                             @foreach($grade->schoolClasses as $class)
                                 @php
-                                    $teacherName = $class->teacher->name ?? $class->classTeacher->name ?? 'Unassigned';
+                                    $teacherName = $class->classTeacher->name ?? $class->teacher->name ?? 'Unassigned';
                                     $searchString = strtolower($class->class_name . ' ' . $class->class_code . ' ' . $class->stream . ' ' . $teacherName);
                                 @endphp
                                 <div x-show="!searchQuery || '{{ $searchString }}'.includes(searchQuery.toLowerCase()) || gradeName.includes(searchQuery.toLowerCase())"
@@ -336,7 +336,7 @@
                                 <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
                                     Form Teacher
                                 </label>
-                                <select name="teacher_id" class="w-full px-3.5 py-2.5 text-xs font-semibold rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <select name="class_teacher_id" class="w-full px-3.5 py-2.5 text-xs font-semibold rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                     <option value="">-- Unassigned --</option>
                                     @foreach($teachers as $teacher)
                                         <option value="{{ $teacher->id }}">{{ $teacher->name }}</option>

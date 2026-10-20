@@ -6,6 +6,8 @@ use App\Models\ActivityMark;
 use App\Models\ClassActivity;
 use App\Models\Student;
 use App\Models\SubjectAssignment;
+use App\Models\SchoolClass;
+use App\Models\Subject;
 use App\Models\Term;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,32 +16,31 @@ use Illuminate\Support\Facades\DB;
 /**
  * CONTINUOUS ASSESSMENT (CA) CONTROLLER
  * -----------------------------------------------------------------------
- * Fully independent from ExamController / the `exams` + `marks` tables.
- * This covers day-to-day, in-class activity marks (classwork, homework,
- * quizzes, participation, etc.) that have no fixed exam-style schedule
- * and can be logged as often as needed.
+ * Handles day-to-day, in-class activities (classwork, homework, quizzes,
+ * participation, practicals, projects, etc.).
  */
 class ActivityController extends Controller
 {
     /**
-     * TEACHER: Landing page - one card per teaching assignment (subject + class),
-     * each with a "Log Activity" action and a link to that class's activity history.
+     * TEACHER: Landing page listing assigned classes and subject teaching load.
      */
-    public function teacherIndex()
+    public function index()
     {
-        $assignments = SubjectAssignment::with(['subject', 'schoolClass'])
-            ->where('teacher_id', Auth::id())
-            ->withCount('activities')
-            ->get();
+        // Expands grade-wide admin allocations into one row per stream
+        $assignments = SubjectAssignment::expandedForTeacher(Auth::id());
+
+        $counts = \App\Models\ClassActivity::whereIn('subject_assignment_id', $assignments->pluck('id')->unique())
+            ->selectRaw('subject_assignment_id, COUNT(*) as total')
+            ->groupBy('subject_assignment_id')
+            ->pluck('total', 'subject_assignment_id');
+
+        $assignments->each(fn($a) => $a->activities_count = $counts[$a->id] ?? 0);
 
         return view('teachers.activities.index', compact('assignments'));
     }
 
     /**
-     * TEACHER: Quick-create a new activity for one of their assignments,
-     * then send them straight to the mark-entry grid. Defaults the date to
-     * today since these are meant to be logged the same day, not scheduled
-     * ahead of time.
+     * TEACHER: Store a newly logged in-class activity.
      */
     public function store(Request $request)
     {
@@ -54,34 +55,29 @@ class ActivityController extends Controller
         ]);
 
         $assignment = SubjectAssignment::findOrFail($validated['subject_assignment_id']);
-
-        if ($assignment->teacher_id !== Auth::id() && Auth::user()->role !== 'admin') {
-            abort(403, 'Unauthorized: you are not assigned to this class/subject.');
-        }
+        $this->authorizeAssignment($assignment);
 
         $term = Term::where('is_current', 1)->first() ?? Term::latest('id')->first();
 
         $activity = ClassActivity::create([
             'subject_assignment_id' => $assignment->id,
-            'term_id'                => $term?->id,
-            'title'                  => $validated['title'],
-            'type'                   => $validated['type'],
-            'activity_date'          => $validated['activity_date'],
-            'max_score'              => $validated['max_score'],
-            'weight'                 => $validated['weight'] ?? 1.00,
-            'notes'                  => $validated['notes'] ?? null,
-            'created_by'             => Auth::id(),
+            'term_id'               => $term?->id,
+            'title'                 => $validated['title'],
+            'type'                  => $validated['type'],
+            'activity_date'         => $validated['activity_date'],
+            'max_score'             => $validated['max_score'],
+            'weight'                => $validated['weight'] ?? 1.00,
+            'notes'                 => $validated['notes'] ?? null,
+            'created_by'            => Auth::id(),
         ]);
 
         return redirect()
             ->route('teacher.activities.record', $activity->id)
-            ->with('success', 'Activity logged. Now record student scores below.');
+            ->with('success', 'Activity logged successfully. Record scores below.');
     }
 
     /**
-     * TEACHER: Mark-entry grid for one activity - lists every student in
-     * that class with an editable score field, mirroring the exam
-     * record-marks screen for a consistent UX.
+     * TEACHER: Mark-entry grid for a specific activity.
      */
     public function recordMarks($id)
     {
@@ -93,6 +89,7 @@ class ActivityController extends Controller
         $classId = $activity->subjectAssignment->class_id;
 
         $students = Student::where('class_id', $classId)
+            ->where('status', 'active')
             ->orderBy('surname')
             ->get();
 
@@ -104,18 +101,15 @@ class ActivityController extends Controller
     }
 
     /**
-     * TEACHER: Bulk save/update scores for an activity. Uses
-     * updateOrCreate against the unique (class_activity_id, student_id)
-     * constraint, so re-opening the same activity later to add or correct
-     * scores just works - no duplicate rows, no separate edit endpoint.
+     * TEACHER: Save/update student scores for an activity.
      */
     public function bulkStore(Request $request)
     {
         $validated = $request->validate([
-            'activity_id'      => 'required|exists:class_activities,id',
-            'marks'             => 'required|array',
-            'marks.*.score'     => 'nullable|numeric|min:0',
-            'marks.*.comment'   => 'nullable|string|max:255',
+            'activity_id'     => 'required|exists:class_activities,id',
+            'marks'           => 'required|array',
+            'marks.*.score'   => 'nullable|numeric|min:0',
+            'marks.*.comment' => 'nullable|string|max:255',
         ]);
 
         $activity = ClassActivity::with('subjectAssignment')->findOrFail($validated['activity_id']);
@@ -124,7 +118,7 @@ class ActivityController extends Controller
         DB::beginTransaction();
         try {
             foreach ($validated['marks'] as $studentId => $data) {
-                if (isset($data['score']) && $data['score'] !== '') {
+                if (isset($data['score']) && $data['score'] !== '' && $data['score'] !== null) {
                     ActivityMark::updateOrCreate(
                         ['class_activity_id' => $activity->id, 'student_id' => $studentId],
                         [
@@ -135,24 +129,24 @@ class ActivityController extends Controller
                 }
             }
             DB::commit();
+
             return back()->with('success', 'Activity scores saved successfully!');
         } catch (\Exception $e) {
             DB::rollback();
+
             return back()->with('error', 'Failed to save scores: ' . $e->getMessage());
         }
     }
 
     /**
-     * TEACHER: History of everything logged for one teaching assignment,
-     * plus each student's running CA average for that subject/term -
-     * computed with a single aggregate query, not per-row loops.
+     * TEACHER: Activity history and running CA averages for an assignment.
      */
     public function history($assignmentId)
     {
         $assignment = SubjectAssignment::with(['subject', 'schoolClass'])->findOrFail($assignmentId);
         $this->authorizeAssignment($assignment);
 
-        $term = Term::where('is_current', 1)->first();
+        $term = Term::where('is_current', 1)->first() ?? Term::latest('id')->first();
 
         $activities = ClassActivity::where('subject_assignment_id', $assignment->id)
             ->when($term, fn($q) => $q->where('term_id', $term->id))
@@ -161,10 +155,11 @@ class ActivityController extends Controller
             ->get();
 
         $students = Student::where('class_id', $assignment->class_id)
+            ->where('status', 'active')
             ->orderBy('surname')
             ->get()
             ->map(function ($student) use ($assignment, $term) {
-                $student->ca_average = $term
+                $student->ca_average = ($term && method_exists($student, 'continuousAssessmentAverage'))
                     ? $student->continuousAssessmentAverage($assignment->subject_id, $term->id)
                     : 0.0;
                 return $student;
@@ -174,36 +169,35 @@ class ActivityController extends Controller
     }
 
     /**
-     * TEACHER/ADMIN: Delete an activity and its scores.
+     * TEACHER/ADMIN: Delete an activity and its associated marks.
      */
     public function destroy($id)
     {
         $activity = ClassActivity::with('subjectAssignment')->findOrFail($id);
         $this->authorizeAssignment($activity->subjectAssignment);
 
-        // Marks cascade-delete at the DB level, but staying explicit keeps
-        // this consistent with the rest of the codebase's transaction style.
         DB::beginTransaction();
         try {
             ActivityMark::where('class_activity_id', $activity->id)->delete();
             $activity->delete();
             DB::commit();
-            return back()->with('success', 'Activity deleted.');
+
+            return back()->with('success', 'Activity deleted successfully.');
         } catch (\Exception $e) {
             DB::rollback();
+
             return back()->with('error', 'Error deleting activity: ' . $e->getMessage());
         }
     }
 
     /**
-     * ADMIN: School-wide overview of all logged activities, filterable by
-     * term / class / subject / type.
+     * ADMIN: School-wide overview of all logged continuous assessment activities.
      */
     public function adminIndex(Request $request)
     {
         $terms = Term::orderBy('id', 'desc')->get();
-        $activeTerm = Term::where('is_current', 1)->first();
-        $selectedTerm = $request->filled('term_id') ? Term::find($request->term_id) : ($activeTerm ?? $terms->first());
+        $activeTerm = Term::where('is_current', 1)->first() ?? $terms->first();
+        $selectedTerm = $request->filled('term_id') ? Term::find($request->term_id) : $activeTerm;
 
         $activities = ClassActivity::with(['subjectAssignment.subject', 'subjectAssignment.schoolClass'])
             ->withCount('marks')
@@ -215,20 +209,23 @@ class ActivityController extends Controller
             ->paginate(25)
             ->withQueryString();
 
-        $classes = \App\Models\SchoolClass::orderBy('class_name')->get();
-        $subjects = \App\Models\Subject::orderBy('subject_name')->get();
+        $classes = SchoolClass::orderBy('class_name')->get();
+        $subjects = Subject::orderBy('subject_name')->get();
 
         return view('activities.index', compact('activities', 'terms', 'selectedTerm', 'classes', 'subjects'));
     }
 
     /**
-     * Shared authorization check: teacher must own the assignment, or be an admin.
+     * Authorization check: verifies if the logged-in user owns the assignment or is an admin.
      */
     private function authorizeAssignment(SubjectAssignment $assignment): void
     {
         $user = Auth::user();
-        if ($assignment->teacher_id !== $user->id && $user->role !== 'admin') {
-            abort(403, 'Unauthorized: you do not teach this class/subject.');
+
+        $isAdmin = ($user->role === 'admin') || (method_exists($user, 'hasRole') && $user->hasRole('admin'));
+
+        if ($assignment->teacher_id !== $user->id && !$isAdmin) {
+            abort(403, 'Unauthorized access to this class activity.');
         }
     }
 }

@@ -23,7 +23,8 @@ class Exam extends Model
         'exam_date',
         'status',
         'subject_assignment_id',
-        'class_id'
+        'class_id',
+        'max_marks',
     ];
 
     public function getActivitylogOptions(): LogOptions

@@ -15,11 +15,11 @@ class ClassController extends Controller
      */
     public function index()
     {
-        $gradeLevels = GradeLevel::with(['schoolClasses.teacher', 'schoolClasses.students'])
+        $gradeLevels = GradeLevel::with(['schoolClasses.teacher', 'schoolClasses.classTeacher', 'schoolClasses.students'])
             ->orderBy('level_order', 'asc')
             ->get();
 
-        $classes = SchoolClass::with(['gradeLevel', 'teacher', 'students', 'subjects'])
+        $classes = SchoolClass::with(['gradeLevel', 'teacher', 'classTeacher', 'students', 'subjects'])
             ->orderBy('class_name', 'asc')
             ->get();
 
@@ -73,11 +73,12 @@ class ClassController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'grade_level_id' => 'required|exists:grade_levels,id',
-            'stream'         => 'required|string|max:10',
-            'room_number'    => 'nullable|string|max:50',
-            'capacity'       => 'nullable|integer|min:1',
-            'teacher_id'     => 'nullable|exists:users,id',
+            'grade_level_id'   => 'required|exists:grade_levels,id',
+            'stream'           => 'required|string|max:10',
+            'room_number'      => 'nullable|string|max:50',
+            'capacity'         => 'nullable|integer|min:1',
+            'teacher_id'       => 'nullable|exists:users,id',
+            'class_teacher_id' => 'nullable|exists:users,id',
         ]);
 
         $gradeLevel = GradeLevel::findOrFail($validated['grade_level_id']);
@@ -89,14 +90,17 @@ class ClassController extends Controller
             return back()->with('error', "Class stream '{$className}' already exists!");
         }
 
+        $teacherId = $validated['class_teacher_id'] ?? $validated['teacher_id'] ?? null;
+
         SchoolClass::create([
-            'grade_level_id' => $gradeLevel->id,
-            'class_name'     => $className,
-            'stream'         => $stream,
-            'class_code'     => $classCode,
-            'room_number'    => $validated['room_number'] ?? null,
-            'capacity'       => $validated['capacity'] ?? 40,
-            'teacher_id'     => $validated['teacher_id'] ?? null,
+            'grade_level_id'   => $gradeLevel->id,
+            'class_name'       => $className,
+            'stream'           => $stream,
+            'class_code'       => $classCode,
+            'room_number'      => $validated['room_number'] ?? null,
+            'capacity'         => $validated['capacity'] ?? 40,
+            'teacher_id'       => $teacherId,
+            'class_teacher_id' => $teacherId,
         ]);
 
         return redirect()->back()->with('success', "Class stream '{$className}' created successfully under {$gradeLevel->name}!");
@@ -107,7 +111,7 @@ class ClassController extends Controller
      */
     public function edit($id)
     {
-        $class = SchoolClass::with(['gradeLevel', 'teacher'])->findOrFail($id);
+        $class = SchoolClass::with(['gradeLevel', 'teacher', 'classTeacher'])->findOrFail($id);
         $gradeLevels = GradeLevel::orderBy('level_order', 'asc')->get();
         $teachers = User::where('role', 'teacher')
             ->orWhereHas('roles', function ($q) {
@@ -127,11 +131,12 @@ class ClassController extends Controller
         $class = SchoolClass::findOrFail($id);
 
         $validated = $request->validate([
-            'grade_level_id' => 'required|exists:grade_levels,id',
-            'stream'         => 'required|string|max:10',
-            'room_number'    => 'nullable|string|max:50',
-            'capacity'       => 'nullable|integer|min:1',
-            'teacher_id'     => 'nullable|exists:users,id',
+            'grade_level_id'   => 'required|exists:grade_levels,id',
+            'stream'           => 'required|string|max:10',
+            'room_number'      => 'nullable|string|max:50',
+            'capacity'         => 'nullable|integer|min:1',
+            'teacher_id'       => 'nullable|exists:users,id',
+            'class_teacher_id' => 'nullable|exists:users,id',
         ]);
 
         $gradeLevel = GradeLevel::findOrFail($validated['grade_level_id']);
@@ -144,14 +149,17 @@ class ClassController extends Controller
             return back()->with('error', "Another class with code '{$classCode}' already exists.");
         }
 
+        $teacherId = $validated['class_teacher_id'] ?? $validated['teacher_id'] ?? null;
+
         $class->update([
-            'grade_level_id' => $gradeLevel->id,
-            'class_name'     => $className,
-            'stream'         => $stream,
-            'class_code'     => $classCode,
-            'room_number'    => $validated['room_number'] ?? null,
-            'capacity'       => $validated['capacity'] ?? $class->capacity,
-            'teacher_id'     => $validated['teacher_id'] ?? null,
+            'grade_level_id'   => $gradeLevel->id,
+            'class_name'       => $className,
+            'stream'           => $stream,
+            'class_code'       => $classCode,
+            'room_number'      => $validated['room_number'] ?? null,
+            'capacity'         => $validated['capacity'] ?? $class->capacity,
+            'teacher_id'       => $teacherId,
+            'class_teacher_id' => $teacherId,
         ]);
 
         return redirect()->route('classes.index')->with('success', "Class '{$className}' updated successfully!");
@@ -211,7 +219,7 @@ class ClassController extends Controller
      */
     public function showStudents($id)
     {
-        $class = SchoolClass::with(['students', 'teacher', 'gradeLevel'])->findOrFail($id);
+        $class = SchoolClass::with(['students', 'teacher', 'classTeacher', 'gradeLevel'])->findOrFail($id);
         return view('classes.students', compact('class'));
     }
 

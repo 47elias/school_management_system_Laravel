@@ -53,7 +53,7 @@ class ExamController extends Controller
         $allClasses = SchoolClass::with('gradeLevel')->orderBy('class_name')->get();
         $allStudents = Student::where('status', 'active')->get();
         $allAssignments = SubjectAssignment::with('subject')->get();
-        $allExams = Exam::with(['subject', 'term', 'schoolClass'])
+        $allExams = Exam::with(['subject', 'term', 'schoolClass', 'subjectAssignment'])
             ->when($selectedTerm, fn($q) => $q->where('term_id', $selectedTerm->id))
             ->get();
 
@@ -97,7 +97,11 @@ class ExamController extends Controller
                 $streamSubjectsCount = $streamAssignments->map(fn($a) => $a->subject)->filter()->unique('id')->count();
 
                 // Scheduled exams count
-                $streamExamsCount = $allExams->filter(fn($e) => $e->class_id == $st->id)->count();
+                $streamExamsCount = $allExams->filter(function ($exam) use ($st, $gName) {
+                    if ((int) $exam->class_id === (int) $st->id) return true;
+                    return $exam->subjectAssignment
+                        && strtolower(trim((string) $exam->subjectAssignment->grade)) === strtolower(trim((string) $gName));
+                })->count();
 
                 $streamList->push([
                     'id'            => $st->id,
@@ -158,8 +162,13 @@ class ExamController extends Controller
 
             $allocatedSubjects = Subject::whereIn('id', $assignedSubjectIds)->orderBy('subject_name')->get();
 
-            $scheduledExams = Exam::with(['subject', 'term', 'schoolClass'])
-                ->where('class_id', $classId)
+            $scheduledExams = Exam::with(['subject', 'term', 'schoolClass', 'subjectAssignment'])
+                ->where(function ($query) use ($classId, $gradeName) {
+                    $query->where('class_id', $classId);
+                    if ($gradeName) {
+                        $query->orWhereHas('subjectAssignment', fn ($assignment) => $assignment->where('grade', $gradeName));
+                    }
+                })
                 ->when($selectedTerm, fn($q) => $q->where('term_id', $selectedTerm->id))
                 ->latest()
                 ->get();
@@ -185,7 +194,7 @@ class ExamController extends Controller
 
             $allocatedSubjects = Subject::whereIn('id', $assignedSubjectIds)->orderBy('subject_name')->get();
 
-            $scheduledExams = Exam::with(['subject', 'term', 'schoolClass'])
+            $scheduledExams = Exam::with(['subject', 'term', 'schoolClass', 'subjectAssignment'])
                 ->where(function($q) use ($gradeName, $matchingClasses) {
                     $q->whereIn('class_id', $matchingClasses)
                       ->orWhereHas('subjectAssignment', fn($sa) => $sa->where('grade', $gradeName));
@@ -207,16 +216,52 @@ class ExamController extends Controller
     public function subjectReport(Request $request, $subject_id)
     {
         $subject = Subject::findOrFail($subject_id);
+        return $this->buildSubjectReport($request, $subject);
+    }
+
+    public function teacherSubjectReport(Request $request, $subject_id)
+    {
+        $subject = Subject::findOrFail($subject_id);
+        $assignments = SubjectAssignment::with(['schoolClass', 'gradeClasses'])
+            ->where('teacher_id', Auth::id())
+            ->where('subject_id', $subject->id)
+            ->get();
+
+        abort_if($assignments->isEmpty(), 403);
+
+        return $this->buildSubjectReport($request, $subject, $assignments, true);
+    }
+
+    private function buildSubjectReport(Request $request, Subject $subject, $teacherAssignments = null, bool $teacherView = false)
+    {
         $terms = Term::orderBy('id', 'desc')->get();
         $activeTerm = Term::where('is_current', 1)->first() ?? $terms->first();
 
         $selectedTermId = $request->get('term_id');
         $selectedTerm = $selectedTermId ? Term::find($selectedTermId) : $activeTerm;
 
-        // Fetch all exams scheduled for this subject in the selected term
-        $exams = Exam::with(['schoolClass', 'marks.student.schoolClass'])
-            ->where('subject_id', $subject->id)
+        // Teachers see papers linked to their allocations, plus admin-created
+        // papers for the exact classes covered by those allocations.
+        $examQuery = Exam::with(['schoolClass', 'subjectAssignment', 'marks.student.schoolClass'])
+            ->where('subject_id', $subject->id);
+
+        if ($teacherAssignments !== null) {
+            $assignmentIds = $teacherAssignments->pluck('id');
+            $classIds = $teacherAssignments->flatMap(function ($assignment) {
+                return $assignment->schoolClass
+                    ? collect([$assignment->schoolClass->id])
+                    : $assignment->gradeClasses->pluck('id');
+            })->unique()->values();
+
+            $examQuery->where(function ($query) use ($assignmentIds, $classIds) {
+                $query->whereIn('subject_assignment_id', $assignmentIds);
+                if ($classIds->isNotEmpty()) $query->orWhereIn('class_id', $classIds);
+            });
+        }
+
+        $exams = $examQuery
             ->when($selectedTerm, fn($q) => $q->where('term_id', $selectedTerm->id))
+            ->orderBy('exam_date')->orderBy('exam_name')
             ->get();
 
         // Collect all marks recorded for this subject in the selected term
@@ -242,7 +287,8 @@ class ExamController extends Controller
             return (object)[
                 'exam_id'    => $exam->id,
                 'exam_name'  => $exam->exam_name,
-                'class_name' => $exam->schoolClass->class_name ?? 'All Streams',
+                'class_name' => $exam->schoolClass->class_name
+                    ?? ($exam->subjectAssignment?->grade ? $exam->subjectAssignment->grade . ' · All Streams' : 'All Streams'),
                 'exam_date'  => $exam->exam_date,
                 'status'     => $exam->status,
                 'sat_count'  => $satCount,
@@ -296,10 +342,45 @@ class ExamController extends Controller
             }
         }
 
+        $markSearch = trim((string) $request->get('search', ''));
+        $selectedExamId = $request->get('exam_id');
+        $selectedClassId = $request->get('class_id');
+        $sortBy = $request->get('sort', 'student');
+        $sortDirection = $request->get('direction', 'asc') === 'desc' ? 'desc' : 'asc';
+        $validSorts = ['student', 'class', 'paper', 'mark', 'date'];
+        if (!in_array($sortBy, $validSorts, true)) $sortBy = 'student';
+
+        $marksForTable = $allMarks
+            ->filter(function ($mark) use ($markSearch, $selectedExamId, $selectedClassId) {
+                if ($selectedExamId && (int) $mark->exam_id !== (int) $selectedExamId) return false;
+                if ($selectedClassId && (int) ($mark->student->schoolClass->id ?? 0) !== (int) $selectedClassId) return false;
+                if ($markSearch !== '') {
+                    $student = $mark->student;
+                    $haystack = strtolower(implode(' ', [
+                        $student->name ?? '', $student->surname ?? '', $student->student_number ?? '',
+                    ]));
+                    if (!str_contains($haystack, strtolower($markSearch))) return false;
+                }
+                return true;
+            })
+            ->sortBy(function ($mark) use ($sortBy) {
+                return match ($sortBy) {
+                    'class' => strtolower($mark->student->schoolClass->class_name ?? ''),
+                    'paper' => strtolower($mark->exam->exam_name ?? ''),
+                    'mark' => (float) $mark->score,
+                    'date' => $mark->exam->exam_date?->timestamp ?? 0,
+                    default => strtolower(($mark->student->surname ?? '') . ' ' . ($mark->student->name ?? '')),
+                };
+            }, SORT_REGULAR, $sortDirection === 'desc')
+            ->values();
+
+        $reportClasses = $allMarks->map(fn ($mark) => $mark->student->schoolClass)->filter()->unique('id')->sortBy('class_name')->values();
+
         return view('exams.subject_report', compact(
             'subject', 'exams', 'terms', 'selectedTerm', 'activeTerm',
             'totalCandidates', 'overallAverage', 'overallPassRate',
-            'paperBreakdown', 'streamBreakdown', 'gradeCounts'
+            'paperBreakdown', 'streamBreakdown', 'gradeCounts', 'marksForTable',
+            'markSearch', 'selectedExamId', 'selectedClassId', 'sortBy', 'sortDirection', 'reportClasses', 'teacherView'
         ));
     }
 
@@ -799,25 +880,325 @@ class ExamController extends Controller
      */
     public function teacherManageMarks($id)
     {
-        $exam = Exam::with(['subject', 'term', 'schoolClass'])->findOrFail($id);
-        $resolvedClassId = $exam->class_id;
+        $exam = Exam::with(['subject', 'term', 'schoolClass', 'subjectAssignment'])->findOrFail($id);
+        abort_unless($this->teacherOwnsExam($exam), 403);
 
-        $students = $resolvedClassId 
-            ? Student::where('class_id', $resolvedClassId)->orderBy('surname')->get()
-            : Student::orderBy('surname')->get();
+        $students = Student::where('status', 'active')
+            ->when($exam->class_id, fn ($query) => $query->where('class_id', $exam->class_id))
+            ->when(!$exam->class_id, function ($query) use ($exam) {
+                if ($exam->subjectAssignment?->grade) {
+                    $grade = $exam->subjectAssignment->grade;
+                    $query->whereHas('schoolClass.gradeLevel', fn ($classes) => $classes->where('name', $grade));
+                } else {
+                    $query->whereRaw('1 = 0');
+                }
+            })
+            ->orderBy('surname')
+            ->get();
 
         $marks = Mark::where('exam_id', $id)->get()->keyBy('student_id');
 
         return view('teachers.exams.record_marks', compact('exam', 'students', 'marks'));
     }
 
+    public function downloadTeacherMarksTemplate($examId)
+    {
+        $exam = Exam::with(['subject', 'subjectAssignment'])->findOrFail($examId);
+        abort_unless($this->teacherOwnsExam($exam), 403);
+
+        $students = $this->teacherExamStudents($exam);
+        $rows = [['student_id', 'student_number', 'surname', 'first_name', 'score', 'max_score', 'teacher_comment']];
+        $existingMarks = Mark::where('exam_id', $exam->id)
+            ->whereIn('student_id', $students->pluck('id'))
+            ->get()->keyBy('student_id');
+
+        foreach ($students as $student) {
+            $mark = $existingMarks->get($student->id);
+            $rows[] = [$student->id, $student->student_number, $student->surname, $student->name,
+                $mark?->score, $exam->max_marks ?? 100, $mark?->teacher_comment];
+        }
+
+        $filename = Str::slug($exam->exam_name . '-marks-template') . '.xlsx';
+        if (class_exists(Spreadsheet::class)) {
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            foreach ($rows as $rowIndex => $row) {
+                foreach ($row as $columnIndex => $value) {
+                    $sheet->setCellValueByColumnAndRow($columnIndex + 1, $rowIndex + 1, $value);
+                }
+            }
+            $sheet->freezePane('A2');
+            $sheet->getStyle('A1:G1')->getFont()->setBold(true);
+            return response()->streamDownload(function () use ($spreadsheet) {
+                (new Xlsx($spreadsheet))->save('php://output');
+            }, $filename, ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
+        }
+
+        if (class_exists('ZipArchive')) {
+            return response()->streamDownload(function () use ($rows) {
+                $zip = new \ZipArchive();
+                $temp = tempnam(sys_get_temp_dir(), 'marks-xlsx-');
+                $zip->open($temp, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+                $zip->addFromString('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>');
+                $zip->addFromString('_rels/.rels', '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>');
+                $zip->addFromString('xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Marks" sheetId="1" r:id="rId1"/></sheets></workbook>');
+                $zip->addFromString('xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>');
+                $xml = '<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>';
+                foreach ($rows as $r => $row) {
+                    $xml .= '<row r="' . ($r + 1) . '">';
+                    foreach ($row as $c => $value) {
+                        $ref = $this->excelColumnName($c + 1) . ($r + 1);
+                        if (is_numeric($value) && $value !== '') {
+                            $xml .= '<c r="' . $ref . '"><v>' . htmlspecialchars((string) $value, ENT_XML1) . '</v></c>';
+                        } else {
+                            $xml .= '<c r="' . $ref . '" t="inlineStr"><is><t>' . htmlspecialchars((string) ($value ?? ''), ENT_XML1) . '</t></is></c>';
+                        }
+                    }
+                    $xml .= '</row>';
+                }
+                $zip->addFromString('xl/worksheets/sheet1.xml', $xml . '</sheetData></worksheet>');
+                $zip->close();
+                readfile($temp);
+                unlink($temp);
+            }, $filename, ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
+        }
+
+        return response()->streamDownload(function () use ($rows) {
+            $output = fopen('php://output', 'w');
+            foreach ($rows as $row) fputcsv($output, $row);
+            fclose($output);
+        }, Str::replaceEnd('.xlsx', '.csv', $filename), ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    public function teacherImportMarks(Request $request)
+    {
+        $request->validate([
+            'exam_id' => 'required|exists:exams,id',
+            'marks_file' => 'required|file|mimes:xlsx,xls,csv,txt|max:10240',
+        ]);
+
+        $exam = Exam::with(['subject', 'subjectAssignment'])->findOrFail($request->exam_id);
+        abort_unless($this->teacherOwnsExam($exam), 403);
+
+        $students = $this->teacherExamStudents($exam)->keyBy('id');
+        $maxMarks = (float) ($exam->max_marks ?? 100);
+        $parsed = [];
+        $file = $request->file('marks_file')->getRealPath();
+
+        $extension = strtolower($request->file('marks_file')->getClientOriginalExtension());
+        if (in_array($extension, ['xlsx', 'xls'], true) && class_exists(IOFactory::class)) {
+            $sheetRows = IOFactory::load($file)->getActiveSheet()->toArray(null, true, true, false);
+        } elseif ($extension === 'xlsx' && class_exists('ZipArchive')) {
+            $sheetRows = $this->readTeacherXlsxRows($file);
+        } elseif (in_array($extension, ['xlsx', 'xls'], true)) {
+            return back()->with('error', 'Excel import requires PhpSpreadsheet or ZIP support. Please upload a CSV file.');
+        } else {
+            $handle = fopen($file, 'r');
+            $sheetRows = [];
+            while (($row = fgetcsv($handle)) !== false) $sheetRows[] = $row;
+            fclose($handle);
+        }
+
+        if (count($sheetRows) < 2) {
+            return back()->with('error', 'The uploaded file has no mark rows.');
+        }
+
+        $headers = array_map(fn ($header) => Str::snake(trim((string) $header)), array_shift($sheetRows));
+        if (!in_array('student_id', $headers, true) || !in_array('score', $headers, true)) {
+            return back()->with('error', 'Template must include student_id and score columns. Download a fresh template and try again.');
+        }
+
+        foreach ($sheetRows as $rowNumber => $row) {
+            $data = [];
+            foreach ($headers as $index => $header) $data[$header] = $row[$index] ?? null;
+            $studentId = trim((string) ($data['student_id'] ?? ''));
+            $score = trim((string) ($data['score'] ?? ''));
+            if ($studentId === '' && $score === '') continue;
+            if (!ctype_digit($studentId) || !$students->has((int) $studentId)) {
+                return back()->with('error', 'Row ' . ($rowNumber + 2) . ' contains a student outside this assigned class. No marks were imported.');
+            }
+            if ($score === '' || !is_numeric($score) || (float) $score < 0 || (float) $score > $maxMarks) {
+                return back()->with('error', 'Row ' . ($rowNumber + 2) . ' has an invalid score. Scores must be between 0 and ' . $maxMarks . '. No marks were imported.');
+            }
+            $uploadedMax = $data['max_score'] ?? null;
+            $parsed[] = [
+                'student_id' => (int) $studentId,
+                'score' => (float) $score,
+                'max_score' => is_numeric($uploadedMax) && (float) $uploadedMax > 0 ? (float) $uploadedMax : $maxMarks,
+                'teacher_comment' => isset($data['teacher_comment']) ? trim((string) $data['teacher_comment']) : null,
+            ];
+        }
+
+        DB::transaction(function () use ($parsed, $exam) {
+            foreach ($parsed as $mark) {
+                Mark::updateOrCreate(
+                    ['exam_id' => $exam->id, 'student_id' => $mark['student_id']],
+                    ['subject' => $exam->subject->subject_name ?? 'Subject', 'score' => $mark['score'],
+                        'max_score' => $mark['max_score'], 'teacher_comment' => $mark['teacher_comment']]
+                );
+            }
+        });
+
+        return back()->with('success', count($parsed) . ' mark rows imported successfully.');
+    }
+
+    private function teacherExamStudents(Exam $exam)
+    {
+        return Student::where('status', 'active')
+            ->when($exam->class_id, fn ($query) => $query->where('class_id', $exam->class_id))
+            ->when(!$exam->class_id, function ($query) use ($exam) {
+                if ($exam->subjectAssignment?->grade) {
+                    $grade = $exam->subjectAssignment->grade;
+                    $query->whereHas('schoolClass.gradeLevel', fn ($classes) => $classes->where('name', $grade));
+                } else {
+                    $query->whereRaw('1 = 0');
+                }
+            })
+            ->orderBy('surname')->orderBy('name')->get();
+    }
+
+    private function readTeacherXlsxRows(string $path): array
+    {
+        $zip = new \ZipArchive();
+        if ($zip->open($path) !== true) return [];
+
+        $sharedStrings = [];
+        $sharedXml = $zip->getFromName('xl/sharedStrings.xml');
+        if ($sharedXml !== false) {
+            $strings = @simplexml_load_string($sharedXml);
+            if ($strings) {
+                foreach ($strings->si as $item) {
+                    $text = '';
+                    foreach ($item->children() as $part) {
+                        $text .= $part->getName() === 't' ? (string) $part : (string) ($part->t ?? '');
+                    }
+                    $sharedStrings[] = $text;
+                }
+            }
+        }
+
+        $sheetXml = $zip->getFromName('xl/worksheets/sheet1.xml');
+        $zip->close();
+        if ($sheetXml === false || !($sheet = @simplexml_load_string($sheetXml))) return [];
+
+        $rows = [];
+        foreach ($sheet->sheetData->row ?? [] as $row) {
+            $values = [];
+            foreach ($row->c as $cell) {
+                preg_match('/^([A-Z]+)/', (string) $cell['r'], $match);
+                $column = 0;
+                foreach (str_split($match[1] ?? '') as $letter) $column = $column * 26 + ord($letter) - 64;
+                $column--;
+                $value = (string) ($cell->v ?? '');
+                if ((string) $cell['t'] === 's') $value = $sharedStrings[(int) $value] ?? '';
+                elseif ((string) $cell['t'] === 'inlineStr') $value = (string) ($cell->is->t ?? '');
+                $values[$column] = $value;
+            }
+            if ($values) {
+                $maxColumn = max(array_keys($values));
+                $rows[] = array_replace(array_fill(0, $maxColumn + 1, ''), $values);
+            }
+        }
+        return $rows;
+    }
+
+    private function excelColumnName(int $column): string
+    {
+        $name = '';
+        while ($column > 0) {
+            $column--;
+            $name = chr(65 + ($column % 26)) . $name;
+            $column = intdiv($column, 26);
+        }
+        return $name;
+    }
+
     public function teacherBulkStore(Request $request)
     {
-        return $this->bulkStore($request);
+        $request->validate([
+            'exam_id' => 'required|exists:exams,id',
+            'marks' => 'required|array',
+        ]);
+
+        $exam = Exam::with(['subject', 'subjectAssignment'])->findOrFail($request->exam_id);
+        abort_unless($this->teacherOwnsExam($exam), 403);
+
+        $request->validate([
+            'marks.*.score' => ['nullable', 'numeric', 'min:0', 'max:' . ($exam->max_marks ?? 100)],
+        ]);
+
+        $students = Student::where('status', 'active')
+            ->when($exam->class_id, fn ($query) => $query->where('class_id', $exam->class_id))
+            ->when(!$exam->class_id, function ($query) use ($exam) {
+                if ($exam->subjectAssignment?->grade) {
+                    $grade = $exam->subjectAssignment->grade;
+                    $query->whereHas('schoolClass.gradeLevel', fn ($classes) => $classes->where('name', $grade));
+                } else {
+                    $query->whereRaw('1 = 0');
+                }
+            })
+            ->get()
+            ->keyBy('id');
+
+        DB::transaction(function () use ($request, $exam, $students) {
+            foreach ($request->input('marks', []) as $studentId => $data) {
+                if (!$students->has($studentId) || !isset($data['score']) || $data['score'] === '') {
+                    continue;
+                }
+
+                Mark::updateOrCreate(
+                    ['exam_id' => $exam->id, 'student_id' => $studentId],
+                    [
+                        'subject' => $exam->subject->subject_name ?? 'Subject',
+                        'score' => $data['score'],
+                        'max_score' => $data['max_score'] ?? $exam->max_marks ?? 100,
+                        'teacher_comment' => $data['comment'] ?? $data['remarks'] ?? null,
+                    ]
+                );
+            }
+        });
+
+        return redirect()->route('teacher.exams.index')->with('success', 'Marks recorded successfully.');
+    }
+
+    private function teacherOwnsExam(Exam $exam): bool
+    {
+        if ($exam->subject_assignment_id) {
+            $assignment = SubjectAssignment::whereKey($exam->subject_assignment_id)
+                ->where('teacher_id', Auth::id())
+                ->where('subject_id', $exam->subject_id)
+                ->first();
+
+            if (!$assignment) return false;
+            if ($assignment->class_id) return (int) $exam->class_id === (int) $assignment->class_id;
+            if (!$assignment->grade) return false;
+            if (!$exam->class_id) return true;
+
+            return SchoolClass::whereKey($exam->class_id)
+                ->whereHas('gradeLevel', fn ($query) => $query->where('name', $assignment->grade))
+                ->exists();
+        }
+
+        if (!$exam->class_id) {
+            return false;
+        }
+
+        return SubjectAssignment::where('teacher_id', Auth::id())
+            ->where('subject_id', $exam->subject_id)
+            ->where('class_id', $exam->class_id)
+            ->exists();
     }
 
     public function teacherDestroy($id)
     {
-        return $this->destroy($id);
+        $exam = Exam::findOrFail($id);
+        abort_unless($this->teacherOwnsExam($exam), 403);
+
+        DB::transaction(function () use ($exam) {
+            Mark::where('exam_id', $exam->id)->delete();
+            $exam->delete();
+        });
+
+        return redirect()->route('teacher.exams.index')->with('success', 'Exam and its marks were deleted.');
     }
 }

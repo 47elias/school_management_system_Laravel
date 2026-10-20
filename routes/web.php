@@ -89,7 +89,7 @@ Route::post('student/reset-password', [StudentForgotPasswordController::class, '
 | Receptionist Portal Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role:admin|receptionist'])
+Route::middleware('auth')
     ->prefix('receptionist')
     ->name('receptionist.')
     ->group(function () {
@@ -128,7 +128,7 @@ Route::middleware(['auth', 'role:admin|receptionist'])
 | Admin & Operational Management Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
+Route::middleware('auth')->group(function () {
 
     // Main Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -141,10 +141,10 @@ Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
         Route::get('/roles', [RolePermissionController::class, 'index'])->middleware('permission:manage-users')->name('index');
         Route::post('/roles', [RolePermissionController::class, 'storeRole'])->middleware('permission:manage-users')->name('store_role');
         Route::post('/permissions', [RolePermissionController::class, 'storePermission'])->middleware('permission:manage-users')->name('store_permission');
+        Route::post('/roles/assign-permissions', [RolePermissionController::class, 'assignPermissions'])->middleware('permission:manage-users')->name('assign_permissions');
         Route::delete('/roles/{id}', [RolePermissionController::class, 'destroyRole'])->middleware('permission:manage-users')->name('destroy_role');
         Route::delete('/permissions/{id}', [RolePermissionController::class, 'destroyPermission'])->middleware('permission:manage-users')->name('destroy_permission');
     });
-
     // Account Profile & Security Settings
     Route::prefix('settings')->group(function () {
         Route::get('/change-password', [DashboardController::class, 'showChangePassword'])->name('admin.change_password');
@@ -314,7 +314,7 @@ Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
 | Shared Academic & Examination Management Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role:admin|teacher'])->group(function () {
+Route::middleware('auth')->group(function () {
 
     // Examinations & Marks Recording
     Route::prefix('exams')->name('exams.')->group(function () {
@@ -347,7 +347,7 @@ Route::middleware(['auth', 'role:admin|teacher'])->group(function () {
 | Teacher Portal Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role:teacher'])
+Route::middleware('auth')
     ->prefix('teacher')
     ->name('teacher.')
     ->group(function () {
@@ -358,17 +358,20 @@ Route::middleware(['auth', 'role:teacher'])
         Route::get('/my-class', [TeacherController::class, 'students'])->name('my_class');
         Route::get('/student/{id}', [TeacherController::class, 'showStudent'])->name('students.show');
         Route::get('/my-subjects', [TeacherController::class, 'assignedSubjects'])->name('subjects');
+        Route::get('/subjects/{subject_id}/marks', [ExamController::class, 'teacherSubjectReport'])->name('subjects.marks');
 
         // Teacher Exam Management
         Route::prefix('exams')->name('exams.')->group(function () {
             Route::get('/', [TeacherController::class, 'examIndex'])->name('index');
             Route::get('/create', [TeacherController::class, 'examCreate'])->name('create');
             Route::post('/store', [TeacherController::class, 'examStore'])->name('store');
-            Route::delete('/{id}', [ExamController::class, 'destroy'])->name('destroy');
+            Route::delete('/{id}', [ExamController::class, 'teacherDestroy'])->name('destroy');
         });
 
         // Teacher Marks Management
         Route::get('/marks/manage/{exam_id}', [ExamController::class, 'teacherManageMarks'])->name('marks.manage');
+        Route::get('/marks/{exam_id}/template', [ExamController::class, 'downloadTeacherMarksTemplate'])->name('marks.template');
+        Route::post('/marks/import', [ExamController::class, 'teacherImportMarks'])->name('marks.import');
         Route::post('/marks/store', [ExamController::class, 'teacherBulkStore'])->name('marks.store');
         Route::post('/marks/bulk-store', [ExamController::class, 'teacherBulkStore'])->name('marks.bulk_store');
 
