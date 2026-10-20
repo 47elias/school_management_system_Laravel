@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
 use Carbon\Carbon;
 
-class Term extends Model
+class Term extends Model implements AuditableContract
 {
-    use LogsActivity;
+    use Auditable;
 
     /**
      * The attributes that are mass assignable.
@@ -36,18 +36,6 @@ class Term extends Model
         'start_date' => 'date',
         'end_date'   => 'date',
     ];
-
-    /**
-     * Spatie Activity Log Options configuration.
-     */
-    public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()
-            ->logFillable()         // Logs all attributes listed in $fillable
-            ->logOnlyDirty()        // Only records a log if fields actually changed during an update
-            ->dontSubmitEmptyLogs() // Prevents saving empty log entries
-            ->setDescriptionForEvent(fn(string $eventName) => "Term record has been {$eventName}");
-    }
 
     /**
      * Boot logic for the model.

@@ -2,17 +2,17 @@
 
 namespace App\Models;
 
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Traits\HasRoles;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
 
-class User extends Authenticatable
+class User extends Authenticatable implements AuditableContract
 {
-    use HasFactory, Notifiable, HasRoles, LogsActivity;
+    use HasFactory, Notifiable, HasRoles, Auditable;
 
     /**
      * The attributes that are mass assignable.
@@ -50,18 +50,6 @@ class User extends Authenticatable
         'base_salary' => 'decimal:2',
         'dob' => 'date', // Cast dob to a date object
     ];
-
-    /**
-     * Spatie Activity Log Options configuration.
-     */
-    public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()
-            ->logFillable()         // Logs all attributes listed in $fillable
-            ->logOnlyDirty()        // Only records a log if fields actually changed during an update
-            ->dontSubmitEmptyLogs() // Prevents saving empty log entries
-            ->setDescriptionForEvent(fn(string $eventName) => "User record has been {$eventName}");
-    }
 
     /**
      * BOOT LOGIC

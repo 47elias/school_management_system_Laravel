@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
 
-class FeeStructure extends Model
+class FeeStructure extends Model implements AuditableContract
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, Auditable;
 
     /**
      * The attributes that are mass assignable.
@@ -22,17 +22,9 @@ class FeeStructure extends Model
         'grade',
         'term_id',
         'student_id',
+        'class_id',
+        'charge_timing',
     ];
-
-    public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()
-            ->logFillable()         // Logs all attributes listed in $fillable
-            ->logOnlyDirty()        // Only records a log if fields actually changed during an update
-            ->dontSubmitEmptyLogs() // Prevents saving empty log entries
-            ->setDescriptionForEvent(fn(string $eventName) => "Fee Structure record has been {$eventName}");
-    }
-
     /**
      * Relationship: The term this fee structure belongs to.
      */
@@ -48,5 +40,10 @@ class FeeStructure extends Model
     public function student(): BelongsTo
     {
         return $this->belongsTo(Student::class);
+    }
+
+    public function schoolClass(): BelongsTo
+    {
+        return $this->belongsTo(SchoolClass::class, 'class_id');
     }
 }

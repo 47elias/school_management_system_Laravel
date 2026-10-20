@@ -2,16 +2,16 @@
 
 namespace App\Models;
 
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
 
-class Mark extends Model
+class Mark extends Model implements AuditableContract
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, Auditable;
 
     /**
      * The attributes that are mass assignable.
@@ -24,16 +24,6 @@ class Mark extends Model
         'max_score',
         'teacher_comment'
     ];
-
-    public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()
-            ->logFillable()         // Logs all attributes listed in $fillable
-            ->logOnlyDirty()        // Only records a log if fields actually changed during an update
-            ->dontSubmitEmptyLogs() // Prevents saving empty log entries
-            ->setDescriptionForEvent(fn(string $eventName) => "Mark record has been {$eventName}");
-    }
-
     /**
      * Relationship: The student this mark belongs to.
      */

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Term;
+use App\Models\GradeLevel;
+use App\Models\SchoolClass;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -33,11 +35,19 @@ class ActivityAnalyticsController extends Controller
             ? Term::find($request->term_id)
             : ($activeTerm ?? $terms->first());
 
-        $stats = $this->computeStats($selectedTerm?->id);
+        $gradeLevelId = $request->filled('grade_level_id') ? (int) $request->grade_level_id : null;
+        $classId = $request->filled('class_id') ? (int) $request->class_id : null;
+        $selectedGrade = $gradeLevelId ? GradeLevel::find($gradeLevelId) : null;
+        $selectedClass = $classId ? SchoolClass::find($classId) : null;
+        $stats = $this->computeStats($selectedTerm?->id, $gradeLevelId, $classId);
 
         return view('activities.analytics', array_merge($stats, [
             'terms'        => $terms,
             'selectedTerm' => $selectedTerm,
+            'selectedGrade' => $selectedGrade,
+            'selectedClass' => $selectedClass,
+            'gradeLevels' => GradeLevel::orderBy('level_order')->get(),
+            'classes' => SchoolClass::with('gradeLevel')->orderBy('grade_level_id')->orderBy('class_name')->get(),
         ]));
     }
 
@@ -49,11 +59,11 @@ class ActivityAnalyticsController extends Controller
      */
     public function aiInsights(Request $request)
     {
-        $request->validate(['term_id' => 'nullable|exists:terms,id']);
+        $request->validate(['term_id' => 'nullable|exists:terms,id', 'grade_level_id' => 'nullable|exists:grade_levels,id', 'class_id' => 'nullable|exists:school_classes,id']);
 
         $termId = $request->term_id ?: (Term::where('is_current', 1)->first()->id ?? null);
         $term = $termId ? Term::find($termId) : null;
-        $stats = $this->computeStats($termId);
+        $stats = $this->computeStats($termId, $request->filled('grade_level_id') ? (int) $request->grade_level_id : null, $request->filled('class_id') ? (int) $request->class_id : null);
 
         if ($stats['overall']['marks_count'] == 0) {
             return response()->json([
@@ -115,12 +125,16 @@ class ActivityAnalyticsController extends Controller
      * Runs every aggregate query for the dashboard. Kept as one method so
      * both the page load and the AI endpoint use exactly the same numbers.
      */
-    private function computeStats(?int $termId): array
+    private function computeStats(?int $termId, ?int $gradeLevelId = null, ?int $classId = null): array
     {
-        $base = function () use ($termId) {
+        $base = function () use ($termId, $gradeLevelId, $classId) {
             return DB::table('activity_marks as am')
                 ->join('class_activities as ca', 'ca.id', '=', 'am.class_activity_id')
                 ->join('subject_assignments as sa', 'sa.id', '=', 'ca.subject_assignment_id')
+                ->join('students as st', 'st.id', '=', 'am.student_id')
+                ->join('school_classes as stu_class', 'stu_class.id', '=', 'st.class_id')
+                ->when($gradeLevelId, fn($q) => $q->where('stu_class.grade_level_id', $gradeLevelId))
+                ->when($classId, fn($q) => $q->where('stu_class.id', $classId))
                 ->when($termId, fn($q) => $q->where('ca.term_id', $termId));
         };
 
@@ -143,9 +157,8 @@ class ActivityAnalyticsController extends Controller
 
         // --- Per-class ranking (this is what surfaces best/worst performing class) ---
         $byClass = (clone $base())
-            ->join('school_classes as sc', 'sc.id', '=', 'sa.class_id')
-            ->groupBy('sc.id', 'sc.class_name')
-            ->selectRaw('sc.id as class_id, sc.class_name')
+            ->groupBy('stu_class.id', 'stu_class.class_name')
+            ->selectRaw('stu_class.id as class_id, stu_class.class_name')
             ->selectRaw('AVG((am.score / ca.max_score) * 100) as avg_pct')
             ->selectRaw('COUNT(am.id) as marks_count')
             ->havingRaw('COUNT(am.id) >= 1')
@@ -222,10 +235,8 @@ class ActivityAnalyticsController extends Controller
 
         // --- Top 5 / bottom 5 students overall for the term (min. 3 recorded marks to be statistically meaningful) ---
         $studentAverages = (clone $base())
-            ->join('students as st', 'st.id', '=', 'am.student_id')
-            ->join('school_classes as sc2', 'sc2.id', '=', 'sa.class_id')
-            ->groupBy('st.id', 'st.name', 'st.surname', 'sc2.class_name')
-            ->selectRaw("st.id, CONCAT(st.surname, ', ', st.name) as student_name, sc2.class_name")
+            ->groupBy('st.id', 'st.name', 'st.surname', 'stu_class.class_name')
+            ->selectRaw("st.id, CONCAT(st.surname, ', ', st.name) as student_name, stu_class.class_name")
             ->selectRaw('AVG((am.score / ca.max_score) * 100) as avg_pct')
             ->selectRaw('COUNT(am.id) as marks_count')
             ->havingRaw('COUNT(am.id) >= 3')
@@ -259,7 +270,7 @@ class ActivityAnalyticsController extends Controller
     {
         $lines = [];
         $lines[] = 'Term: ' . ($term->term_name ?? 'All terms') . ' (' . ($term->academic_year ?? 'N/A') . ')';
-        $lines[] = "School-wide CA average: {$stats['overall']['avg_pct']}% across {$stats['overall']['marks_count']} recorded scores from {$stats['overall']['activity_count']} activities and {$stats['overall']['student_count']} students.";
+        $lines[] = "CA average for the selected level/stream scope: {$stats['overall']['avg_pct']}% across {$stats['overall']['marks_count']} recorded scores from {$stats['overall']['activity_count']} activities and {$stats['overall']['student_count']} students.";
         $lines[] = "Scores below 40% (at-risk): {$stats['overall']['at_risk_count']}.";
 
         $lines[] = "Class averages (best to worst):";

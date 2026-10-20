@@ -77,7 +77,7 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-center">
-                                <a href="{{ Route::has('inventory.index') ? route('inventory.index') : url('/inventory') }}" 
+                                <a href="{{ route('inventory.index', ['search' => $item->sku, 'restock' => $item->id]) }}" 
                                    class="inline-flex items-center px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm">
                                     <i class="fa-solid fa-plus-circle mr-1.5"></i> Restock Now
                                 </a>
@@ -95,6 +95,9 @@
                     </tbody>
                 </table>
             </div>
+            @if($lowStockItems->hasPages())
+                <div class="border-t border-slate-200 px-5 py-4 dark:border-slate-700">{{ $lowStockItems->links() }}</div>
+            @endif
         </div>
 
     </div>

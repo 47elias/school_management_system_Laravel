@@ -12,13 +12,16 @@
             </h1>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
                 Subject Code: <strong class="text-indigo-600 dark:text-indigo-400 font-mono">{{ $subject->subject_code }}</strong> &bull; 
-                Session: <strong class="text-slate-700 dark:text-slate-200">{{ $selectedTerm->term_name ?? 'Current Term' }} ({{ $selectedTerm->academic_year ?? date('Y') }})</strong>
+                School Term: <strong class="text-slate-700 dark:text-slate-200">{{ $selectedTerm->term_name ?? 'Current Term' }} ({{ $selectedTerm->academic_year ?? date('Y') }})</strong>
+                @if($selectedGrade) &bull; Grade: <strong class="text-slate-700 dark:text-slate-200">{{ $selectedGrade }}</strong> @endif
             </p>
         </div>
 
         <div class="flex items-center space-x-3">
             {{-- Academic Session Selector --}}
             <form method="GET" action="{{ $teacherView ? route('teacher.subjects.marks', $subject->id) : route('exams.subject_report', $subject->id) }}" class="flex items-center space-x-2">
+                @if($selectedGrade)<input type="hidden" name="grade" value="{{ $selectedGrade }}">@endif
+                @if($selectedClassId)<input type="hidden" name="class_id" value="{{ $selectedClassId }}">@endif
                 <select name="term_id" onchange="this.form.submit()" 
                         class="px-3.5 py-2 text-xs font-bold rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
                     @foreach($terms as $t)
@@ -44,6 +47,7 @@
 @section('content')
     <div class="space-y-6">
 
+        @if(!$teacherView)
         {{-- Overall Performance KPI Row --}}
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {{-- Overall Subject Mean --}}
@@ -53,7 +57,7 @@
                     <i class="fa-solid fa-calculator text-indigo-300 text-lg"></i>
                 </div>
                 <h3 class="text-3xl font-black font-mono mt-2">{{ $overallAverage }}%</h3>
-                <p class="text-[11px] text-indigo-200 mt-1">School-wide average score</p>
+                <p class="text-[11px] text-indigo-200 mt-1">Average for selected grade and class</p>
             </div>
 
             {{-- Pass Rate --}}
@@ -255,6 +259,50 @@
                 @endforeach
             </div>
         </div>
+        @endif
+
+        {{-- All student marks across the subject's papers --}}
+        <section class="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-700/60 bg-white dark:bg-slate-800 shadow-sm">
+            <div class="flex flex-col gap-3 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-900/50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-800 dark:text-slate-100">All Marks for {{ $subject->subject_name }}</h2>
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ $marksForTable->count() }} marks from {{ $exams->count() }} papers in this term</p>
+                </div>
+                <button type="button" onclick="window.print()" class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-indigo-700 no-print"><i class="fa-solid fa-print mr-2"></i>Print Marks</button>
+            </div>
+
+            <form method="GET" action="{{ $teacherView ? route('teacher.subjects.marks', $subject->id) : route('exams.subject_report', $subject->id) }}" class="grid grid-cols-1 gap-3 border-b border-slate-200/80 dark:border-slate-700/60 p-4 sm:grid-cols-2 xl:grid-cols-7 no-print">
+                @if($selectedTerm)<input type="hidden" name="term_id" value="{{ $selectedTerm->id }}">@endif
+                <label class="xl:col-span-2"><span class="mb-1 block text-[11px] font-bold text-slate-600 dark:text-slate-300">Find student</span><input type="search" name="search" value="{{ $markSearch }}" placeholder="Name or student number" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2.5 text-xs text-slate-800 dark:text-slate-100"></label>
+                <label><span class="mb-1 block text-[11px] font-bold text-slate-600 dark:text-slate-300">Paper</span><select name="exam_id" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2.5 text-xs text-slate-800 dark:text-slate-100"><option value="">All papers</option>@foreach($exams as $exam)<option value="{{ $exam->id }}" @selected((string) $selectedExamId === (string) $exam->id)>{{ $exam->exam_name }}</option>@endforeach</select></label>
+                <label><span class="mb-1 block text-[11px] font-bold text-slate-600 dark:text-slate-300">Grade / Form</span><select name="grade" onchange="this.form.class_id.value = ''; this.form.exam_id.value = ''; this.form.submit()" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2.5 text-xs text-slate-800 dark:text-slate-100">@foreach($reportGrades as $grade)<option value="{{ $grade }}" @selected($selectedGrade === $grade)>{{ $grade }}</option>@endforeach</select></label>
+                <label><span class="mb-1 block text-[11px] font-bold text-slate-600 dark:text-slate-300">Stream / Class</span><select name="class_id" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2.5 text-xs text-slate-800 dark:text-slate-100"><option value="">All streams in {{ $selectedGrade ?? 'this grade' }}</option>@foreach($reportClasses as $class)<option value="{{ $class->id }}" @selected((string) $selectedClassId === (string) $class->id)>{{ $class->class_name }}</option>@endforeach</select></label>
+                <label><span class="mb-1 block text-[11px] font-bold text-slate-600 dark:text-slate-300">Sort by</span><select name="sort" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2.5 text-xs text-slate-800 dark:text-slate-100"><option value="student" @selected($sortBy === 'student')>Student name</option><option value="class" @selected($sortBy === 'class')>Class</option><option value="paper" @selected($sortBy === 'paper')>Paper</option><option value="mark" @selected($sortBy === 'mark')>Mark</option><option value="date" @selected($sortBy === 'date')>Exam date</option></select></label>
+                <div class="flex items-end gap-2"><label class="min-w-0 flex-1"><span class="mb-1 block text-[11px] font-bold text-slate-600 dark:text-slate-300">Order</span><select name="direction" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2.5 text-xs text-slate-800 dark:text-slate-100"><option value="asc" @selected($sortDirection === 'asc')>A to Z / Low to high</option><option value="desc" @selected($sortDirection === 'desc')>Z to A / High to low</option></select></label><button type="submit" class="rounded-xl bg-slate-800 px-4 py-2.5 text-xs font-bold text-white hover:bg-slate-700 dark:bg-indigo-600 dark:hover:bg-indigo-700">Apply</button></div>
+            </form>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-100 dark:divide-slate-700/60 text-xs">
+                    <thead class="bg-slate-50/80 dark:bg-slate-900/50 text-left text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400"><tr><th class="px-4 py-3">Student</th><th class="px-4 py-3">Student No.</th><th class="px-4 py-3">Class</th><th class="px-4 py-3">Paper</th><th class="px-4 py-3">Exam Date</th><th class="px-4 py-3 text-center">Mark</th><th class="px-4 py-3 text-center">Grade</th><th class="px-4 py-3">Comment</th></tr></thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-700/60">
+                        @forelse($marksForTable as $mark)
+                            <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/30">
+                                <td class="whitespace-nowrap px-4 py-3 font-bold text-slate-800 dark:text-slate-100">{{ $mark->student->surname ?? '' }}, {{ $mark->student->name ?? '' }}</td>
+                                <td class="whitespace-nowrap px-4 py-3 font-mono text-slate-500 dark:text-slate-400">{{ $mark->student->student_number ?? '—' }}</td>
+                                <td class="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">{{ $mark->student->schoolClass->class_name ?? 'Unassigned' }}</td>
+                                <td class="whitespace-nowrap px-4 py-3 font-semibold text-slate-700 dark:text-slate-200">{{ $mark->exam->exam_name ?? 'Exam paper' }}</td>
+                                <td class="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">{{ $mark->exam?->exam_date?->format('d M Y') ?? '—' }}</td>
+                                <td class="whitespace-nowrap px-4 py-3 text-center font-black text-slate-800 dark:text-slate-100">{{ $mark->score }} / {{ $mark->max_score ?? $mark->exam->max_marks ?? 100 }}</td>
+                                <td class="px-4 py-3 text-center"><span class="rounded-lg bg-indigo-50 px-2 py-1 font-bold text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300">{{ $mark->grade_letter }}</span></td>
+                                <td class="min-w-40 px-4 py-3 text-slate-500 dark:text-slate-400">{{ $mark->teacher_comment ?? '—' }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="8" class="px-5 py-12 text-center text-sm text-slate-500 dark:text-slate-400">No marks match these filters for this term.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </section>
 
     </div>
 @endsection

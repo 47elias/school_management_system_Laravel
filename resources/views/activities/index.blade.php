@@ -23,8 +23,16 @@
 
         {{-- Filters Bar --}}
         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 p-4 transition-colors">
-            <form method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <form method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Grade / Form</label>
+                    <select name="grade_level_id" onchange="this.form.submit()" class="w-full px-3 py-2 text-xs font-semibold rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100">
+                        <option value="">All Levels</option>
+                        @foreach($gradeLevels as $grade)<option value="{{ $grade->id }}" @selected(request('grade_level_id') == $grade->id)>{{ $grade->name }}</option>@endforeach
+                    </select>
+                </div>
+
                 <div>
                     <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Term</label>
                     <select name="term_id" onchange="this.form.submit()" 
@@ -92,12 +100,14 @@
                     <thead class="bg-slate-50 dark:bg-slate-800/80">
                         <tr>
                             <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Title</th>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Teacher</th>
                             <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Type</th>
                             <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Subject</th>
                             <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Class</th>
                             <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
                             <th scope="col" class="px-6 py-3.5 text-center font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Recorded</th>
                             <th scope="col" class="px-6 py-3.5 text-center font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Avg %</th>
+                            <th scope="col" class="px-6 py-3.5 text-right font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">View</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700/60">
@@ -105,6 +115,9 @@
                             <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
                                 <td class="px-6 py-4 whitespace-nowrap font-bold text-slate-800 dark:text-slate-100">
                                     {{ $activity->title }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-slate-600 dark:text-slate-300">
+                                    {{ $activity->creator->name ?? $activity->subjectAssignment->teacher->name ?? 'N/A' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/50">
@@ -116,22 +129,23 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="px-2 py-0.5 rounded font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-                                        {{ $activity->subjectAssignment->schoolClass->class_name ?? 'N/A' }}
+                                        {{ $selectedClass?->class_name ?? ($activity->subjectAssignment->schoolClass->class_name ?? (($activity->subjectAssignment->grade ?? 'All levels') . ' - All Streams')) }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-slate-500 dark:text-slate-400 font-mono">
                                     {{ $activity->formatted_date }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center font-mono font-bold text-slate-700 dark:text-slate-300">
-                                    {{ $activity->marks_count }}
+                                    {{ $activity->visible_marks_count }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                                    {{ $activity->average_percent }}%
+                                    {{ $activity->visible_average_percent }}%
                                 </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right"><a href="{{ route('activities.show', $activity->id) . '?' . http_build_query(request()->only(['term_id', 'grade_level_id', 'class_id', 'subject_id', 'type'])) }}" class="inline-flex items-center rounded-lg bg-indigo-50 dark:bg-indigo-950/50 px-3 py-2 font-bold text-indigo-700 dark:text-indigo-300"><i class="fa-solid fa-eye mr-1.5"></i>View Marks</a></td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-6 py-12 text-center text-slate-400">
+                                <td colspan="9" class="px-6 py-12 text-center text-slate-400">
                                     <i class="fa-solid fa-folder-open text-2xl text-slate-300 dark:text-slate-600 mb-2 block"></i>
                                     No activities logged for this filter context.
                                 </td>

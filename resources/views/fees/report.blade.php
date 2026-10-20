@@ -170,12 +170,12 @@
                 <h3 class="text-2xl font-black mt-1">${{ number_format($report->sum('paid'), 2) }}</h3>
             </div>
             <div class="bg-rose-600 text-white p-5 rounded-3xl shadow-sm border border-rose-500">
-                <span class="text-xs font-bold uppercase tracking-wider text-rose-100">Total Account Arrears</span>
+                <span class="text-xs font-bold uppercase tracking-wider text-rose-100">Net Account Balance</span>
                 <h3 class="text-2xl font-black mt-1">${{ number_format($report->sum('balance'), 2) }}</h3>
             </div>
             <div class="bg-sky-600 text-white p-5 rounded-3xl shadow-sm border border-sky-500">
-                <span class="text-xs font-bold uppercase tracking-wider text-sky-100">Current Term Outstanding</span>
-                <h3 class="text-2xl font-black mt-1">${{ number_format($report->sum('monthly_arrears'), 2) }}</h3>
+                <span class="text-xs font-bold uppercase tracking-wider text-sky-100">Total Term Dues to Clear</span>
+                <h3 class="text-2xl font-black mt-1">${{ number_format($report->sum('term_dues'), 2) }}</h3>
             </div>
         </div>
 
@@ -190,7 +190,7 @@
                             <th scope="col" class="px-6 py-3.5 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Grade Level</th>
                             <th scope="col" class="px-6 py-3.5 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Invoiced</th>
                             <th scope="col" class="px-6 py-3.5 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Paid</th>
-                            <th scope="col" class="px-6 py-3.5 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Term Dues</th>
+                            <th scope="col" class="px-6 py-3.5 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Due to Clear</th>
                             <th scope="col" class="px-6 py-3.5 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Net Balance</th>
                             <th scope="col" class="px-6 py-3.5 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider no-print">Action</th>
                         </tr>
@@ -215,13 +215,13 @@
                             <td class="px-6 py-4 text-right font-medium text-slate-700 dark:text-slate-300">${{ number_format($data->expected, 2) }}</td>
                             <td class="px-6 py-4 text-right font-bold text-emerald-600 dark:text-emerald-400">${{ number_format($data->paid, 2) }}</td>
                             <td class="px-6 py-4 text-center">
-                                @if($data->monthly_arrears > 0)
+                                @if($data->term_dues > 0)
                                     <span class="inline-flex items-center px-2.5 py-1 rounded-full font-bold bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50">
-                                        ${{ number_format($data->monthly_arrears, 2) }} Due
+                                        ${{ number_format($data->term_dues, 2) }} Due
                                     </span>
                                 @else
                                     <span class="inline-flex items-center px-2.5 py-1 rounded-full font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
-                                        <i class="fa-solid fa-check mr-1 text-[10px]"></i> CLEARED
+                                        <i class="fa-solid fa-check mr-1 text-[10px]"></i> NO DUES
                                     </span>
                                 @endif
                             </td>
@@ -229,7 +229,7 @@
                                 ${{ number_format($data->balance, 2) }}
                             </td>
                             <td class="px-6 py-4 text-center no-print">
-                                <a href="{{ Route::has('fees.show') ? route('fees.show', $data->id) : url('/fees/show/' . $data->id) }}" 
+                                <a href="{{ route('fees.show', ['id' => $data->id, 'term_id' => $currentTerm->id]) }}" 
                                    class="inline-flex items-center px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 font-bold border border-indigo-200 dark:border-indigo-800/50 transition-colors">
                                     STATEMENT
                                 </a>
@@ -248,7 +248,7 @@
                             <td colspan="3" class="px-6 py-4 text-right">GRAND TOTALS:</td>
                             <td class="px-6 py-4 text-right">${{ number_format($report->sum('expected'), 2) }}</td>
                             <td class="px-6 py-4 text-right text-emerald-600 dark:text-emerald-400">${{ number_format($report->sum('paid'), 2) }}</td>
-                            <td class="px-6 py-4 text-center text-rose-600 dark:text-rose-400">${{ number_format($report->sum('monthly_arrears'), 2) }}</td>
+                            <td class="px-6 py-4 text-center text-rose-600 dark:text-rose-400">${{ number_format($report->sum('term_dues'), 2) }}</td>
                             <td class="px-6 py-4 text-right text-rose-600 dark:text-rose-400">${{ number_format($report->sum('balance'), 2) }}</td>
                             <td class="no-print"></td>
                         </tr>

@@ -1,49 +1,14 @@
 @extends('layouts.student')
 
 @section('content')
+@if(!$displayTerm)
+<div class="rounded-xl border border-amber-300 bg-amber-50 p-5 text-sm font-semibold text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+    No financial term in your enrolment period is currently available. Your statement will appear here when the school opens a term covering your enrolment.
+</div>
+@else
 @php
     $sortedTerms = $allTerms->sortByDesc('is_current')->values();
-
-    $requestedTermId = request('term_id');
-    if ($requestedTermId) {
-        $displayTerm = $sortedTerms->firstWhere('id', $requestedTermId);
-    } else {
-        $displayTerm = $sortedTerms->first();
-    }
-
-    $pastTransactions = \App\Models\Payment::where('student_id', $student->id)
-        ->whereHas('term', function($q) use ($displayTerm) {
-            $q->where('start_date', '<', $displayTerm->start_date);
-        })->get();
-
-    $carriedForward = 0;
-    foreach($pastTransactions as $pt) {
-        if ($pt->amount_paid < 0) {
-            $carriedForward += abs($pt->amount_paid); 
-        } else {
-            $carriedForward -= $pt->amount_paid;
-        }
-    }
-
-    $termTransactions = \App\Models\Payment::where('student_id', $student->id)
-        ->where('term_id', $displayTerm->id)
-        ->orderBy('payment_date', 'asc')
-        ->orderBy('id', 'asc')
-        ->get();
-
-    $invoices = $termTransactions->where('amount_paid', '<', 0);
-    $receipts = $termTransactions->where('amount_paid', '>', 0);
-
-    $termCharges = $invoices->sum(function($q) { return abs($q->amount_paid); });
-    $termPayments = $receipts->sum('amount_paid');
-    
-    $trueBalance = $carriedForward + $termCharges - $termPayments;
-
-    $feeStructures = \App\Models\FeeStructure::where('term_id', $displayTerm->id)
-        ->where(function($query) use ($student) {
-            $query->where('grade', $student->grade)->whereNull('student_id')
-                  ->orWhere('student_id', $student->id);
-        })->get();
+    $trueBalance = $balance;
 @endphp
 
 <!-- PRINT HEADER -->
@@ -161,7 +126,19 @@
 
                     @php $runningBalance = $carriedForward; @endphp
 
-                    @forelse($termTransactions as $txn)
+                    @if(!$termInvoiceExists && $scheduledFees > 0)
+                        @php $runningBalance += $scheduledFees; @endphp
+                        <tr class="bg-amber-50/70 dark:bg-amber-950/20">
+                            <td class="py-2.5 px-4 font-bold whitespace-nowrap text-slate-900 dark:text-slate-200">{{ $displayTerm->start_date?->format('d M Y') ?? 'Start of term' }}</td>
+                            <td class="py-2.5 px-4 font-bold text-slate-900 dark:text-slate-100">Term fees scheduled ({{ $displayTerm->term_name }})</td>
+                            <td class="py-2.5 px-4 text-slate-700">-</td>
+                            <td class="py-2.5 px-4 text-right font-black text-rose-700 dark:text-rose-400">{{ env('CURRENCY_SYMBOL', '$') }}{{ number_format($scheduledFees, 2) }}</td>
+                            <td class="py-2.5 px-4 text-right text-slate-400">-</td>
+                            <td class="py-2.5 px-4 text-right font-black text-slate-900 dark:text-slate-100">{{ env('CURRENCY_SYMBOL', '$') }}{{ number_format($runningBalance, 2) }}</td>
+                        </tr>
+                    @endif
+
+                    @foreach($termTransactions as $txn)
                         @php
                             $isCharge = $txn->amount_paid < 0;
                             $absAmount = abs($txn->amount_paid);
@@ -191,11 +168,12 @@
                                 {{ env('CURRENCY_SYMBOL', '$') }}{{ number_format($runningBalance, 2) }}
                             </td>
                         </tr>
-                    @empty
+                    @endforeach
+                    @if($termTransactions->isEmpty() && $termCharges <= 0 && $carriedForward == 0)
                         <tr>
                             <td colspan="6" class="py-8 text-center text-slate-900 dark:text-slate-400 font-bold">No transactions recorded for this term.</td>
                         </tr>
-                    @endforelse
+                    @endif
 
                     <!-- Closing Balance -->
                     <tr class="bg-slate-200 dark:bg-slate-950 font-black border-t-2 border-slate-400 dark:border-slate-700">
@@ -268,7 +246,7 @@
                 @forelse($feeStructures as $fee)
                     @php $totalStructure += $fee->amount; @endphp
                     <div class="flex justify-between text-slate-900 dark:text-slate-100 font-bold border-b border-slate-200 dark:border-slate-800 pb-1.5">
-                        <span>{{ $fee->fee_name }}</span>
+                        <span>{{ $fee->fee_name }}@if($fee->schoolClass) <small class="block font-semibold text-slate-600 dark:text-slate-400">{{ $fee->schoolClass->class_name }}</small>@endif</span>
                         <span class="font-black">{{ env('CURRENCY_SYMBOL', '$') }}{{ number_format($fee->amount, 2) }}</span>
                     </div>
                 @empty
@@ -285,4 +263,5 @@
         </div>
     </div>
 </div>
+@endif
 @endsection

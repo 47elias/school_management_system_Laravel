@@ -38,11 +38,6 @@
             </summary>
 
             <div class="space-y-4 border-t border-slate-200/80 dark:border-slate-700/60 p-4 sm:p-5">
-                @if($subjectGroup['subject'])
-                    <div class="flex justify-end">
-                        <a href="{{ route('teacher.subjects.marks', $subjectGroup['subject']->id) }}" class="inline-flex items-center rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-700"><i class="fa-solid fa-chart-column mr-2"></i>View All Marks for {{ $subjectGroup['subject']->subject_name }}</a>
-                    </div>
-                @endif
                 @foreach($subjectGroup['classes'] as $classGroup)
                     <details open class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
                         <summary class="flex cursor-pointer list-none items-center justify-between gap-4 bg-white dark:bg-slate-800 px-4 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-700/40">
@@ -50,6 +45,11 @@
                             <span class="shrink-0 rounded-full bg-slate-100 dark:bg-slate-700 px-2.5 py-1 text-[10px] font-bold text-slate-600 dark:text-slate-300">{{ $classGroup['papers']->count() }} {{ \Illuminate\Support\Str::plural('paper', $classGroup['papers']->count()) }}</span>
                         </summary>
                         <div class="border-t border-slate-200 dark:border-slate-700">
+                            @if($subjectGroup['subject'])
+                                <div class="flex justify-end border-b border-slate-100 dark:border-slate-700/60 px-4 py-3">
+                                    <a href="{{ route('teacher.subjects.marks', ['subject_id' => $subjectGroup['subject']->id, 'grade' => $classGroup['grade'], 'class_id' => $classGroup['class_id']]) }}" class="inline-flex items-center rounded-lg bg-emerald-50 dark:bg-emerald-950/50 px-3 py-2 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50"><i class="fa-solid fa-chart-column mr-1.5"></i>View Marks for {{ $classGroup['label'] }}</a>
+                                </div>
+                            @endif
                             @forelse($classGroup['papers'] as $exam)
                                 <div class="flex flex-col gap-3 border-b border-slate-100 dark:border-slate-700/60 px-4 py-4 last:border-b-0 lg:flex-row lg:items-center lg:justify-between hover:bg-slate-50/70 dark:hover:bg-slate-700/20">
                                     <div class="flex min-w-0 items-start gap-3"><span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300"><i class="fa-solid fa-file-lines"></i></span><div class="min-w-0"><h3 class="truncate text-sm font-bold text-slate-800 dark:text-slate-100">{{ $exam->exam_name }}</h3><p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{{ $exam->exam_date->format('d M Y') }} <span class="mx-1">·</span> Out of {{ $exam->max_marks ?? 100 }} marks <span class="mx-1">·</span> Marks entered for {{ $exam->marks_count }} students</p></div></div>

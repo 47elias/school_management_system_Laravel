@@ -86,7 +86,7 @@
                         <div id="class_select_wrapper">
                             <select id="class_id" name="class_id" class="w-full px-3.5 py-2.5 text-xs font-semibold rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                                 <option value="">-- Choose Class --</option>
-                                @foreach($classes as$class)
+                                @foreach($classes as $class)
                                     <option value="{{ $class->id }}"
                                             data-class-teacher-id="{{ $class->teacher_id ?? '' }}"
                                             data-class-teacher-name="{{ $class->teacher->name ?? 'No Class Teacher Assigned' }}">

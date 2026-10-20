@@ -13,6 +13,10 @@ use App\Models\InventoryItem;
 use App\Models\Payment;
 use App\Models\Expense;
 use App\Models\Payslip;
+use App\Models\Term;
+use App\Models\SchoolClass;
+use App\Models\ClassActivity;
+use App\Models\Admission;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -25,16 +29,28 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        // Core Statistics
-        $studentCount = Student::count();$examCount = Exam::count();
-        $subjectCount = Subject::count();$userCount = User::count();
+        $currentTerm = Term::where('is_current', true)->first();
+        $studentCount = Student::where('status', 'active')->count();
+        $examCount = Exam::when($currentTerm, fn ($query) => $query->where('term_id', $currentTerm->id))->count();
+        $subjectCount = Subject::count();
+        $userCount = User::count();
+        $classCount = SchoolClass::count();
+        $newStudentsCount = Student::where('enrollment_date', '>=', Carbon::now()->subDays(30)->startOfDay())->count();
+        $pendingAdmissionsCount = Admission::whereIn('status', ['pending', 'reviewing', 'interview'])->count();
 
         // Financial Metrics for Dashboard
-        $totalRevenue = Payment::sum('amount_paid');$totalGeneralExpenses = Expense::sum('amount');
-        $totalSalaries = Payslip::sum('net_salary');$totalExpenses = $totalGeneralExpenses +$totalSalaries;
-        $netBalance = $totalRevenue -$totalExpenses;
+        $totalRevenue = Payment::where('amount_paid', '>', 0)->sum('amount_paid');
+        $totalGeneralExpenses = Expense::sum('amount');
+        $totalSalaries = Payslip::sum('net_salary');
+        $totalExpenses = $totalGeneralExpenses + $totalSalaries;
+        $netBalance = $totalRevenue - $totalExpenses;
 
-        $recentExams = Exam::with('subject')->orderBy('exam_date', 'desc')->take(5)->get();
+        $upcomingExams = Exam::with(['subject', 'schoolClass'])
+            ->whereDate('exam_date', '>=', Carbon::today())
+            ->when($currentTerm, fn ($query) => $query->where('term_id', $currentTerm->id))
+            ->orderBy('exam_date')
+            ->take(6)
+            ->get();
 
         // Enrollment Chart Data
         $gradesData = Student::select('grade', DB::raw('count(*) as total'))
@@ -42,8 +58,9 @@ class DashboardController extends Controller
             ->whereNotNull('grade')
             ->get();
 
-        // Performance Chart Data
-        $passCount = Mark::where('score', '>=', 50)->count();$failCount = Mark::where('score', '<', 50)->count();
+        $activitiesCount = ClassActivity::when($currentTerm, fn ($query) => $query->where('term_id', $currentTerm->id))->count();
+        $marksEnteredCount = Mark::whereHas('exam', fn ($query) => $query->when($currentTerm, fn ($termQuery) => $termQuery->where('term_id', $currentTerm->id)))->count();
+        $lowStockCount = InventoryItem::whereColumn('quantity', '<=', 'alert_level')->count();
 
         // Weekly Stock Issuance Data (Last 7 Days)
         $days = collect(range(6, 0))->map(function($i) {
@@ -66,9 +83,10 @@ class DashboardController extends Controller
             ->get();
 
         return view('dashboard.index', compact(
-            'studentCount', 'examCount', 'subjectCount', 'userCount',
+            'studentCount', 'examCount', 'subjectCount', 'userCount', 'classCount',
+            'newStudentsCount', 'pendingAdmissionsCount', 'activitiesCount', 'marksEnteredCount', 'lowStockCount', 'currentTerm',
             'totalRevenue', 'totalExpenses', 'netBalance',
-            'recentExams', 'gradesData', 'passCount', 'failCount',
+            'upcomingExams', 'gradesData',
             'days', 'stockOutData', 'topIssuedItems'
         ));
     }

@@ -122,6 +122,12 @@
                         <span>My Results</span>
                     </a>
 
+                    <a href="{{ route('student.continuous_assessment') }}"
+                       class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-bold transition-all {{ Request::is('student/continuous-assessment*') ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                        <i class="fa-solid fa-clipboard-check w-4 text-center text-xs"></i>
+                        <span>Class Activities</span>
+                    </a>
+
                     <a href="{{ route('student.fees') }}" 
                        class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-bold transition-all {{ Request::is('student/fees') ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                         <i class="fa-solid fa-wallet w-4 text-center text-xs"></i>

@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable;
 use Illuminate\Database\Eloquent\Model;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
 
-class Expense extends Model
+class Expense extends Model implements AuditableContract
 {
-    use LogsActivity;
+    use Auditable;
     protected $fillable = [
         'description',
         'amount',
@@ -17,13 +17,4 @@ class Expense extends Model
         'reference_no',
         'notes'
     ];
-
-    public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()
-            ->logFillable()          // Logs all attributes listed in $fillable
-            ->logOnlyDirty()         // Only records a log if fields actually changed during an update
-            ->dontSubmitEmptyLogs()  // Prevents saving empty log entries
-            ->setDescriptionForEvent(fn(string $eventName) => "Expense record has been {$eventName}");
-    }
 }

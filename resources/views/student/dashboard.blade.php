@@ -2,42 +2,11 @@
 
 @section('content')
 @php
-    $activeTerm = $currentTerm ?? \App\Models\Term::where('is_current', true)->first();
-    
-    $activeTermBalance = 0;
-    $paymentPercentage = 0;
-    $totalDue = 0;
-    $carriedForward = 0;
-
-    if ($activeTerm) {
-        $pastTransactions = \App\Models\Payment::where('student_id', $student->id)
-            ->whereHas('term', function($q) use ($activeTerm) {
-                $q->where('start_date', '<', $activeTerm->start_date);
-            })->get();
-
-        foreach($pastTransactions as $pt) {
-            $carriedForward += ($pt->amount_paid < 0) ? abs($pt->amount_paid) : -$pt->amount_paid;
-        }
-
-        $termTransactions = \App\Models\Payment::where('student_id', $student->id)
-            ->where('term_id', $activeTerm->id)
-            ->get();
-
-        $termCharges = $termTransactions->where('amount_paid', '<', 0)->sum(function($q) { return abs($q->amount_paid); });
-        $termPayments = $termTransactions->where('amount_paid', '>', 0)->sum('amount_paid');
-
-        $activeTermBalance = $termCharges - $termPayments;
-        $totalDue = $carriedForward + $activeTermBalance;
-
-        if ($termCharges > 0) {
-            $paymentPercentage = ($termPayments / $termCharges) * 100;
-            $paymentPercentage = min(100, max(0, $paymentPercentage));
-        } else {
-            $paymentPercentage = 100;
-        }
-    } else {
-        $totalDue = $calculatedBalance ?? 0;
-    }
+    $activeTerm = $currentTerm ?? null;
+    $activeTermBalance = ($totalOwed ?? 0) - ($totalPaid ?? 0);
+    $totalDue = $calculatedBalance ?? 0;
+    $carriedForward = $carriedForward ?? 0;
+    $paymentPercentage = $paymentPercentage ?? 0;
 @endphp
 
 <div class="space-y-4">

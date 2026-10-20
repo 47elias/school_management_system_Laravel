@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
 
 /**
  * Represents a single in-class activity (classwork, homework, quiz,
@@ -14,9 +14,9 @@ use Spatie\Activitylog\LogOptions;
  * for. Unlike Exam, this has no fixed schedule and is expected to be
  * created and marked on the same day, potentially many times a term.
  */
-class ClassActivity extends Model
+class ClassActivity extends Model implements AuditableContract
 {
-    use LogsActivity;
+    use Auditable;
     protected $fillable = [
         'subject_assignment_id',
         'term_id',
@@ -28,15 +28,6 @@ class ClassActivity extends Model
         'notes',
         'created_by',
     ];
-
-    public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()
-            ->logFillable()          // Logs all attributes listed in $fillable
-            ->logOnlyDirty()         // Only records a log if fields actually changed during an update
-            ->dontSubmitEmptyLogs()  // Prevents saving empty log entries
-            ->setDescriptionForEvent(fn(string $eventName) => "Class activity record has been {$eventName}");
-    }
     protected $casts = [
         'activity_date' => 'date',
         'max_score'     => 'integer',
@@ -81,6 +72,9 @@ class ClassActivity extends Model
 
     public function getAverageScoreAttribute(): float
     {
+        if (array_key_exists('marks_avg_score', $this->attributes)) {
+            return round((float) ($this->attributes['marks_avg_score'] ?? 0), 2);
+        }
         return round((float) ($this->marks()->avg('score') ?? 0), 2);
     }
 

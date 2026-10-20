@@ -21,7 +21,7 @@ class PayrollController extends Controller
         // --- FINANCIAL SUMMARY LOGIC ---
 
         // 3. Calculate Total Income (All fees paid by students)
-        $totalIncome = Payment::sum('amount_paid');
+        $totalIncome = Payment::where('amount_paid', '>', 0)->sum('amount_paid');
 
         // 4. Calculate Total Expenses (All salaries paid to staff)
         $totalExpenses = Payslip::sum('net_salary');
@@ -59,7 +59,7 @@ class PayrollController extends Controller
         // --- PRE-PAYMENT VALIDATION ---
 
         // Check if school has enough money to pay this salary
-        $totalIncome = Payment::sum('amount_paid');
+        $totalIncome = Payment::where('amount_paid', '>', 0)->sum('amount_paid');
         $totalExpenses = Payslip::sum('net_salary');
         $currentBalance = $totalIncome - $totalExpenses;
 

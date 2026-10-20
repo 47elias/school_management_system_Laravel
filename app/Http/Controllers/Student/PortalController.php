@@ -8,8 +8,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Mark;
 use App\Models\Term;
-use App\Models\Payment;
 use App\Models\FeeStructure;
+use App\Models\ActivityMark;
+use App\Models\ClassActivity;
+use App\Services\StudentFinanceService;
 
 class PortalController extends Controller
 {
@@ -19,26 +21,28 @@ class PortalController extends Controller
     public function dashboard()
     {
         $student = Auth::guard('student')->user();
+        $avatar = ($student->gender == 'Female')
+            ? asset('adminlte/dist/img/avatar3.png')
+            : asset('adminlte/dist/img/avatar5.png');
 
-        // Use the explicitly marked 'current' term, or the most recent one
-        $currentTerm = Term::where('is_current', true)->first() ?? Term::latest()->first();
+        $finance = app(StudentFinanceService::class);
+        $eligibleTerms = $finance->availableTerms($student);
+        $currentTerm = $eligibleTerms->firstWhere('is_current', true) ?? $eligibleTerms->first();
 
         // If no term exists at all, prevent crash
         if (!$currentTerm) {
-            return view('student.dashboard', ['student' => $student, 'currentAverage' => 0, 'calculatedBalance' => 0]);
+            return view('student.dashboard', ['student' => $student, 'avatar' => $avatar, 'currentAverage' => 0, 'calculatedBalance' => 0, 'totalOwed' => 0, 'totalPaid' => 0, 'carriedForward' => 0, 'paymentPercentage' => 0, 'currentTerm' => null]);
         }
 
-        // Financial Summary for the current term
-        $totalOwed = FeeStructure::where('grade', $student->grade)
-                    ->where('term_id', $currentTerm->id)
-                    ->sum('amount');
-
-        $totalPaid = Payment::where('student_id', $student->id)
-                    ->where('term_id', $currentTerm->id)
-                    ->sum('amount_paid');
-
-        $calculatedBalance = $totalOwed - $totalPaid;
-        $paymentPercentage = ($totalOwed > 0) ? ($totalPaid / $totalOwed) * 100 : 0;
+        $statement = $finance->statement($student, $currentTerm);
+        $totalOwed = $statement['term_charges'];
+        $totalPaid = $statement['term_paid'];
+        $calculatedBalance = $statement['balance'];
+        $carriedForward = $statement['carried_forward'];
+        $paymentBase = $totalOwed + abs($carriedForward);
+        $paymentPercentage = $paymentBase > 0
+            ? min(100, max(0, (($totalPaid + max(0, -$carriedForward)) / $paymentBase) * 100))
+            : 0;
 
         // Academic Quick Stats for current term
         $recentResults = Mark::where('student_id', $student->id)
@@ -50,13 +54,9 @@ class PortalController extends Controller
         $aggregatedResults = $this->aggregateMarksBySubject($recentResults);
         $currentAverage = $aggregatedResults->count() > 0 ? $aggregatedResults->avg('average_score') : 0;
 
-        $avatar = ($student->gender == 'Female')
-                ? asset('adminlte/dist/img/avatar3.png')
-                : asset('adminlte/dist/img/avatar5.png');
-
         return view('student.dashboard', compact(
             'student', 'avatar', 'calculatedBalance',
-            'totalOwed', 'totalPaid', 'paymentPercentage', 'currentTerm', 'currentAverage'
+            'totalOwed', 'totalPaid', 'carriedForward', 'paymentPercentage', 'currentTerm', 'currentAverage'
         ));
     }
 
@@ -82,32 +82,57 @@ class PortalController extends Controller
     public function fees(Request $request)
     {
         $student = Auth::guard('student')->user();
-        $allTerms = Term::orderBy('id', 'desc')->get();
+        $finance = app(StudentFinanceService::class);
+        $allTerms = $finance->availableTerms($student);
 
         // Term selection logic
         $selectedTermId = $request->get('term_id');
-        $displayTerm = $selectedTermId ? Term::find($selectedTermId) : Term::where('is_current', true)->first();
-        $displayTerm = $displayTerm ?? $allTerms->first();
+        $displayTerm = $selectedTermId ? $allTerms->firstWhere('id', (int) $selectedTermId) : null;
+        $displayTerm = $displayTerm ?? $allTerms->firstWhere('is_current', true) ?? $allTerms->first();
 
-        if (!$displayTerm) return back()->with('error', 'No term data available.');
+        if (!$displayTerm) {
+            return view('student.fees', [
+                'student' => $student, 'allTerms' => $allTerms, 'displayTerm' => null,
+                'payments' => collect(), 'balance' => 0, 'totalOwed' => 0, 'feeItems' => collect(),
+                'carriedForward' => 0, 'termCharges' => 0, 'scheduledFees' => 0, 'termPayments' => 0,
+                'termTransactions' => collect(), 'invoices' => collect(), 'receipts' => collect(),
+                'feeStructures' => collect(), 'termInvoiceExists' => false,
+            ]);
+        }
 
-        // Fetch term-specific financial data
-        $feeItems = FeeStructure::where('grade', $student->grade)
-                    ->where('term_id', $displayTerm->id)
-                    ->get();
-
-        $payments = Payment::where('student_id', $student->id)
-                    ->where('term_id', $displayTerm->id)
-                    ->orderBy('payment_date', 'desc')
-                    ->get();
-
-        $totalOwed = $feeItems->sum('amount');
-        $totalPaid = $payments->sum('amount_paid');
-        $balance = $totalOwed - $totalPaid;
+        $statement = $finance->statement($student, $displayTerm);
+        $individualFees = FeeStructure::where('term_id', $displayTerm->id)
+            ->where('student_id', $student->id);
+        if ($individualFees->exists()) {
+            $feeItems = $individualFees->with('term')->get();
+        } else {
+            $class = $student->schoolClass()->with('gradeLevel')->first();
+            $gradeNames = collect([$student->grade, $class?->gradeLevel?->name])->filter()->unique();
+            $feeItems = FeeStructure::where('term_id', $displayTerm->id)
+                ->whereNull('student_id')
+                ->whereIn('grade', $gradeNames)
+                ->where(fn ($query) => $query->whereNull('class_id')->orWhere('class_id', $student->class_id))
+                ->with('schoolClass')
+                ->get();
+        }
+        $payments = $statement['transactions']->sortByDesc('payment_date')->values();
+        $carriedForward = $statement['carried_forward'];
+        $totalOwed = $statement['term_charges'];
+        $totalPaid = $statement['term_paid'];
+        $balance = $statement['balance'];
+        $termCharges = $statement['base_term_fees'];
+        $scheduledFees = $statement['scheduled_fees'];
+        $termPayments = $statement['term_paid'];
+        $termTransactions = $statement['transactions'];
+        $invoices = $termTransactions->where('amount_paid', '<', 0);
+        $receipts = $termTransactions->where('amount_paid', '>', 0);
+        $termInvoiceExists = $termTransactions->contains(fn ($payment) => $payment->payment_method === 'Term Invoice'
+            || str_contains((string) $payment->remarks, 'Term Fees Charged'));
+        $feeStructures = $feeItems;
 
         return view('student.fees', compact(
-            'student', 'payments', 'balance',
-            'totalOwed', 'feeItems', 'allTerms', 'displayTerm'
+            'student', 'payments', 'balance', 'totalOwed', 'feeItems', 'allTerms', 'displayTerm',
+            'carriedForward', 'termCharges', 'scheduledFees', 'termPayments', 'termTransactions', 'invoices', 'receipts', 'feeStructures', 'termInvoiceExists'
         ));
     }
 
@@ -117,18 +142,23 @@ class PortalController extends Controller
     public function results(Request $request)
     {
         $student = Auth::guard('student')->user();
-        $allTerms = Term::orderBy('id', 'desc')->get();
+        $finance = app(StudentFinanceService::class);
+        $allTerms = $finance->availableTerms($student);
+        $enrollmentDate = $finance->enrollmentDate($student)->toDateString();
 
         // 1. Identify which term to display
         $selectedTermId = $request->get('term_id');
         if ($selectedTermId) {
-            $activeTerm = Term::find($selectedTermId);
+            $activeTerm = $allTerms->firstWhere('id', (int) $selectedTermId);
         } else {
-            $activeTerm = Term::where('is_current', 1)->first() ?? $allTerms->first();
+            $activeTerm = $allTerms->firstWhere('is_current', true) ?? $allTerms->first();
         }
 
         if (!$activeTerm) {
-            return back()->with('error', 'No academic terms found in the system.');
+            return view('student.results', [
+                'student' => $student, 'current_results' => collect(), 'history' => collect(),
+                'average' => 0, 'activeTerm' => null, 'allTerms' => $allTerms,
+            ]);
         }
 
         // 2. Fetch raw marks for the current active/selected term
@@ -136,6 +166,7 @@ class PortalController extends Controller
             ->whereHas('exam', function($query) use ($activeTerm) {
                 $query->where('term_id', $activeTerm->id);
             })
+            ->whereHas('exam', fn ($query) => $query->whereDate('exam_date', '>=', $enrollmentDate))
             ->with(['exam.subject', 'exam.term'])
             ->get();
 
@@ -147,12 +178,16 @@ class PortalController extends Controller
 
         // 5. Historical Data: Grouped results for all other terms
         $history = Mark::where('student_id', $student->id)
-            ->whereHas('exam', function($query) use ($activeTerm) {
-                $query->where('term_id', '!=', $activeTerm->id);
+            ->whereHas('exam', function($query) use ($activeTerm, $enrollmentDate, $allTerms) {
+                $query->whereIn('term_id', $allTerms->pluck('id'))
+                    ->where('term_id', '!=', $activeTerm->id)
+                    ->whereDate('exam_date', '>=', $enrollmentDate);
             })
             ->with(['exam.term', 'exam.subject'])
             ->get()
-            ->groupBy(fn($item) => $item->exam->term->term_name ?? 'Archive')
+            ->groupBy(fn($item) => $item->exam->term
+                ? $item->exam->term->term_name . ' (' . $item->exam->term->academic_year . ')'
+                : 'Archive')
             ->map(function ($termMarks) {
                 return $this->aggregateMarksBySubject($termMarks);
             });
@@ -161,6 +196,44 @@ class PortalController extends Controller
         return view('student.results', compact(
             'student', 'current_results', 'history', 'average', 'activeTerm', 'allTerms'
         ));
+    }
+
+    /** Read only continuous assessment record for the signed in student. */
+    public function continuousAssessment(Request $request)
+    {
+        $student = Auth::guard('student')->user();
+        $finance = app(StudentFinanceService::class);
+        $allTerms = $finance->availableTerms($student);
+        $enrollmentDate = $finance->enrollmentDate($student)->toDateString();
+        $requested = $request->integer('term_id');
+        $activeTerm = $requested ? $allTerms->firstWhere('id', $requested) : null;
+        $activeTerm ??= $allTerms->firstWhere('is_current', true) ?? $allTerms->first();
+
+        $activityMarks = collect();
+        $subjectSummary = collect();
+        if ($activeTerm) {
+            $activityMarks = ActivityMark::query()
+                ->where('student_id', $student->id)
+                ->whereHas('classActivity', fn ($query) => $query
+                    ->where('term_id', $activeTerm->id)
+                    ->whereDate('activity_date', '>=', $enrollmentDate))
+                ->with(['classActivity.term', 'classActivity.subjectAssignment.subject', 'classActivity.subjectAssignment.schoolClass'])
+                ->orderByDesc(ClassActivity::select('activity_date')->whereColumn('class_activities.id', 'activity_marks.class_activity_id'))
+                ->get();
+
+            $subjectSummary = $activityMarks->groupBy(fn ($mark) => $mark->classActivity?->subjectAssignment?->subject_id)
+                ->map(function ($marks) {
+                    $valid = $marks->filter(fn ($mark) => (float) ($mark->classActivity?->max_score ?? 0) > 0);
+                    $average = $valid->isEmpty() ? 0 : $valid->avg(fn ($mark) => ($mark->score / $mark->classActivity->max_score) * 100);
+                    return (object) [
+                        'subject' => $marks->first()->classActivity?->subjectAssignment?->subject?->subject_name ?? 'Subject',
+                        'count' => $valid->count(),
+                        'average' => round($average, 1),
+                    ];
+                })->values();
+        }
+
+        return view('student.continuous_assessment', compact('student', 'allTerms', 'activeTerm', 'activityMarks', 'subjectSummary'));
     }
 
     /**
@@ -206,21 +279,20 @@ class PortalController extends Controller
     {
         return $marksCollection->groupBy('exam.subject_id')->map(function ($subjectMarks) {
             // Calculate the average score across all papers for this subject
-            $averageScore = $subjectMarks->avg('score');
-            
-            // Calculate percentage based on max marks 
-            $totalMaxMarks = $subjectMarks->sum('exam.max_marks');
-            $totalObtained = $subjectMarks->sum('score');
-            $percentage = ($totalMaxMarks > 0) ? (($totalObtained / $totalMaxMarks) * 100) : 0;
+            $validMarks = $subjectMarks->filter(fn ($mark) => (float) ($mark->max_score ?: $mark->exam?->max_marks ?: 0) > 0);
+            $totalMaxMarks = $validMarks->sum(fn ($mark) => (float) ($mark->max_score ?: $mark->exam->max_marks));
+            $totalObtained = $validMarks->sum('score');
+            $percentage = $totalMaxMarks > 0 ? ($totalObtained / $totalMaxMarks) * 100 : 0;
+            $averageScore = $percentage;
 
             return (object) [
                 'subject_id'    => $subjectMarks->first()->exam->subject_id,
                 'subject_name'  => $subjectMarks->first()->exam->subject->subject_name,
-                'papers_taken'  => $subjectMarks->count(),
+                'papers_taken'  => $validMarks->count(),
                 'total_score'   => $totalObtained,
                 'average_score' => round($averageScore, 2),
                 'percentage'    => round($percentage, 2),
-                'grade'         => $this->calculateGrade(round($averageScore)),
+                'grade'         => $this->calculateGrade(round($percentage)),
                 'individual'    => $subjectMarks // Raw paper data included so the view can list them
             ];
         })->values(); // Reset keys for easy iteration in blade
@@ -234,8 +306,8 @@ class PortalController extends Controller
         if ($score >= 75) return 'A';
         if ($score >= 65) return 'B';
         if ($score >= 50) return 'C';
+        if ($score >= 45) return 'D';
         if ($score >= 40) return 'E';
-        if ($score >= 39) return 'U';
-        return 'F';
+        return 'U';
     }
 }

@@ -2,14 +2,14 @@
 
 namespace App\Models;
 
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
 
-class ActivityMark extends Model
+class ActivityMark extends Model implements AuditableContract
 {
-    use LogsActivity;
+    use Auditable;
     protected $fillable = [
         'class_activity_id',
         'student_id',
@@ -20,15 +20,6 @@ class ActivityMark extends Model
     protected $casts = [
         'score' => 'float',
     ];
-    public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()
-            ->logFillable()          // Logs all attributes listed in $fillable
-            ->logOnlyDirty()         // Only records a log if fields actually changed during an update
-            ->dontSubmitEmptyLogs()  // Prevents saving empty log entries
-            ->setDescriptionForEvent(fn(string $eventName) => "Activity Mark record has been {$eventName}");
-    }
-
     public function classActivity(): BelongsTo
     {
         return $this->belongsTo(ClassActivity::class);

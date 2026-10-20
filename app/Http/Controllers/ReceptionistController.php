@@ -9,6 +9,7 @@ use App\Models\Payment;
 use App\Models\SchoolClass;
 use App\Models\Term;
 use App\Models\FeeStructure;
+use App\Services\StudentFinanceService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -25,22 +26,16 @@ class ReceptionistController extends Controller
         $totalArrears = 0;
 
         if ($currentTerm) {
-            $activeStudents = Student::with(['payments', 'feeStructures'])
-                ->where('term_id', $currentTerm->id)
-                ->get();
-
-            foreach($activeStudents as $student) {
-                $totalExpected = $this->getStudentExpectedTotal($student, $currentTerm->id);
-                $totalPaid = $student->payments->where('term_id', $currentTerm->id)->sum('amount_paid');
-
-                $totalArrears += $this->calculateSumOfReds($student, $currentTerm, $totalExpected, $totalPaid);
+            $finance = app(StudentFinanceService::class);
+            foreach (Student::where('status', 'active')->get() as $student) {
+                $totalArrears += max(0, $finance->statement($student, $currentTerm)['balance']);
             }
         }
 
         return view('receptionist.dashboard', [
             'currentTerm'    => $currentTerm,
             'totalStudents'  => Student::count(),
-            'todayPayments'  => Payment::whereDate('created_at', Carbon::today())->sum('amount_paid'),
+            'todayPayments'  => Payment::whereDate('payment_date', Carbon::today())->where('amount_paid', '>', 0)->sum('amount_paid'),
             'recentPayments' => Payment::with('student')->latest()->take(5)->get(),
             'totalClasses'   => SchoolClass::count(),
             'totalArrears'   => $totalArrears,
@@ -54,55 +49,43 @@ class ReceptionistController extends Controller
     {
         $student = Student::with(['payments', 'term', 'class', 'feeStructures'])
             ->findOrFail($id);
-
-        $allTerms = Term::orderBy('academic_year', 'desc')
-                        ->orderBy('term_name', 'desc')
-                        ->get();
-
+        $finance = app(StudentFinanceService::class);
+        $allTerms = $finance->availableTerms($student);
         $selectedTermId = $request->get('term_id');
-        if ($selectedTermId) {
-            $term = Term::find($selectedTermId);
-        } else {
-            $term = $student->term ?? Term::where('is_current', true)->first();
-        }
+        $term = $selectedTermId ? $allTerms->firstWhere('id', (int) $selectedTermId) : null;
+        $term = $term ?? $allTerms->firstWhere('is_current', true) ?? $allTerms->first();
 
         if (!$term) {
             return back()->with('error', 'No active term found to generate financial portfolio.');
         }
 
-        // --- CARRY FORWARD LOGIC ---
-        $pastExpected = FeeStructure::where('term_id', '!=', $term->id)
-            ->where('term_id', '>=', $student->term_id)
-            ->where(function($q) use ($student) {
-                $q->where('student_id', $student->id)
-                  ->orWhere(function($sq) use ($student) {
-                      $sq->where('grade', $student->grade)->whereNull('student_id');
-                  });
-            })->sum('amount');
-
-        $pastPaid = Payment::where('student_id', $student->id)
-            ->where('term_id', '!=', $term->id)
-            ->sum('amount_paid');
-
-        $carriedForward = (float)$pastExpected - (float)$pastPaid;
-
-        // Current Term Logic
-        $termRawExpected = $this->getStudentExpectedTotal($student, $term->id);
-        $termPaid = Payment::where('student_id', $student->id)
-                           ->where('term_id', $term->id)
-                           ->sum('amount_paid');
-
-        // Adjust totals for carry forward
-        $adjustedExpected = $termRawExpected + $carriedForward;
+        $statement = $finance->statement($student, $term);
+        $carriedForward = $statement['carried_forward'];
+        $termRawExpected = $statement['base_term_fees'];
+        $totalTermCharges = $statement['term_charges'];
+        $termPaid = $statement['term_paid'];
+        $adjustedExpected = $totalTermCharges + $carriedForward;
         $arrears = $this->calculateSumOfReds($student, $term, $adjustedExpected, $termPaid);
+        $termTransactions = $statement['transactions'];
+        $trueBalance = $statement['balance'];
+        $invoices = $termTransactions->where('amount_paid', '<', 0);
+        $receipts = $termTransactions->where('amount_paid', '>', 0);
+        $feeStructures = FeeStructure::where('term_id', $term->id)
+            ->where(function ($query) use ($student) {
+                $query->where(fn ($general) => $general->where('grade', $student->grade)->whereNull('student_id'))
+                    ->orWhere('student_id', $student->id);
+            })->get();
 
-        $student->expected_total = $adjustedExpected;
+        $student->expected_total = $totalTermCharges + $carriedForward;
         $student->monthly_installment = 50.00;
         $student->monthly_arrears = $arrears;
-        $student->calculated_balance = $adjustedExpected - $termPaid;
+        $student->calculated_balance = $trueBalance;
         $student->carried_forward = $carriedForward;
 
-        return view('receptionist.students.show', compact('student', 'term', 'allTerms'));
+        return view('fees.show', compact(
+            'student', 'term', 'allTerms', 'carriedForward', 'termRawExpected', 'termPaid',
+            'trueBalance', 'termTransactions', 'invoices', 'receipts', 'feeStructures'
+        ));
     }
 
     /**
@@ -140,33 +123,12 @@ class ReceptionistController extends Controller
 
         $students = $query->paginate(20)->withQueryString();
 
-        $report = $students->getCollection()->map(function ($student) use ($currentTerm) {
-
-            // 1. Calculate Carry Forward
-            $pastExpected = FeeStructure::where('term_id', '!=', $currentTerm->id)
-                ->where('term_id', '>=', $student->term_id)
-                ->where(function($q) use ($student) {
-                    $q->where('student_id', $student->id)
-                      ->orWhere(function($sq) use ($student) {
-                          $sq->where('grade', $student->grade)->whereNull('student_id');
-                      });
-                })->sum('amount');
-
-            $pastPaid = Payment::where('student_id', $student->id)
-                ->where('term_id', '!=', $currentTerm->id)
-                ->sum('amount_paid');
-
-            $carriedForward = (float)$pastExpected - (float)$pastPaid;
-
-            // 2. Current Term Raw
-            $termRawExpected = $this->getStudentExpectedTotal($student, $currentTerm->id);
-            $termPaid = Payment::where('student_id', $student->id)
-                               ->where('term_id', $currentTerm->id)
-                               ->sum('amount_paid');
-
-            // 3. Final Adjusted Totals
-            $adjustedExpected = $termRawExpected + $carriedForward;
-            $trueBalance = $adjustedExpected - $termPaid;
+        $finance = app(StudentFinanceService::class);
+        $report = $students->getCollection()->map(function ($student) use ($currentTerm, $finance) {
+            $statement = $finance->statement($student, $currentTerm);
+            $adjustedExpected = $statement['term_charges'] + $statement['carried_forward'];
+            $termPaid = $statement['term_paid'];
+            $trueBalance = $statement['balance'];
 
             return (object)[
                 'id'              => $student->id,
@@ -185,25 +147,6 @@ class ReceptionistController extends Controller
             'report', 'students', 'classes', 'terms', 'grades',
             'currentTerm', 'selectedTermId', 'selectedGrade', 'searchName'
         ));
-    }
-
-    /**
-     * Helper: Get Total Expected
-     */
-    private function getStudentExpectedTotal($student, $termId)
-    {
-        if (!$termId) return 0;
-
-        $individualFees = FeeStructure::where('term_id', $termId)
-            ->where('student_id', $student->id)
-            ->sum('amount');
-
-        if ($individualFees > 0) return (float) $individualFees;
-
-        return (float) FeeStructure::where('term_id', $termId)
-            ->where('grade', $student->grade)
-            ->whereNull('student_id')
-            ->sum('amount');
     }
 
     /**
@@ -241,31 +184,18 @@ class ReceptionistController extends Controller
      */
     public function createPayment(Request $request)
     {
+        $finance = app(StudentFinanceService::class);
         $currentTerm = Term::where('is_current', true)->first();
         $selectedStudentId = $request->get('student_id');
 
         $terms = Term::orderBy('academic_year', 'desc')->get();
 
-        $students = Student::all()->map(function($student) use ($currentTerm) {
-            $pastExpected = FeeStructure::where('term_id', '!=', $currentTerm->id)
-                ->where('term_id', '>=', $student->term_id)
-                ->where(function($q) use ($student) {
-                    $q->where('student_id', $student->id)->orWhere(function($sq) use ($student) {
-                        $sq->where('grade', $student->grade)->whereNull('student_id');
-                    });
-                })->sum('amount');
-
-            $pastPaid = Payment::where('student_id', $student->id)
-                ->where('term_id', '!=', $currentTerm->id)
-                ->sum('amount_paid');
-
-            $carriedForward = (float)$pastExpected - (float)$pastPaid;
-            $termExpected = $this->getStudentExpectedTotal($student, $currentTerm->id);
-            $termPaid = Payment::where('student_id', $student->id)
-                               ->where('term_id', $currentTerm->id)
-                               ->sum('amount_paid');
-
-            $student->calculated_balance = ($termExpected + $carriedForward) - $termPaid;
+        $students = Student::all()->map(function($student) use ($currentTerm, $finance) {
+            $studentTerms = $finance->availableTerms($student);
+            $studentTerm = $currentTerm && $studentTerms->contains('id', $currentTerm->id)
+                ? $currentTerm
+                : ($studentTerms->firstWhere('is_current', true) ?? $studentTerms->first());
+            $student->calculated_balance = $studentTerm ? $finance->statement($student, $studentTerm)['balance'] : 0;
             return $student;
         });
 
@@ -286,24 +216,40 @@ class ReceptionistController extends Controller
             'term_id'        => 'required|exists:terms,id'
         ]);
 
+        $student = Student::findOrFail($request->student_id);
+        $term = Term::findOrFail($request->term_id);
+        $finance = app(StudentFinanceService::class);
+        try {
+            $paymentDate = Carbon::createFromFormat('d/m/Y', $request->payment_date);
+        } catch (\Exception $e) {
+            return back()->withInput()->withErrors(['payment_date' => 'Enter a valid payment date.']);
+        }
+        if (!$finance->canBillForTerm($student, $term) || $paymentDate->lt($finance->enrollmentDate($student))) {
+            return back()->withInput()->withErrors(['term_id' => 'A student can only be charged or receive payments from their enrolment term onward.']);
+        }
+
         try {
             // Convert dd/mm/yyyy from UI to yyyy-mm-dd for MySQL
-            $formattedDate = Carbon::createFromFormat('d/m/Y', $request->payment_date)->format('Y-m-d');
+            $formattedDate = $paymentDate->format('Y-m-d');
 
-            $payment = Payment::create([
+            $payment = $finance->recordReceipt($student, $term, [
                 'student_id'     => $request->student_id,
                 'term_id'        => $request->term_id,
                 'amount_paid'    => $request->amount_paid,
                 'payment_date'   => $formattedDate,
                 'payment_method' => $request->payment_method,
                 'reference_no'   => $request->reference_no,
-                'received_by'    => Auth::id(), // Tracks the user who saved it
+                'received_by'    => Auth::id(),
                 'remarks'        => $request->remarks,
             ]);
 
+            $allocationMessage = $payment->term_id !== $term->id
+                ? ' The receipt was applied to the older ' . ($payment->term->term_name ?? 'term') . ' arrears first; any extra is carried forward.'
+                : '';
+
             return redirect()->route('receptionist.payments.index')
                 ->with([
-                    'success' => 'Payment of $' . number_format($request->amount_paid, 2) . ' recorded successfully.',
+                    'success' => 'Payment of $' . number_format($request->amount_paid, 2) . ' recorded successfully.' . $allocationMessage,
                     'payment_id' => $payment->id
                 ]);
 

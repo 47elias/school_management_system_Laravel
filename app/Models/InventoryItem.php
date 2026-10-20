@@ -2,16 +2,16 @@
 
 namespace App\Models;
 
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory; // Added
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany; // Added for type-hinting
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
 
-class InventoryItem extends Model
+class InventoryItem extends Model implements AuditableContract
 {
     use HasFactory; // Added
-    use LogsActivity;
+    use Auditable;
 
     protected $fillable = [
         'item_name',
@@ -21,16 +21,6 @@ class InventoryItem extends Model
         'alert_level',
         'unit_price'
     ];
-
-    public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()
-            ->logFillable()          // Logs all attributes listed in $fillable
-            ->logOnlyDirty()         // Only records a log if fields actually changed during an update
-            ->dontSubmitEmptyLogs()  // Prevents saving empty log entries
-            ->setDescriptionForEvent(fn(string $eventName) => "InventoryItem record has been {$eventName}");
-    }
-
     /**
      * Get the stock movement logs for the item.
      */

@@ -189,7 +189,7 @@
                                     </tr>
                                 @endif
 
-                                @forelse($student->payments->where('term_id', $displayTerm->id)->where('payment_method', '!=', 'Term Invoice')->sortBy('payment_date') as $payment)
+                                @forelse($termTransactions->reject(fn ($payment) => $payment->payment_method === 'Term Invoice' || str_contains((string) $payment->remarks, 'Term Fees Charged'))->sortBy('payment_date') as $payment)
                                     @php $runningBalance -= $payment->amount_paid; @endphp
                                     <tr>
                                         <td class="px-6 py-4 text-slate-500 dark:text-slate-400">{{ \Carbon\Carbon::parse($payment->payment_date)->format('d M Y') }}</td>

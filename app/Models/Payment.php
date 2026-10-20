@@ -2,14 +2,14 @@
 
 namespace App\Models;
 
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
 
-class Payment extends Model
+class Payment extends Model implements AuditableContract
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, Auditable;
 
     /**
      * The attributes that are mass assignable.
@@ -25,16 +25,6 @@ class Payment extends Model
         'received_by',
         'remarks',
     ];
-
-    public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()
-            ->logFillable()         // Logs all attributes listed in $fillable
-            ->logOnlyDirty()        // Only records a log if fields actually changed during an update
-            ->dontSubmitEmptyLogs() // Prevents saving empty log entries
-            ->setDescriptionForEvent(fn(string $eventName) => "Payment record has been {$eventName}");
-    }
-
     /**
      * The attributes that should be cast.
      */

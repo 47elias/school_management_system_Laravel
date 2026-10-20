@@ -2,16 +2,16 @@
 
 namespace App\Models;
 
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
 
-class Exam extends Model
+class Exam extends Model implements AuditableContract
 {
-    use LogsActivity;
+    use Auditable;
 
     /**
      * Mass assignable attributes matching the database schema.
@@ -26,16 +26,6 @@ class Exam extends Model
         'class_id',
         'max_marks',
     ];
-
-    public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()
-            ->logFillable()
-            ->logOnlyDirty()
-            ->dontSubmitEmptyLogs()
-            ->setDescriptionForEvent(fn(string $eventName) => "Exam record has been {$eventName}");
-    }
-
     protected $casts = [
         'exam_date' => 'date',
     ];

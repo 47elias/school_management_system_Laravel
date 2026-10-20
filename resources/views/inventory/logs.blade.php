@@ -21,6 +21,16 @@
 @section('content')
     <div class="space-y-6">
 
+        <form method="GET" action="{{ route('inventory.logs') }}" class="grid grid-cols-1 gap-3 rounded-2xl border border-slate-200 bg-stone-50 p-4 sm:grid-cols-3 dark:border-slate-700 dark:bg-slate-800/70">
+            <input type="search" name="search" value="{{ request('search') }}" placeholder="Search item, SKU, person, or note" class="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white">
+            <select name="type" class="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white">
+                <option value="">Stock in and out</option>
+                <option value="in" @selected(request('type') === 'in')>Stock received</option>
+                <option value="out" @selected(request('type') === 'out')>Stock issued</option>
+            </select>
+            <button class="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700">Filter movements</button>
+        </form>
+
         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden transition-colors">
             <div class="px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/80">
                 <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center">
@@ -36,6 +46,7 @@
                             <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Item Name</th>
                             <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Transaction Type</th>
                             <th scope="col" class="px-6 py-3.5 text-center font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Quantity</th>
+                            <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Person / Department</th>
                             <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Remarks / Context</th>
                         </tr>
                     </thead>
@@ -62,13 +73,14 @@
                             <td class="px-6 py-4 whitespace-nowrap text-center font-mono font-extrabold text-slate-800 dark:text-slate-100 text-sm">
                                 {{ $log->quantity }}
                             </td>
+                            <td class="px-6 py-4 text-slate-600 dark:text-slate-300">{{ $log->person_involved ?: '—' }}</td>
                             <td class="px-6 py-4 text-slate-600 dark:text-slate-300">
                                 {{ $log->remarks ?? '-' }}
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-12 text-center text-slate-400">
+                            <td colspan="6" class="px-6 py-12 text-center text-slate-400">
                                 <i class="fa-solid fa-clock-rotate-left text-2xl text-slate-300 dark:text-slate-600 mb-2 block"></i>
                                 No stock movements recorded yet.
                             </td>

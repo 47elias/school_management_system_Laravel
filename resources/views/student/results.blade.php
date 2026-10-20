@@ -9,6 +9,7 @@
             <p class="text-xs font-bold text-slate-700 dark:text-slate-400">Subject marks, paper breakdowns, and remarks</p>
         </div>
 
+        @if($activeTerm)
         <form method="GET" action="{{ url()->current() }}">
             <div class="relative">
                 <i class="fa-solid fa-filter absolute left-3 top-1/2 -translate-y-1/2 text-slate-900 text-xs pointer-events-none"></i>
@@ -23,7 +24,14 @@
                 </select>
             </div>
         </form>
+        @endif
     </div>
+
+    @if(!$activeTerm)
+        <div class="rounded-xl border border-amber-300 bg-amber-50 p-5 text-sm font-semibold text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+            No term in your enrolment period is currently available. Exam results will appear here when they are recorded for an eligible term.
+        </div>
+    @else
 
     <!-- MAIN GRID -->
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
@@ -72,7 +80,8 @@
                                     @foreach($result->individual as $mark)
                                         <div class="flex items-center justify-between px-2 py-1 rounded bg-slate-200 dark:bg-slate-800 text-[10px] border border-slate-300 dark:border-slate-700">
                                             <span class="font-bold text-slate-900 dark:text-slate-300 truncate max-w-[100px]">{{ $mark->exam->exam_name }}</span>
-                                            <span class="font-mono font-black text-slate-900 dark:text-slate-100">{{ $mark->score }}%</span>
+                                            @php $paperMax = (float) ($mark->max_score ?: $mark->exam->max_marks ?: 0); @endphp
+                                            <span class="font-mono font-black text-slate-900 dark:text-slate-100">{{ $mark->score }} / {{ $paperMax ?: '—' }}{{ $paperMax > 0 ? ' (' . number_format(($mark->score / $paperMax) * 100, 1) . '%)' : '' }}</span>
                                         </div>
                                     @endforeach
                                 </td>
@@ -117,5 +126,6 @@
             </div>
         </div>
     </div>
+    @endif
 </div>
 @endsection

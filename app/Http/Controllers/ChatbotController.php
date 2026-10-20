@@ -5,8 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Term;
-use App\Models\FeeStructure;
+use App\Services\StudentFinanceService;
 
 class ChatbotController extends Controller
 {
@@ -18,27 +17,14 @@ class ChatbotController extends Controller
         /** @var \App\Models\Student $student */
         $student = Auth::guard('student')->user();
 
-        $calculatedBalance = $student->calculated_balance;
-
-        $hasIndividualFees = FeeStructure::where('term_id', $student->term_id)
-            ->where('student_id', $student->id)
-            ->exists();
-
-        if ($hasIndividualFees) {
-            $totalFee = FeeStructure::where('term_id', $student->term_id)
-                ->where('student_id', $student->id)
-                ->sum('amount');
-        } else {
-            $totalFee = FeeStructure::where('term_id', $student->term_id)
-                ->where('grade', $student->grade)
-                ->whereNull('student_id')
-                ->sum('amount');
-        }
-
-        $paid = $student->payments->where('term_id', $student->term_id)->sum('amount_paid');
-        $paymentPercentage = $totalFee > 0 ? ($paid / $totalFee) * 100 : 0;
-
-        $currentTerm = $student->term ?? Term::where('is_current', true)->first();
+        $finance = app(StudentFinanceService::class);
+        $terms = $finance->availableTerms($student);
+        $currentTerm = $terms->firstWhere('is_current', true) ?? $terms->first();
+        $statement = $currentTerm ? $finance->statement($student, $currentTerm) : null;
+        $calculatedBalance = $statement['balance'] ?? 0;
+        $totalFee = $statement['term_charges'] ?? 0;
+        $paid = $statement['term_paid'] ?? 0;
+        $paymentPercentage = $totalFee > 0 ? min(100, max(0, ($paid / $totalFee) * 100)) : 0;
         $avatar = $student->gender == 'Female' ? 'adminlte/dist/img/avatar3.png' : 'adminlte/dist/img/avatar5.png';
 
         return view('student.ai_chat', compact(

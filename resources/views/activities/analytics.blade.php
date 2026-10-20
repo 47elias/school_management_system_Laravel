@@ -7,7 +7,7 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
         <div>
             <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">CA Analytics</h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Statistical breakdown of Continuous Assessment across the school</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Continuous Assessment results {{ $selectedClass ? 'for ' . $selectedClass->class_name : ($selectedGrade ? 'for ' . $selectedGrade->name . ' across all streams' : 'across the school') }}.</p>
         </div>
         <div class="mt-4 sm:mt-0">
             <a href="{{ Route::has('activities.index') ? route('activities.index') : url('/activities') }}" 
@@ -35,6 +35,14 @@
                         </option>
                     @endforeach
                 </select>
+                <label class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Grade / Form</label>
+                <select name="grade_level_id" onchange="this.form.submit()" class="px-3.5 py-2 text-xs font-bold rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100">
+                    <option value="">All levels</option>@foreach($gradeLevels as $grade)<option value="{{ $grade->id }}" @selected(request('grade_level_id') == $grade->id)>{{ $grade->name }}</option>@endforeach
+                </select>
+                <label class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Stream</label>
+                <select name="class_id" onchange="this.form.submit()" class="px-3.5 py-2 text-xs font-bold rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100">
+                    <option value="">All streams</option>@foreach($classes as $class)<option value="{{ $class->id }}" @selected(request('class_id') == $class->id)>{{ $class->class_name }}</option>@endforeach
+                </select>
             </form>
         </div>
 
@@ -44,7 +52,7 @@
             {{-- School Average --}}
             <div class="bg-gradient-to-br from-sky-500 to-indigo-600 rounded-2xl p-5 text-white shadow-sm relative overflow-hidden">
                 <div class="relative z-10">
-                    <span class="text-xs font-bold uppercase tracking-wider opacity-80 block">School-Wide CA Average</span>
+                    <span class="text-xs font-bold uppercase tracking-wider opacity-80 block">{{ request('class_id') ? 'Stream' : (request('grade_level_id') ? 'Form' : 'School') }} CA Average</span>
                     <h3 class="text-3xl font-black mt-2 tracking-tight">{{ $overall['avg_pct'] }}%</h3>
                 </div>
                 <i class="fa-solid fa-chart-line absolute right-4 bottom-2 text-6xl opacity-15"></i>
@@ -243,7 +251,7 @@
     </div>
 @endsection
 
-@section('scripts')
+@push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -373,6 +381,8 @@
             const btn = document.getElementById('generateInsightsBtn');
             const box = document.getElementById('aiInsightsBox');
             const termId = {{ $selectedTerm->id ?? 'null' }};
+            const gradeLevelId = {{ request('grade_level_id') ? (int) request('grade_level_id') : 'null' }};
+            const classId = {{ request('class_id') ? (int) request('class_id') : 'null' }};
 
             btn.addEventListener('click', function () {
                 btn.disabled = true;
@@ -385,7 +395,7 @@
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify({ term_id: termId })
+                    body: JSON.stringify({ term_id: termId, grade_level_id: gradeLevelId, class_id: classId })
                 })
                 .then(r => r.json())
                 .then(data => {
@@ -401,4 +411,4 @@
             });
         });
     </script>
-@endsection
+@endpush

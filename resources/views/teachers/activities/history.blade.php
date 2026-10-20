@@ -11,6 +11,10 @@
 
 @section('content')
 <div class="space-y-6">
+    <section class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+        <div class="rounded-2xl border border-slate-200/80 dark:border-slate-700/60 bg-white dark:bg-slate-800 p-5"><h2 class="font-bold text-sm text-slate-800 dark:text-slate-100">Class performance over time</h2><p class="mt-1 text-xs text-slate-500">Average mark for each activity</p><div class="mt-4 h-64"><canvas id="activityTrendChart"></canvas></div></div>
+        <div class="rounded-2xl border border-slate-200/80 dark:border-slate-700/60 bg-white dark:bg-slate-800 p-5"><h2 class="font-bold text-sm text-slate-800 dark:text-slate-100">Student averages</h2><p class="mt-1 text-xs text-slate-500">Top 20 students by weighted average</p><div class="mt-4 h-64"><canvas id="studentAverageChart"></canvas></div></div>
+    </section>
     @if(session('success'))<div class="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 p-4 text-sm font-semibold text-emerald-800 dark:text-emerald-200"><i class="fa-solid fa-circle-check mr-2"></i>{{ session('success') }}</div>@endif
     @if(session('error'))<div class="rounded-xl border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 p-4 text-sm font-semibold text-rose-800 dark:text-rose-200"><i class="fa-solid fa-circle-exclamation mr-2"></i>{{ session('error') }}</div>@endif
     <div class="grid grid-cols-1 2xl:grid-cols-5 gap-6">
@@ -36,3 +40,16 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const trend = @json($activityChart);
+    const students = @json($studentChart);
+    const common = {responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}};
+    new Chart(document.getElementById('activityTrendChart'), {type:'line', data:{labels:trend.map(x=>x.label), datasets:[{data:trend.map(x=>x.average), borderColor:'#4f46e5', backgroundColor:'rgba(79,70,229,.12)', fill:true, tension:.3}]}, options:{...common, scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'}}}}});
+    new Chart(document.getElementById('studentAverageChart'), {type:'bar', data:{labels:students.map(x=>x.label), datasets:[{data:students.map(x=>x.average), backgroundColor:'#0ea5e9', borderRadius:5}]}, options:{...common, indexAxis:'y', scales:{x:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'}}}}});
+});
+</script>
+@endpush

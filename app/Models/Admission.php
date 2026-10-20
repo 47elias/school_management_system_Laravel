@@ -2,17 +2,17 @@
 
 namespace App\Models;
 
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
 
-class Admission extends Model
+class Admission extends Model implements AuditableContract
 {
     use HasFactory;
-    use LogsActivity;
+    use Auditable;
 
     /**
      * FULLY SYNCHRONIZED WITH SQL DUMP (sit (10).sql)
@@ -36,16 +36,6 @@ class Admission extends Model
         'status',
         'admin_remarks'
     ];
-
-    public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()
-            ->logFillable()          // Logs all attributes listed in $fillable
-            ->logOnlyDirty()         // Only records a log if fields actually changed during an update
-            ->dontSubmitEmptyLogs()  // Prevents saving empty log entries
-            ->setDescriptionForEvent(fn(string $eventName) => "Admission record has been {$eventName}");
-    }
-
     /**
      * Attributes that should be cast to native types.
      */

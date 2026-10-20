@@ -7,7 +7,7 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
         <div>
             <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">School Inventory</h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage item catalog, stock levels, and supply adjustments</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Track school supplies, record stock received or issued, and spot items that need restocking.</p>
         </div>
         <div class="mt-4 sm:mt-0 flex flex-wrap items-center gap-3">
             <a href="{{ Route::has('inventory.logs') ? route('inventory.logs') : url('/inventory/logs') }}" 
@@ -23,7 +23,7 @@
 @endsection
 
 @section('content')
-    <div x-data="{ activeModal: null }" class="space-y-6">
+    <div x-data="{ activeModal: null }" x-init="const item = new URLSearchParams(window.location.search).get('restock'); if (item) activeModal = 'adjust-' + item" class="space-y-6">
 
         @if(session('success'))
             <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-200 flex items-center justify-between shadow-sm">
@@ -35,6 +35,10 @@
                     <i class="fa-solid fa-xmark text-sm"></i>
                 </button>
             </div>
+        @endif
+
+        @if(session('error'))
+            <div class="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 text-rose-800 dark:text-rose-200 text-sm font-medium">{{ session('error') }}</div>
         @endif
 
         @if($errors->any())
@@ -55,6 +59,54 @@
                 </ul>
             </div>
         @endif
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div class="rounded-2xl border border-indigo-200 bg-indigo-50 p-5 dark:border-indigo-900 dark:bg-indigo-950/40">
+                <p class="text-xs font-bold uppercase tracking-wide text-indigo-700 dark:text-indigo-300">Item types</p>
+                <p class="mt-2 text-3xl font-black text-slate-900 dark:text-white">{{ number_format($summary['item_types']) }}</p>
+                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Different supplies in the catalogue</p>
+            </div>
+            <div class="rounded-2xl border border-teal-200 bg-teal-50 p-5 dark:border-teal-900 dark:bg-teal-950/40">
+                <p class="text-xs font-bold uppercase tracking-wide text-teal-700 dark:text-teal-300">Units in store</p>
+                <p class="mt-2 text-3xl font-black text-slate-900 dark:text-white">{{ number_format($summary['units']) }}</p>
+                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Current quantity across all items</p>
+            </div>
+            <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-900 dark:bg-amber-950/40">
+                <p class="text-xs font-bold uppercase tracking-wide text-amber-800 dark:text-amber-300">Needs attention</p>
+                <p class="mt-2 text-3xl font-black text-slate-900 dark:text-white">{{ number_format($summary['low_stock']) }}</p>
+                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">At or below the restock level</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-stone-50 p-5 dark:border-slate-700 dark:bg-slate-800">
+                <p class="text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">Stock value</p>
+                <p class="mt-2 text-3xl font-black text-slate-900 dark:text-white">${{ number_format($summary['stock_value'], 2) }}</p>
+                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Quantity multiplied by unit price</p>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ route('inventory.index') }}" class="rounded-full border px-3 py-1.5 text-xs font-bold {{ !request('category') ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-300 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300' }}">All categories</a>
+            @foreach($categories as $category)
+                <a href="{{ route('inventory.index', array_filter(['category' => $category, 'search' => request('search'), 'status' => request('status')])) }}" class="rounded-full border px-3 py-1.5 text-xs font-bold {{ request('category') === $category ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-300 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300' }}">
+                    {{ $category }} <span class="ml-1 opacity-70">{{ $categoryCounts[$category] ?? 0 }}</span>
+                </a>
+            @endforeach
+        </div>
+
+        <form method="GET" action="{{ route('inventory.index') }}" class="grid grid-cols-1 sm:grid-cols-4 gap-3 rounded-2xl border border-slate-200 bg-stone-50 p-4 dark:border-slate-700 dark:bg-slate-800/70">
+            <input type="search" name="search" value="{{ request('search') }}" placeholder="Search item name or SKU" class="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-white">
+            <select name="category" class="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-white">
+                <option value="">Every category</option>
+                @foreach($categories as $category)
+                    <option value="{{ $category }}" @selected(request('category') === $category)>{{ $category }}</option>
+                @endforeach
+            </select>
+            <select name="status" class="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-white">
+                <option value="">Any stock level</option>
+                <option value="low" @selected(request('status') === 'low')>Needs restocking</option>
+                <option value="available" @selected(request('status') === 'available')>In stock</option>
+            </select>
+            <button class="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700"><i class="fa-solid fa-magnifying-glass mr-2"></i>Find items</button>
+        </form>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
@@ -80,9 +132,9 @@
 
                         <div>
                             <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
-                                SKU / Item Code <span class="text-rose-500">*</span>
+                                SKU / Item Code <span class="font-medium normal-case text-slate-400">(optional)</span>
                             </label>
-                            <input type="text" name="sku" value="{{ old('sku') }}" placeholder="e.g. STAT-001" required
+                            <input type="text" name="sku" value="{{ old('sku') }}" placeholder="Leave blank to generate an item code"
                                    class="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         </div>
 
@@ -90,8 +142,8 @@
                             <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
                                 Category <span class="text-rose-500">*</span>
                             </label>
-                            <select name="category" class="w-full px-3.5 py-2.5 text-xs font-medium rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                @foreach(['Stationery', 'Uniforms', 'Furniture', 'Electronics', 'Other'] as $cat)
+                            <select name="category" required class="w-full px-3.5 py-2.5 text-xs font-medium rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                @foreach($categories as $cat)
                                     <option value="{{ $cat }}" {{ old('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
                                 @endforeach
                             </select>
@@ -114,6 +166,12 @@
                                 <input type="number" step="0.01" name="unit_price" value="{{ old('unit_price', '0.00') }}" min="0"
                                        class="w-full px-3.5 py-2.5 text-xs font-mono font-bold rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                             </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">Opening Quantity</label>
+                            <input type="number" name="opening_quantity" min="0" value="{{ old('opening_quantity', 0) }}" class="w-full px-3.5 py-2.5 text-xs font-mono font-bold rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100">
+                            <p class="mt-1 text-[11px] text-slate-500">If entered, this is recorded as the opening stock movement.</p>
                         </div>
 
                         <div class="pt-2">
@@ -143,7 +201,7 @@
                                     <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Category</th>
                                     <th scope="col" class="px-6 py-3.5 text-center font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Qty</th>
                                     <th scope="col" class="px-6 py-3.5 text-left font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
-                                    <th scope="col" class="px-6 py-3.5 text-center font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Action</th>
+                                    <th scope="col" class="px-6 py-3.5 text-center font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700/60">
@@ -175,10 +233,10 @@
                                         @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-center">
-                                        <button type="button" @click="activeModal = 'adjust-{{ $item->id }}'" 
-                                                class="inline-flex items-center px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-400 text-xs font-bold transition-colors border border-amber-200 dark:border-amber-800/50">
-                                            <i class="fa-solid fa-rotate mr-1.5"></i> Adjust
-                                        </button>
+                                        <div class="flex justify-center gap-2">
+                                            <a href="{{ route('inventory.edit', $item->id) }}" class="rounded-lg bg-indigo-50 px-3 py-1.5 font-bold text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:text-indigo-300">Edit</a>
+                                            <button type="button" @click="activeModal = 'adjust-{{ $item->id }}'" class="rounded-lg bg-amber-50 px-3 py-1.5 font-bold text-amber-700 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300"><i class="fa-solid fa-rotate mr-1"></i>Stock</button>
+                                        </div>
                                     </td>
                                 </tr>
                                 @empty
@@ -192,6 +250,9 @@
                             </tbody>
                         </table>
                     </div>
+                    @if($items->hasPages())
+                        <div class="border-t border-slate-200 px-5 py-4 dark:border-slate-700">{{ $items->links() }}</div>
+                    @endif
                 </div>
             </div>
 
@@ -232,6 +293,11 @@
                                     <option value="in">Restock / Purchase (+)</option>
                                     <option value="out">Issue / Sale / Damage (-)</option>
                                 </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">Issued to / Received from</label>
+                                <input type="text" name="person_involved" placeholder="Teacher, department, or supplier" class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100">
                             </div>
 
                             <div>

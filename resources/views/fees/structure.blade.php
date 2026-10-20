@@ -103,6 +103,16 @@
             </div>
         </div>
 
+        @if(isset($currentTerm) && $currentTerm->end_date && \Illuminate\Support\Carbon::parse($currentTerm->end_date)->lt(now()->startOfDay()))
+            <div class="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-100 flex items-start gap-3">
+                <i class="fa-solid fa-triangle-exclamation mt-0.5 text-amber-600 dark:text-amber-400"></i>
+                <div class="text-sm">
+                    <p class="font-bold">This term has ended</p>
+                    <p class="mt-1">{{ $currentTerm->term_name }} ended on {{ \Illuminate\Support\Carbon::parse($currentTerm->end_date)->format('d M Y') }}. Students who enrolled after that date cannot be charged for this term. Update the term dates or select the term that covers their enrolment before running invoices.</p>
+                </div>
+            </div>
+        @endif
+
         {{-- Search & Global Accordion Controls --}}
         <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div class="relative w-full sm:w-96">

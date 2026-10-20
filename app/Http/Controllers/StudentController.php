@@ -10,6 +10,10 @@ use App\Models\GradeLevel;
 use App\Models\Payment;
 use App\Models\FeeStructure;
 use App\Models\Mark;
+use App\Models\ActivityMark;
+use App\Models\Exam;
+use App\Models\ClassActivity;
+use App\Services\StudentFinanceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -38,8 +42,104 @@ class StudentController extends Controller
      */
     public function show(Student $student)
     {
-        $student->load(['term', 'schoolClass', 'payments', 'feeStructures']);
-        return view('students.show', compact('student'));
+        $enrollmentDate = $student->enrollment_date?->toDateString()
+            ?? $student->created_at?->toDateString()
+            ?? now()->toDateString();
+
+        $student->load(['term', 'schoolClass.gradeLevel', 'schoolClass.teacher', 'schoolClass.classTeacher']);
+
+        // Keep the selector within the student's time at the school.
+        $enrollmentTerms = app(StudentFinanceService::class)->availableTerms($student);
+        $requestedTermId = request()->query('term_id');
+        $selectedTerm = $requestedTermId
+            ? $enrollmentTerms->firstWhere('id', (int) $requestedTermId)
+            : null;
+        $selectedTermId = $selectedTerm?->id;
+
+        $examMarks = Mark::where('student_id', $student->id)
+            ->whereHas('exam', fn ($query) => $query->whereDate('exam_date', '>=', $enrollmentDate)
+                ->when($selectedTermId, fn ($query) => $query->where('term_id', $selectedTermId)));
+        $examMarksCount = (clone $examMarks)->count();
+        $examAverage = (float) (DB::table('marks')
+            ->join('exams', 'exams.id', '=', 'marks.exam_id')
+            ->where('marks.student_id', $student->id)
+            ->whereDate('exams.exam_date', '>=', $enrollmentDate)
+            ->when($selectedTermId, fn ($query) => $query->where('exams.term_id', $selectedTermId))
+            ->where('marks.max_score', '>', 0)
+            ->selectRaw('AVG(marks.score * 100.0 / marks.max_score) as average_percent')
+            ->value('average_percent') ?? 0);
+        $examHistory = (clone $examMarks)
+            ->with(['exam.term', 'exam.subject', 'exam.schoolClass'])
+            ->whereHas('exam')
+            ->orderByDesc(Exam::select('exam_date')->whereColumn('exams.id', 'marks.exam_id'))
+            ->paginate(20, ['*'], 'exam_page')
+            ->appends(request()->except(['exam_page', 'activity_page', 'payment_page']));
+
+        $activityMarks = ActivityMark::where('student_id', $student->id)
+            ->whereHas('classActivity', fn ($query) => $query->whereDate('activity_date', '>=', $enrollmentDate)
+                ->when($selectedTermId, fn ($query) => $query->where('term_id', $selectedTermId)));
+        $activityMarksCount = (clone $activityMarks)->count();
+        $activityAverage = (float) (DB::table('activity_marks')
+            ->join('class_activities', 'class_activities.id', '=', 'activity_marks.class_activity_id')
+            ->where('activity_marks.student_id', $student->id)
+            ->whereDate('class_activities.activity_date', '>=', $enrollmentDate)
+            ->when($selectedTermId, fn ($query) => $query->where('class_activities.term_id', $selectedTermId))
+            ->where('class_activities.max_score', '>', 0)
+            ->selectRaw('AVG(activity_marks.score * 100.0 / class_activities.max_score) as average_percent')
+            ->value('average_percent') ?? 0);
+        $activityHistory = (clone $activityMarks)
+            ->with(['classActivity.term', 'classActivity.subjectAssignment.subject', 'classActivity.subjectAssignment.schoolClass'])
+            ->orderByDesc(ClassActivity::select('activity_date')->whereColumn('class_activities.id', 'activity_marks.class_activity_id'))
+            ->paginate(20, ['*'], 'activity_page')
+            ->appends(request()->except(['exam_page', 'activity_page', 'payment_page']));
+
+        $payments = Payment::where('student_id', $student->id)
+            ->whereDate('payment_date', '>=', $enrollmentDate)
+            ->when($selectedTermId, fn ($query) => $query->where('term_id', $selectedTermId));
+        $totalPaidSinceEnrollment = (float) (clone $payments)->sum('amount_paid');
+        $paymentCount = (clone $payments)->count();
+        $paymentHistory = (clone $payments)
+            ->with('term')
+            ->orderByDesc('payment_date')
+            ->orderByDesc('id')
+            ->paginate(20, ['*'], 'payment_page')
+            ->appends(request()->except(['exam_page', 'activity_page', 'payment_page']));
+        $paymentsByTerm = Payment::query()
+            ->selectRaw('term_id, SUM(amount_paid) as total_paid, COUNT(*) as payment_count')
+            ->with('term')
+            ->where('student_id', $student->id)
+            ->whereDate('payment_date', '>=', $enrollmentDate)
+            ->when($selectedTermId, fn ($query) => $query->where('term_id', $selectedTermId))
+            ->groupBy('term_id')
+            ->orderByDesc('term_id')
+            ->get();
+
+        $financialTerm = $selectedTerm
+            ?? $enrollmentTerms->firstWhere('is_current', true)
+            ?? $enrollmentTerms->first();
+        $expectedFees = 0.0;
+        $paidInCurrentTerm = 0.0;
+        $financialCarriedForward = 0.0;
+        if ($financialTerm) {
+            $financialStatement = app(StudentFinanceService::class)->statement($student, $financialTerm);
+            $expectedFees = $financialStatement['term_charges'];
+            $paidInCurrentTerm = $financialStatement['term_paid'];
+            $financialCarriedForward = $financialStatement['carried_forward'];
+        }
+
+        $currentTermBalance = $expectedFees + $financialCarriedForward - $paidInCurrentTerm;
+        $financialStatus = !$financialTerm
+            || ($expectedFees <= 0 && $financialCarriedForward <= 0 && $paidInCurrentTerm <= 0)
+            ? 'No fee schedule'
+            : ($currentTermBalance <= 0 ? 'Settled' : 'Balance due');
+
+        return view('students.show', compact(
+            'student', 'enrollmentDate', 'examHistory', 'examMarksCount', 'examAverage',
+            'activityHistory', 'activityMarksCount', 'activityAverage', 'paymentHistory',
+            'totalPaidSinceEnrollment', 'paymentCount', 'paymentsByTerm', 'financialTerm',
+            'expectedFees', 'paidInCurrentTerm', 'financialCarriedForward', 'currentTermBalance', 'financialStatus',
+            'enrollmentTerms', 'selectedTerm', 'selectedTermId'
+        ));
     }
 
     /**
@@ -525,41 +625,43 @@ class StudentController extends Controller
     {
         $student = Student::with(['payments', 'term', 'schoolClass', 'feeStructures'])
             ->findOrFail($id);
-
+        $finance = app(StudentFinanceService::class);
+        $allTerms = $finance->availableTerms($student);
         $termId = $request->get('term_id');
-        $term = $termId ? Term::find($termId) : (Term::where('is_current', true)->first() ?? Term::latest()->first());
+        $term = $termId ? $allTerms->firstWhere('id', (int) $termId) : null;
+        $term = $term ?? $allTerms->firstWhere('is_current', true) ?? $allTerms->first();
 
         if (!$term) {
             return back()->with('error', 'No active academic term found.');
         }
 
-        $expected = $this->getStudentExpectedTotal($student, $term->id);
-        $paid = $student->payments->where('term_id', $term->id)->sum('amount_paid');
+        $statement = $finance->statement($student, $term);
+        $expected = $statement['term_charges'] + $statement['carried_forward'];
+        $paid = $statement['term_paid'];
         $arrears = $this->calculateSumOfReds($student, $term, $expected, $paid);
+
+        $carriedForward = $statement['carried_forward'];
+        $termRawExpected = $statement['base_term_fees'];
+        $termPaid = $statement['term_paid'];
+        $trueBalance = $statement['balance'];
+        $termTransactions = $statement['transactions'];
+        $invoices = $termTransactions->where('amount_paid', '<', 0);
+        $receipts = $termTransactions->where('amount_paid', '>', 0);
+        $feeStructures = FeeStructure::where('term_id', $term->id)
+            ->where(function ($query) use ($student) {
+                $query->where(fn ($general) => $general->where('grade', $student->grade)->whereNull('student_id'))
+                    ->orWhere('student_id', $student->id);
+            })->get();
 
         $student->expected_total = $expected;
         $student->monthly_installment = 50.00;
         $student->monthly_arrears = $arrears;
-        $student->calculated_balance = $expected - $paid;
+        $student->calculated_balance = $statement['balance'];
 
-        $allTerms = Term::orderBy('academic_year', 'desc')->orderBy('id', 'desc')->get();
-
-        return view('receptionist.students.show', compact('student', 'term', 'allTerms'));
-    }
-
-    private function getStudentExpectedTotal($student, $termId)
-    {
-        if (!$termId) return 0;
-        $individualFees = FeeStructure::where('term_id', $termId)
-            ->where('student_id', $student->id)
-            ->sum('amount');
-
-        if ($individualFees > 0) return (float) $individualFees;
-
-        return (float) FeeStructure::where('term_id', $termId)
-            ->where('grade', $student->grade)
-            ->whereNull('student_id')
-            ->sum('amount');
+        return view('fees.show', compact(
+            'student', 'term', 'allTerms', 'carriedForward', 'termRawExpected', 'termPaid',
+            'trueBalance', 'termTransactions', 'invoices', 'receipts', 'feeStructures'
+        ));
     }
 
     public function calculateSumOfReds($student, $term, $totalFee, $totalPaid)

@@ -242,7 +242,7 @@ class ExamController extends Controller
 
         // Teachers see papers linked to their allocations, plus admin-created
         // papers for the exact classes covered by those allocations.
-        $examQuery = Exam::with(['schoolClass', 'subjectAssignment', 'marks.student.schoolClass'])
+        $examQuery = Exam::with(['schoolClass.gradeLevel', 'subjectAssignment', 'marks.student.schoolClass.gradeLevel'])
             ->where('subject_id', $subject->id);
 
         if ($teacherAssignments !== null) {
@@ -264,10 +264,59 @@ class ExamController extends Controller
             ->orderBy('exam_date')->orderBy('exam_name')
             ->get();
 
-        // Collect all marks recorded for this subject in the selected term
+        // Collect marks first so the report can offer grade and stream scopes.
         $allMarks = Mark::whereIn('exam_id', $exams->pluck('id'))
-            ->with(['student.schoolClass', 'exam'])
+            ->with(['student.schoolClass.gradeLevel', 'exam.subjectAssignment'])
             ->get();
+
+        $availableExams = $exams;
+        $availableMarks = $allMarks;
+        $knownGrades = GradeLevel::pluck('name')
+            ->concat($availableExams->map(fn ($exam) => $exam->subjectAssignment?->grade))
+            ->filter()->unique()->sortByDesc(fn ($grade) => strlen((string) $grade))->values();
+        $reportClasses = $availableExams->pluck('schoolClass')
+            ->concat($availableMarks->map(fn ($mark) => $mark->student?->schoolClass))
+            ->filter()->unique('id')->sortBy('class_name')->values();
+        $classGrade = function ($class) use ($knownGrades) {
+            if (!$class) return null;
+            if ($class->gradeLevel?->name) return $class->gradeLevel->name;
+            $className = strtolower(trim((string) $class->class_name));
+            return $knownGrades->first(fn ($grade) => str_starts_with($className, strtolower(trim((string) $grade))))
+                ?? $class->class_name;
+        };
+        $reportGrades = $reportClasses->map(fn ($class) => $classGrade($class))
+            ->concat($availableExams->map(fn ($exam) => $exam->subjectAssignment?->grade))
+            ->filter()->unique()->sort()->values();
+
+        $requestedGrade = $request->get('grade');
+        $selectedGrade = $reportGrades->contains($requestedGrade)
+            ? $requestedGrade
+            : $reportGrades->first();
+        $classesForGrade = $reportClasses->filter(fn ($class) => $classGrade($class) === $selectedGrade)->values();
+        $selectedClassId = $request->get('class_id');
+        if ($selectedClassId && !$classesForGrade->contains(fn ($class) => (string) $class->id === (string) $selectedClassId)) {
+            $selectedClassId = null;
+        }
+
+        $markGrade = fn ($mark) => $classGrade($mark->student?->schoolClass)
+            ?? $mark->exam?->subjectAssignment?->grade
+            ?? $mark->student?->grade;
+        $allMarks = $availableMarks->filter(function ($mark) use ($selectedGrade, $selectedClassId, $markGrade) {
+            if ($selectedGrade && $markGrade($mark) !== $selectedGrade) return false;
+            if ($selectedClassId && (string) ($mark->student?->class_id ?? '') !== (string) $selectedClassId) return false;
+            return true;
+        })->values();
+
+        $exams = $availableExams->filter(function ($exam) use ($selectedGrade, $selectedClassId, $classGrade, $allMarks) {
+            $examGrade = $classGrade($exam->schoolClass) ?? $exam->subjectAssignment?->grade;
+            if ($selectedGrade && $examGrade !== $selectedGrade) return false;
+            if ($selectedClassId && $exam->class_id && (string) $exam->class_id !== (string) $selectedClassId) return false;
+            if ($selectedClassId && !$exam->class_id && $exam->subjectAssignment?->grade !== $selectedGrade) return false;
+            return true;
+        })->values();
+        $examIds = $exams->pluck('id');
+        $allMarks = $allMarks->whereIn('exam_id', $examIds)->values();
+        $reportClasses = $classesForGrade;
 
         // 1. Overall Subject Summary Metrics
         $totalCandidates = $allMarks->pluck('student_id')->unique()->count();
@@ -277,8 +326,8 @@ class ExamController extends Controller
         $overallPassRate = $allMarks->count() > 0 ? round(($passedCount / $allMarks->count()) * 100, 1) : 0;
 
         // 2. Overview of Papers Written for this Subject
-        $paperBreakdown = $exams->map(function($exam) {
-            $examMarks = $exam->marks;
+        $paperBreakdown = $exams->map(function($exam) use ($allMarks) {
+            $examMarks = $allMarks->where('exam_id', $exam->id);
             $satCount = $examMarks->count();
             $avgScore = $satCount > 0 ? round($examMarks->avg('score'), 2) : 0;
             $passed = $examMarks->filter(fn($m) => $this->calculationService->calculateGrade($m->score)['is_passed'])->count();
@@ -344,7 +393,6 @@ class ExamController extends Controller
 
         $markSearch = trim((string) $request->get('search', ''));
         $selectedExamId = $request->get('exam_id');
-        $selectedClassId = $request->get('class_id');
         $sortBy = $request->get('sort', 'student');
         $sortDirection = $request->get('direction', 'asc') === 'desc' ? 'desc' : 'asc';
         $validSorts = ['student', 'class', 'paper', 'mark', 'date'];
@@ -374,13 +422,11 @@ class ExamController extends Controller
             }, SORT_REGULAR, $sortDirection === 'desc')
             ->values();
 
-        $reportClasses = $allMarks->map(fn ($mark) => $mark->student->schoolClass)->filter()->unique('id')->sortBy('class_name')->values();
-
         return view('exams.subject_report', compact(
             'subject', 'exams', 'terms', 'selectedTerm', 'activeTerm',
             'totalCandidates', 'overallAverage', 'overallPassRate',
             'paperBreakdown', 'streamBreakdown', 'gradeCounts', 'marksForTable',
-            'markSearch', 'selectedExamId', 'selectedClassId', 'sortBy', 'sortDirection', 'reportClasses', 'teacherView'
+            'markSearch', 'selectedExamId', 'selectedClassId', 'selectedGrade', 'reportGrades', 'sortBy', 'sortDirection', 'reportClasses', 'teacherView'
         ));
     }
 

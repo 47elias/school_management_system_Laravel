@@ -2,14 +2,14 @@
 
 namespace App\Models;
 
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
 
-class SubjectAssignment extends Model
+class SubjectAssignment extends Model implements AuditableContract
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, Auditable;
 
     // Mass assignable attributes
     protected $fillable = [
@@ -28,29 +28,10 @@ class SubjectAssignment extends Model
         }
 
         if ($this->grade) {
-            $classes = $this->relationLoaded('gradeClasses')
-                ? $this->gradeClasses
-                : $this->gradeClasses()->orderBy('class_name')->get();
-            $classNames = $classes->pluck('class_name')->filter()->values();
-
-            if ($classNames->isNotEmpty()) {
-                return $classNames->join(', ');
-            }
+            return $this->grade . ' - All Streams';
         }
 
         return $this->grade ?: 'Class not assigned';
-    }
-
-    /**
-     * Spatie Activity Log Options configuration.
-     */
-    public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()
-            ->logFillable()         // Logs all attributes listed in $fillable
-            ->logOnlyDirty()        // Only records a log if fields actually changed during an update
-            ->dontSubmitEmptyLogs() // Prevents saving empty log entries
-            ->setDescriptionForEvent(fn(string $eventName) => "Subject Assignment record has been {$eventName}");
     }
 
     /**

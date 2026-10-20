@@ -339,6 +339,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [ActivityController::class, 'adminIndex'])->middleware('permission:activities_management')->name('index');
         Route::get('/analytics', [ActivityAnalyticsController::class, 'dashboard'])->middleware('permission:activities_management')->name('analytics');
         Route::post('/analytics/ai-insights', [ActivityAnalyticsController::class, 'aiInsights'])->middleware('permission:activities_management')->name('analytics.ai_insights');
+        Route::get('/{id}', [ActivityController::class, 'adminShow'])->middleware('permission:activities_management')->name('show');
     });
 });
 
@@ -381,6 +382,8 @@ Route::middleware('auth')
             Route::post('/', [ActivityController::class, 'store'])->name('store');
             Route::get('/{id}/record', [ActivityController::class, 'recordMarks'])->name('record');
             Route::post('/marks/store', [ActivityController::class, 'bulkStore'])->name('marks.store');
+            Route::get('/{id}/template', [ActivityController::class, 'downloadTemplate'])->name('template');
+            Route::post('/marks/import', [ActivityController::class, 'importMarks'])->name('import');
             Route::get('/assignment/{assignmentId}/history', [ActivityController::class, 'history'])->name('history');
             Route::delete('/{id}', [ActivityController::class, 'destroy'])->name('destroy');
         });
@@ -403,6 +406,7 @@ Route::prefix('student')->name('student.')->group(function () {
         Route::get('/dashboard', [PortalController::class, 'dashboard'])->name('dashboard');
         Route::get('/updates', [PortalController::class, 'updates'])->name('updates');
         Route::get('/results', [PortalController::class, 'results'])->name('results');
+        Route::get('/continuous-assessment', [PortalController::class, 'continuousAssessment'])->name('continuous_assessment');
         Route::get('/fees', [PortalController::class, 'fees'])->name('fees');
         Route::get('/change-password', [PortalController::class, 'changePassword'])->name('change_password');
         Route::post('/update-password', [PortalController::class, 'updatePassword'])->name('update_password');

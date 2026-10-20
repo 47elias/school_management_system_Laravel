@@ -2,14 +2,14 @@
 
 namespace App\Models;
 
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
 
-class FeeTransaction extends Model
+class FeeTransaction extends Model implements AuditableContract
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, Auditable;
 
     protected $fillable = [
         'student_id',
@@ -26,16 +26,6 @@ class FeeTransaction extends Model
         'remarks',
         'payment_id',
     ];
-
-    public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()
-            ->logFillable()         // Logs all attributes listed in $fillable
-            ->logOnlyDirty()        // Only records a log if fields actually changed during an update
-            ->dontSubmitEmptyLogs() // Prevents saving empty log entries
-            ->setDescriptionForEvent(fn(string $eventName) => "Fee Transaction record has been {$eventName}");
-    }
-
     protected function casts(): array
     {
         return [

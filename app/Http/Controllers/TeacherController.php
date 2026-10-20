@@ -97,19 +97,28 @@ class TeacherController extends Controller
             ->when($activeTerm, fn ($query) => $query->where('term_id', $activeTerm->id))
             ->count();
 
-        $examsRecordedCount = Exam::where($examAssignmentScope)
+        $termExamIds = Exam::where($examAssignmentScope)
             ->when($activeTerm, fn ($query) => $query->where('term_id', $activeTerm->id))
-            ->count();
+            ->pluck('id');
+        $examsRecordedCount = Mark::whereIn('exam_id', $termExamIds)->count();
 
         $recentExams = Exam::with(['subject', 'schoolClass', 'subjectAssignment'])
             ->where($examAssignmentScope)
+            ->when($activeTerm, fn ($query) => $query->where('term_id', $activeTerm->id))
             ->latest()
             ->take(5)
             ->get();
 
-        $activitiesCount = $assignedSubjectsCount;
+        $activitiesCount = \App\Models\ClassActivity::whereIn('subject_assignment_id', $assignmentIds)
+            ->when($activeTerm, fn ($query) => $query->where('term_id', $activeTerm->id))
+            ->count();
+
+        $teacherInitials = collect(preg_split('/\s+/', trim($teacher->name)))
+            ->filter()->take(2)->map(fn ($part) => strtoupper(substr($part, 0, 1)))->implode('');
 
         return view('teachers.dashboard', compact(
+            'teacher',
+            'teacherInitials',
             'assignedClass',
             'myClass',
             'myClasses',
@@ -180,7 +189,7 @@ class TeacherController extends Controller
      */
     public function assignedSubjects()
     {
-        $assignments = SubjectAssignment::with(['schoolClass', 'gradeClasses', 'subject'])
+        $assignments = SubjectAssignment::with(['schoolClass.gradeLevel', 'gradeClasses', 'subject'])
             ->where('teacher_id', Auth::id())
             ->get();
 
@@ -198,7 +207,7 @@ class TeacherController extends Controller
         $selectedTermId = $request->get('term_id');
         $selectedTerm = $selectedTermId ? Term::find($selectedTermId) : $activeTerm;
 
-        $myAssignments = SubjectAssignment::with(['subject', 'schoolClass', 'gradeClasses'])
+        $myAssignments = SubjectAssignment::with(['subject', 'schoolClass.gradeLevel', 'gradeClasses'])
             ->forTeacher(Auth::id())
             ->get();
         $assignmentIds = $myAssignments->modelKeys();
@@ -238,6 +247,7 @@ class TeacherController extends Controller
                 $label = $assignment->grade . ' · All Streams';
                 $subjectGroups[$subjectId]['classes'][$classKey] ??= [
                     'label' => $label,
+                    'grade' => $assignment->grade,
                     'class_id' => null,
                     'assignment_ids' => [],
                     'papers' => collect(),
@@ -252,6 +262,7 @@ class TeacherController extends Controller
                 $classKey = 'unassigned-' . $assignment->id;
                 $subjectGroups[$subjectId]['classes'][$classKey] ??= [
                     'label' => $assignment->grade ?: 'Class not assigned',
+                    'grade' => $assignment->grade,
                     'class_id' => null,
                     'assignment_ids' => [],
                     'papers' => collect(),
@@ -264,6 +275,7 @@ class TeacherController extends Controller
                 $classKey = (string) $class->id;
                 $subjectGroups[$subjectId]['classes'][$classKey] ??= [
                     'label' => $class->class_name,
+                    'grade' => $class->gradeLevel->name ?? $assignment->grade,
                     'class_id' => $class->id,
                     'assignment_ids' => [],
                     'papers' => collect(),
@@ -459,8 +471,8 @@ class TeacherController extends Controller
      */
     public function profile()
     {
-        $user = Auth::user();
-        return view('settings.profile', compact('user'));
+        $teacher = Auth::user();
+        return view('teachers.profile', compact('teacher'));
     }
 
     /**
@@ -471,24 +483,16 @@ class TeacherController extends Controller
         $user = Auth::user();
 
         $request->validate([
-            'name'         => 'required|string|max:255',
-            'email'        => ['required', 'email', Rule::unique('users')->ignore($user->id)],
-            'phone_number' => 'nullable|string',
-            'password'     => 'nullable|min:8|confirmed',
+            'password' => 'nullable|string|min:8|confirmed',
         ]);
-
-        $user->name = $request->name;
-        $user->email = $request->email;
-        if ($request->has('phone_number')) {
-            $user->phone_number = $request->phone_number;
-        }
 
         if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
+            $user->save();
+
+            return back()->with('success', 'Your password has been updated. Contact the school administrator to change your name, email or phone number.');
         }
 
-        $user->save();
-
-        return back()->with('success', 'Profile updated successfully!');
+        return back()->with('success', 'Your name, email and phone number are managed by the school administrator. Enter a new password above if you want to change it.');
     }
 }

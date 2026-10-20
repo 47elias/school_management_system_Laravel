@@ -4,27 +4,7 @@
 @section('title', 'Teacher Dashboard')
 
 @section('header')
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
-        <div>
-            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2.5">
-                <span>Teacher Dashboard</span>
-                @if($activeTerm)
-                    <span class="text-xs px-2.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 font-extrabold border border-indigo-200 dark:border-indigo-800/50 uppercase tracking-wide">
-                        {{ $activeTerm->term_name ?? 'Active Term' }}
-                    </span>
-                @endif
-            </h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Welcome back, <strong class="text-slate-700 dark:text-slate-200 font-bold">{{ auth()->user()->name }}</strong>.
-                Here are the classes and subjects assigned to you.
-            </p>
-        </div>
-        <div class="mt-4 sm:mt-0">
-            <span class="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60">
-                <i class="fa-solid fa-calendar-day text-indigo-500 mr-2"></i>{{ date('l, d M Y') }}
-            </span>
-        </div>
-    </div>
+    <div class="w-full"><h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Teacher Dashboard</h1><p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Your teaching overview, quick actions and profile.</p></div>
 @endsection
 
 @section('content')
@@ -36,54 +16,59 @@
 
 <div class="space-y-6">
 
-    {{-- Hero: summary of assigned classes --}}
-    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-700 via-indigo-600 to-violet-700 text-white p-6 sm:p-8 shadow-md">
-        <div class="relative z-10 space-y-3">
-            <div class="flex flex-wrap items-center gap-2">
-                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-indigo-100 text-xs font-bold">
-                    <i class="fa-solid fa-graduation-cap"></i> Teacher Dashboard
-                </span>
-                @if($formClass)
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 text-xs font-black">
-                        <i class="fa-solid fa-chalkboard-user text-emerald-400"></i>
-                        Form Class: {{ $formClass->class_name }}
-                    </span>
-                @endif
-            </div>
-
-            <h2 class="text-2xl sm:text-3xl font-black tracking-tight">
-                @if($classCount > 0)
-                    You are assigned to {{ $classCount }} {{ \Illuminate\Support\Str::plural('class', $classCount) }}
-                @else
-                    No class assigned yet
-                @endif
-            </h2>
-
-            @if($classCount > 0)
-                <div class="flex flex-wrap gap-2 pt-1">
-                    @foreach($myClasses as $item)
-                        <span class="px-2.5 py-1 rounded-lg text-xs font-bold border {{ $item->is_form_teacher ? 'bg-emerald-400/20 border-emerald-300/40 text-emerald-100' : 'bg-white/10 border-white/20 text-indigo-50' }}">
-                            {{ $item->class_name }}
-                        </span>
-                    @endforeach
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+        {{-- Welcome and teaching overview --}}
+        <section class="xl:col-span-2 relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-950 via-indigo-800 to-violet-700 text-white p-6 sm:p-8 shadow-lg shadow-indigo-950/10">
+            <div class="relative z-10 space-y-5">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold text-indigo-100"><i class="fa-solid fa-sun text-amber-300"></i>{{ now()->format('l, d F Y') }}</span>
+                    @if($activeTerm)<span class="inline-flex items-center gap-2 rounded-full border border-emerald-300/30 bg-emerald-400/15 px-3 py-1.5 text-xs font-bold text-emerald-100"><i class="fa-solid fa-calendar-check"></i>{{ $activeTerm->term_name }}{{ $activeTerm->academic_year ? ' · ' . $activeTerm->academic_year : '' }}</span>@endif
                 </div>
-            @else
-                <p class="text-sm text-indigo-100 max-w-xl">
-                    No class or subject has been assigned to you yet. Please contact the school administrator.
-                </p>
-            @endif
-        </div>
-        <div class="absolute -right-10 -bottom-10 w-64 h-64 rounded-full bg-white/5 blur-2xl pointer-events-none"></div>
+                <div>
+                    <p class="text-sm font-semibold text-indigo-200">Your teaching at a glance</p>
+                    <h2 class="mt-1 text-3xl sm:text-4xl font-black tracking-tight">Good {{ now()->hour < 12 ? 'morning' : (now()->hour < 17 ? 'afternoon' : 'evening') }}, {{ \Illuminate\Support\Str::of($teacher->name)->before(' ') }}.</h2>
+                    <p class="mt-2 max-w-2xl text-sm leading-6 text-indigo-100">Your classes, subjects and work for this term are together here. Use the shortcuts to record class activities, enter exam scores or check your student lists.</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    @forelse($myClasses->take(5) as $item)<span class="rounded-xl border {{ $item->is_form_teacher ? 'border-emerald-300/30 bg-emerald-400/15 text-emerald-100' : 'border-white/15 bg-white/10 text-indigo-50' }} px-3 py-2 text-xs font-bold"><i class="fa-solid {{ $item->is_form_teacher ? 'fa-chalkboard-user' : 'fa-school' }} mr-1.5 opacity-80"></i>{{ $item->class_name }}</span>@empty<span class="text-sm text-indigo-100">No classes assigned yet. Contact the school administrator for your allocations.</span>@endforelse
+                    @if($myClasses->count() > 5)<a href="{{ route('teacher.subjects') }}" class="rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-xs font-bold text-white">+{{ $myClasses->count() - 5 }} more</a>@endif
+                </div>
+                <div class="flex flex-wrap gap-2 pt-1">
+                    <a href="{{ route('teacher.activities.index') }}" class="rounded-xl bg-white px-4 py-2.5 text-xs font-extrabold text-indigo-900 shadow-sm hover:bg-indigo-50"><i class="fa-solid fa-list-check mr-1.5"></i>Record class activity</a>
+                    <a href="{{ route('teacher.exams.index') }}" class="rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-xs font-bold text-white hover:bg-white/15"><i class="fa-solid fa-pen-to-square mr-1.5"></i>Open exams</a>
+                </div>
+            </div>
+            <div class="pointer-events-none absolute -right-16 -bottom-24 h-72 w-72 rounded-full border-[36px] border-white/5"></div>
+            <div class="pointer-events-none absolute right-20 -top-24 h-52 w-52 rounded-full bg-violet-400/20 blur-3xl"></div>
+        </section>
+
+        {{-- Teacher profile snapshot --}}
+        <section class="relative overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-700/70 bg-gradient-to-br from-white to-indigo-50/70 dark:from-slate-800 dark:to-slate-800 p-5 sm:p-6 shadow-sm">
+            <div class="flex items-start justify-between gap-3">
+                <div class="flex min-w-0 items-center gap-3">
+                    <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 text-lg font-black text-white shadow-md shadow-indigo-600/20">{{ $teacherInitials ?: 'T' }}</div>
+                    <div class="min-w-0"><p class="text-[10px] font-extrabold uppercase tracking-[.16em] text-indigo-600 dark:text-indigo-300">Teacher profile</p><h3 class="mt-1 truncate text-lg font-black text-slate-900 dark:text-white">{{ $teacher->name }}</h3><p class="text-xs font-medium text-slate-500 dark:text-slate-400">{{ ucfirst($teacher->role ?? 'Teacher') }} account</p></div>
+                </div>
+                <a href="{{ route('teacher.profile') }}" aria-label="Edit teacher profile" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-600 bg-white/80 dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-slate-600"><i class="fa-solid fa-pen"></i></a>
+            </div>
+            <div class="mt-5 space-y-3 border-t border-slate-200/80 dark:border-slate-700 pt-4">
+                <div class="flex items-center gap-3"><span class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-300"><i class="fa-solid fa-id-badge text-xs"></i></span><div class="min-w-0"><p class="text-[10px] font-bold uppercase tracking-wide text-slate-400">Staff number</p><p class="truncate text-xs font-bold text-slate-700 dark:text-slate-200">{{ $teacher->employee_id ?: ($teacher->ec_number ?: 'Not added') }}</p></div></div>
+                <div class="flex items-center gap-3"><span class="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-100 dark:bg-sky-950/70 text-sky-600 dark:text-sky-300"><i class="fa-solid fa-envelope text-xs"></i></span><div class="min-w-0"><p class="text-[10px] font-bold uppercase tracking-wide text-slate-400">Email address</p><p class="truncate text-xs font-bold text-slate-700 dark:text-slate-200">{{ $teacher->email ?: 'Not added' }}</p></div></div>
+                <div class="flex items-center gap-3"><span class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-300"><i class="fa-solid fa-phone text-xs"></i></span><div class="min-w-0"><p class="text-[10px] font-bold uppercase tracking-wide text-slate-400">Phone number</p><p class="truncate text-xs font-bold text-slate-700 dark:text-slate-200">{{ $teacher->phone_number ?: 'Add your phone number' }}</p></div></div>
+            </div>
+            <a href="{{ route('teacher.profile') }}" class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/40 px-4 py-2.5 text-xs font-extrabold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-950/70">View and update profile <i class="fa-solid fa-arrow-right text-[10px]"></i></a>
+        </section>
     </div>
 
     {{-- Stat cards --}}
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
         @php
             $stats = [
                 ['label' => 'My Classes',     'value' => $classCount,                 'icon' => 'fa-school',         'color' => 'teal'],
                 ['label' => 'My Subjects',    'value' => $assignedSubjectsCount ?? 0, 'icon' => 'fa-book-bookmark',  'color' => 'indigo'],
                 ['label' => 'Total Students', 'value' => $totalStudentsCount ?? 0,    'icon' => 'fa-user-graduate',  'color' => 'emerald'],
-                ['label' => 'Exams This Term','value' => $examsRecordedCount ?? 0,    'icon' => 'fa-pen-to-square',  'color' => 'purple'],
+                ['label' => 'Activities This Term','value' => $activitiesCount ?? 0, 'icon' => 'fa-list-check', 'color' => 'amber'],
+                ['label' => 'Exams This Term','value' => $examCount ?? 0, 'hint' => ($examsRecordedCount ?? 0) . ' marks entered', 'icon' => 'fa-pen-to-square', 'color' => 'purple'],
             ];
         @endphp
         @foreach($stats as $stat)
@@ -92,6 +77,7 @@
                     <div>
                         <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">{{ $stat['label'] }}</p>
                         <h3 class="text-2xl font-black text-slate-800 dark:text-slate-100 mt-1">{{ $stat['value'] }}</h3>
+                        @if(!empty($stat['hint']))<p class="mt-1 text-[10px] font-semibold text-slate-500 dark:text-slate-400">{{ $stat['hint'] }}</p>@endif
                     </div>
                     <div class="w-10 h-10 rounded-xl bg-{{ $stat['color'] }}-50 dark:bg-{{ $stat['color'] }}-950/60 text-{{ $stat['color'] }}-600 dark:text-{{ $stat['color'] }}-400 border border-{{ $stat['color'] }}-200 dark:border-{{ $stat['color'] }}-800/50 flex items-center justify-center text-lg">
                         <i class="fa-solid {{ $stat['icon'] }}"></i>

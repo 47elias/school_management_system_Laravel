@@ -2,18 +2,18 @@
 
 namespace App\Models;
 
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
 use Carbon\Carbon;
 
-class Student extends Authenticatable
+class Student extends Authenticatable implements AuditableContract
 {
-    use Notifiable, LogsActivity;
+    use Notifiable, Auditable;
 
     protected $guard = 'student';
 
@@ -69,17 +69,6 @@ class Student extends Authenticatable
         'monthly_arrears',
         'payment_status'
     ];
-
-    /**
-     * Spatie Activity Log Options configuration.
-     */
-    public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()
-            ->logFillable()          // Logs changes to all fillable attributes
-            ->logOnlyDirty()         // Only log attributes that actually changed
-            ->dontSubmitEmptyLogs(); // Skip log entries if no data was modified
-    }
 
     /* =========================================================================
         DYNAMIC FINANCIAL LOGIC (PRESERVED)
