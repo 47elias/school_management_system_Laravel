@@ -45,8 +45,8 @@
             <i class="fa-solid fa-circle-info text-indigo-600 dark:text-indigo-400 text-lg mt-0.5 shrink-0"></i>
             <div>
                 <h4 class="font-bold text-indigo-950 dark:text-indigo-200">Grade Level Promotion Architecture</h4>
-                <p class="text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
-                    Map each existing **Grade Level** (e.g. <em>Form 1</em>) directly to its target destination Grade Level (e.g. <em>Form 2</em>). All active student accounts across all constituent streams under the source grade will be batch migrated in a single pass. Select <strong>Graduated / Alumni</strong> for final-year cohorts (e.g. <em>Form 4</em> or <em>Upper 6</em>).
+                    <p class="text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+                    Students are selected from the active term{{ isset($currentTerm) && $currentTerm ? ' (' . $currentTerm->display_name . ')' : '' }}. Map each grade level to its destination grade, then choose the term they move into. Select <strong>Graduated / Alumni</strong> for final-year cohorts.
                 </p>
             </div>
         </div>
@@ -68,7 +68,7 @@
                     <select name="target_term_id" id="target_term_id" required
                             class="w-full md:w-1/2 px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold">
                         @foreach($terms as $term)
-                            <option value="{{ $term->id }}" {{ (isset($term->is_current) && $term->is_current) ? 'selected' : '' }}>
+                            <option value="{{ $term->id }}" {{ isset($targetTerm) && $targetTerm?->id === $term->id ? 'selected' : '' }}>
                                 {{ $term->term_name }} ({{ $term->academic_year }})
                             </option>
                         @endforeach

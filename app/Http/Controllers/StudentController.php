@@ -50,10 +50,8 @@ class StudentController extends Controller
 
         // Keep the selector within the student's time at the school.
         $enrollmentTerms = app(StudentFinanceService::class)->availableTerms($student);
-        $requestedTermId = request()->query('term_id');
-        $selectedTerm = $requestedTermId
-            ? $enrollmentTerms->firstWhere('id', (int) $requestedTermId)
-            : null;
+        $selectedTerm = Term::where('is_current', true)->first();
+        if ($selectedTerm && !$enrollmentTerms->contains('id', $selectedTerm->id)) $selectedTerm = null;
         $selectedTermId = $selectedTerm?->id;
 
         $examMarks = Mark::where('student_id', $student->id)
@@ -218,11 +216,12 @@ class StudentController extends Controller
             'phone'             => 'required|string',
             'emergency_contact' => 'nullable|string',
             'address'           => 'nullable|string',
-            'term_id'           => 'required|exists:terms,id',
+            'term_id'           => 'nullable|exists:terms,id',
         ]);
 
         try {
             return DB::transaction(function () use ($validatedData) {
+                $currentTerm = Term::where('is_current', true)->firstOrFail();
                 // Resolve Class & Grade Assignment
                 $schoolClass = null;
                 if (!empty($validatedData['class_id'])) {
@@ -240,6 +239,7 @@ class StudentController extends Controller
                 $generatedEmail = strtolower(substr($validatedData['name'], 0, 1) . $validatedData['surname']) . $studentCount . '@student.local';
 
                 $studentData = $validatedData;
+                $studentData['term_id'] = $currentTerm->id;
                 $studentData['class_id'] = $schoolClass ? $schoolClass->id : null;
                 $studentData['grade'] = $schoolClass ? $schoolClass->class_name : ($validatedData['grade'] ?? 'Unassigned');
                 $studentData['status'] = 'active';
@@ -283,8 +283,9 @@ class StudentController extends Controller
             ? GradeLevel::with('schoolClasses')->orderBy('level_order', 'asc')->get() 
             : collect();
         $terms = Term::orderBy('id', 'desc')->get();
+        $currentTerm = $student->term ?? Term::where('is_current', true)->first();
 
-        return view('students.edit', compact('student', 'classes', 'gradeLevels', 'terms'));
+        return view('students.edit', compact('student', 'classes', 'gradeLevels', 'terms', 'currentTerm'));
     }
 
     /**
@@ -372,14 +373,21 @@ class StudentController extends Controller
      */
     public function showPromotionForm()
     {
+        $currentTerm = Term::where('is_current', true)->first();
         $gradeLevels = class_exists(GradeLevel::class)
-            ? GradeLevel::with(['schoolClasses.students', 'students'])->orderBy('level_order', 'asc')->get()
+            ? GradeLevel::with([
+                'schoolClasses.students' => fn ($query) => $query->when($currentTerm, fn ($students) => $students->where('term_id', $currentTerm->id)),
+                'students' => fn ($query) => $query->when($currentTerm, fn ($students) => $students->where('term_id', $currentTerm->id)),
+            ])->orderBy('level_order', 'asc')->get()
             : collect();
 
         $classes = SchoolClass::orderBy('class_name', 'asc')->get();
         $terms   = Term::orderBy('id', 'desc')->get();
+        $targetTerm = $currentTerm
+            ? $terms->sortBy('start_date')->first(fn ($term) => $term->start_date && $currentTerm->end_date && $term->start_date->gt($currentTerm->end_date))
+            : null;
 
-        return view('students.promote', compact('gradeLevels', 'classes', 'terms'));
+        return view('students.promote', compact('gradeLevels', 'classes', 'terms', 'currentTerm', 'targetTerm'));
     }
 
     /**
@@ -402,13 +410,19 @@ class StudentController extends Controller
             'promote'        => 'required|array',
         ]);
 
+        $currentTerm = Term::where('is_current', true)->first();
+        if (!$currentTerm) {
+            return back()->with('error', 'Set the active term before promoting students.');
+        }
+
         $promotions = $request->input('promote');
         $targetTermId = $request->input('target_term_id');
+        $sourceTermId = $currentTerm->id;
         $totalPromoted = 0;
         $totalGraduated = 0;
 
         try {
-            DB::transaction(function () use ($promotions, $targetTermId, &$totalPromoted, &$totalGraduated) {
+            DB::transaction(function () use ($promotions, $targetTermId, $sourceTermId, &$totalPromoted, &$totalGraduated) {
                 // Registry to track student IDs already promoted during this pass to prevent single-turn cascades
                 $processedStudentIds = [];
 
@@ -456,6 +470,7 @@ class StudentController extends Controller
                                     }
                                     $q->orWhere('grade', 'LIKE', $fromGradeLevel->name . '%');
                                 })
+                                ->where('term_id', $sourceTermId)
                                 ->where('status', 'active')
                                 ->whereNotIn('id', $processedStudentIds)
                                 ->pluck('id');
@@ -486,6 +501,7 @@ class StudentController extends Controller
 
                                         if ($targetClass) {
                                             $studentsToPromote = Student::where('class_id', $fromClass->id)
+                                                ->where('term_id', $sourceTermId)
                                                 ->where('status', 'active')
                                                 ->whereNotIn('id', $processedStudentIds)
                                                 ->pluck('id');
@@ -509,6 +525,7 @@ class StudentController extends Controller
                                     // Fallback when students are assigned directly by grade name string
                                     $targetClass = $targetGradeLevel->schoolClasses->first();
                                     $studentsToPromote = Student::where('grade', 'LIKE', $fromGradeLevel->name . '%')
+                                        ->where('term_id', $sourceTermId)
                                         ->where('status', 'active')
                                         ->whereNotIn('id', $processedStudentIds)
                                         ->pluck('id');
@@ -543,6 +560,7 @@ class StudentController extends Controller
                         $destinationClass = $isGraduated ? null : SchoolClass::where('class_name', $toGrade)->first();
 
                         $studentsToTransition = Student::where('grade', $fromGrade)
+                            ->where('term_id', $sourceTermId)
                             ->where('status', 'active')
                             ->whereNotIn('id', $processedStudentIds)
                             ->pluck('id');
