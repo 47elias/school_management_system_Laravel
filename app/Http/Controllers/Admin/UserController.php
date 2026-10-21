@@ -11,6 +11,7 @@ use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
@@ -28,7 +29,13 @@ class UserController extends Controller
      */
     public function create()
     {
-        return view('users.create');
+        $roles = Role::query()
+            ->where('guard_name', config('auth.defaults.guard'))
+            ->where('name', '!=', 'student')
+            ->orderBy('name')
+            ->get();
+
+        return view('users.create', compact('roles'));
     }
 
     /**
@@ -43,8 +50,19 @@ class UserController extends Controller
             'dob' => 'required|date',
             'ec_number' => 'required|unique:users,ec_number',
             'password' => 'required|min:8',
-            'role' => 'required|in:admin,teacher,receptionist',
+            'role' => [
+                'required',
+                'string',
+                Rule::exists('roles', 'name')
+                    ->where('guard_name', config('auth.defaults.guard'))
+                    ->where('name', '!=', 'student'),
+            ],
         ]);
+
+        $selectedRole = Role::query()
+            ->where('guard_name', config('auth.defaults.guard'))
+            ->where('name', $request->role)
+            ->firstOrFail();
 
         $user = User::create([
             'name' => $request->name,
@@ -58,7 +76,7 @@ class UserController extends Controller
         ]);
 
         // Automatically assign the Spatie Role upon creation
-        $user->assignRole($request->role);
+        $user->assignRole($selectedRole);
 
         return redirect()->route('users.index')->with('success', 'Staff account created successfully!');
     }

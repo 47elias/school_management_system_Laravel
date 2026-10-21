@@ -76,9 +76,11 @@
                         <select name="role" id="role" required
                                 class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                             <option value="" disabled {{ old('role') ? '' : 'selected' }}>Select Access Level</option>
-                            <option value="teacher" {{ old('role') == 'teacher' ? 'selected' : '' }}>Teacher</option>
-                            <option value="receptionist" {{ old('role') == 'receptionist' ? 'selected' : '' }}>Receptionist</option>
-                            <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Administrator</option>
+                            @foreach($roles as $role)
+                                <option value="{{ $role->name }}" {{ old('role') === $role->name ? 'selected' : '' }}>
+                                    {{ \Illuminate\Support\Str::headline($role->name) }}
+                                </option>
+                            @endforeach
                         </select>
                     </div>
 
