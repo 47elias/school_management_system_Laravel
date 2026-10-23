@@ -11,7 +11,7 @@ class StudentForgotPasswordController extends Controller
 {
     public function showResetForm()
     {
-        return view('student_verify');
+        return view('student.auth.student_verify');
     }
 
     public function updatePassword(Request $request)
@@ -30,6 +30,10 @@ class StudentForgotPasswordController extends Controller
             return back()
                 ->withInput($request->only('student_number', 'dob'))
                 ->with('error', 'The student number or date of birth provided does not match our records.');
+        }
+
+        if (empty($student->password)) {
+            return redirect()->route('student.activate')->with('status', 'This portal account has not been activated yet. Confirm your admission tracking ID or National ID to create a password.');
         }
 
         $student->password = Hash::make($request->password);

@@ -3,57 +3,70 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Admission Portal | {{ env('SCHOOL_NAME') }}</title>
-    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <title>Admissions | {{ config('app.name', env('SCHOOL_NAME', 'School Portal')) }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     @include('components.adminlte')
 
     <style>
-        body { 
-            background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%) !important; 
-            font-family: 'Source Sans Pro', sans-serif; 
-            min-height: 100vh;
+        body { background: #f1f5f9 !important; font-family: 'Inter', 'Source Sans Pro', sans-serif; min-height: 100vh; color: #1e293b; }
+        .portal-wrapper { max-width: 1100px; margin: 28px auto; padding: 0 20px; }
+        .school-header { text-align: left; margin-bottom: 24px; padding: 24px 28px; background: #fff; border-radius: 18px; box-shadow: 0 8px 30px rgba(15,23,42,.06); border: 1px solid #e2e8f0; border-top: 4px solid #4f46e5; }
+        .school-brand { display: flex; align-items: center; gap: 18px; }
+        .school-header h2 { font-weight: 800; color: #0f172a; margin: 0 0 6px; letter-spacing: -.02em; }
+        .school-header p { color: #64748b; font-size: 13px; margin: 0; line-height: 1.8; }
+        .school-logo { max-width: 72px; max-height: 72px; object-fit: contain; }
+        .hub-card { width: 100%; min-height: 220px; border: 0; border-radius: 18px; padding: 28px 22px; color: white; cursor: pointer; transition: transform .2s ease, box-shadow .2s ease; text-align: center; box-shadow: 0 10px 25px rgba(15,23,42,.12); }
+        .hub-card:focus-visible { outline: 3px solid #a5b4fc; outline-offset: 3px; }
+        .hub-card { font: inherit; }
+        .hub-title { display: block; font-weight: 800; margin: 0 0 10px; font-size: 24px; }
+        .hub-action { display: block; margin-top: 18px; font-weight: 700; }
+        .hub-card p { font-size: 14px !important; line-height: 1.6; }
+        .hub-card-apply { background: linear-gradient(135deg, #6366f1, #4338ca); }
+        .hub-card-track { background: linear-gradient(135deg, #0f766e, #047857); }
+        .portal-intro { margin: 0 0 22px; color: #475569; font-size: 14px; line-height: 1.7; }
+        .tracking-panel { max-width: 650px; margin: 0 auto; padding: 36px; text-align: center; }
+        .tracking-icon { display: grid; place-items: center; width: 72px; height: 72px; margin: 0 auto 18px; border-radius: 22px; background: #eef2ff; color: #4f46e5; font-size: 28px; }
+        .tracking-hint { margin-top: 12px; color: #64748b; font-size: 12px; line-height: 1.6; }
+        .form-intro { padding: 12px 14px; border-radius: 12px; background: #eef2ff; color: #3730a3; font-size: 12px; line-height: 1.6; margin-bottom: 18px; }
+        .box { border-radius: 18px; border: 1px solid #e2e8f0; border-top: 0; box-shadow: 0 8px 30px rgba(15,23,42,.06); overflow: hidden; }
+        .box-header { border-bottom: 1px solid #e2e8f0; padding: 20px 24px; }
+        .box-title { font-weight: 800 !important; color: #1e293b; }
+        .box-body { padding: 24px !important; }
+        .form-section-title { border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin: 28px 0 18px; color: #4338ca; font-weight: 800; text-transform: uppercase; font-size: 12px; letter-spacing: .08em; }
+        .form-section-title:first-child { margin-top: 4px; }
+        .form-control { min-height: 42px; border-radius: 10px; border: 1px solid #cbd5e1; box-shadow: none; padding: 10px 12px; }
+        .form-control:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.12); }
+        .form-group label { color: #334155; font-size: 12px; font-weight: 700; margin-bottom: 7px; }
+        .input-group-addon { border-radius: 10px 0 0 10px; border-color: #cbd5e1; background: #f8fafc; color: #64748b; }
+        .btn { white-space: normal; }
+        .btn-primary { background-color: #4f46e5; border-color: #4f46e5; }
+        .btn-primary:hover, .btn-primary:focus { background-color: #4338ca; border-color: #4338ca; }
+        .box-footer { padding: 20px 24px !important; background: #f8fafc !important; }
+        #official-letter-content { padding: 48px; }
+        @media (max-width: 767px) {
+            .portal-wrapper { margin: 14px auto; padding: 0 12px; }
+            .school-header { padding: 18px; border-radius: 14px; }
+            .school-brand { align-items: flex-start; gap: 12px; }
+            .school-logo { max-width: 54px; max-height: 54px; }
+            .school-header h2 { font-size: 20px; }
+            .school-header p { font-size: 12px; }
+            .hub-card { min-height: 0; padding: 22px 16px; }
+            .hub-card i { font-size: 34px; margin-bottom: 10px; }
+            .box-body { padding: 18px !important; }
+            .box-header { padding: 18px; }
+            .tracking-panel { padding: 24px 18px; }
+            .form-section-title { margin-top: 20px; }
+            #official-letter-content { padding: 22px !important; }
+            #official-letter-content h2 { font-size: 20px !important; }
+            #official-letter-content > div:first-child { gap: 12px; }
         }
-        .portal-wrapper { max-width: 1050px; margin: 40px auto; padding: 0 20px; }
 
         /* Section Transitions */
         .portal-section { display: none; opacity: 0; transition: opacity 0.4s ease-in-out; }
         .portal-section.active { display: block; opacity: 1; animation: slideUp 0.4s ease forwards; }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-        /* Branding & Header */
-        .school-header { 
-            text-align: center; margin-bottom: 30px; padding: 35px 25px; 
-            background: #fff; border-radius: 12px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05); border-top: 5px solid #3b82f6; 
-        }
-        .school-header h2 { font-weight: 800; color: #1e293b; margin-top: 15px; letter-spacing: 1px; }
-        .school-header p { color: #64748b; font-size: 15px; }
-
-        /* Modern Cards for Hub */
-        .hub-card {
-            border-radius: 12px; padding: 30px 20px; color: white; cursor: pointer;
-            transition: all 0.3s ease; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-        .hub-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.15); }
-        .hub-card-apply { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
-        .hub-card-track { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
-        .hub-card i { font-size: 48px; margin-bottom: 15px; opacity: 0.9; }
-        .hub-card h3 { font-weight: 700; margin: 0 0 10px 0; font-size: 28px; }
-
-        /* Form Styling */
-        .box { border-radius: 12px; border-top: none; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-        .box-header { border-bottom: 1px solid #f1f5f9; padding: 20px; }
-        .box-title { font-weight: 700 !important; color: #334155; }
-        .form-section-title { 
-            border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 25px; 
-            color: #3b82f6; font-weight: 700; text-transform: uppercase; font-size: 14px; margin-top: 30px; letter-spacing: 0.5px;
-        }
-        .form-section-title:first-child { margin-top: 10px; }
-        .required-star { color: #ef4444; }
-        .form-control { border-radius: 6px; border: 1px solid #cbd5e1; box-shadow: none; padding: 10px 15px; height: auto; }
-        .form-control:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
-        .input-group-addon { border-radius: 6px 0 0 6px; border-color: #cbd5e1; background: #f8fafc; color: #64748b; }
 
         /* Result & Letter Styling */
         .status-badge { font-size: 14px; padding: 8px 20px; border-radius: 30px; font-weight: 700; letter-spacing: 1px; }
@@ -79,16 +92,20 @@
 <body>
 
 <div class="portal-wrapper">
+    @php($schoolAcronym = strtoupper(preg_replace('/[^A-Za-z0-9]+/', '', env('SCHOOL_ACRONYM', 'SMS')) ?: 'SMS'))
 
     {{-- 1. BRANDING HEADER --}}
     <div class="school-header no-print">
-        <img src="{{ asset('images/school_logo.png') }}" style="max-height: 85px;" onerror="this.src='https://via.placeholder.com/90?text={{ env('SCHOOL_ACRONYM', 'LOGO') }}'">
-        <h2>{{ env('SCHOOL_NAME', 'MUKAHLERA ACADEMY') }}</h2>
-        <p>
-            <i class="fa fa-map-marker text-blue"></i> {{ env('SCHOOL_ADDRESS', '123 Education Lane') }} &nbsp;|&nbsp;
-            <i class="fa fa-envelope text-blue"></i> {{ env('SCHOOL_EMAIL', 'admissions@school.com') }} &nbsp;|&nbsp;
-            <i class="fa fa-phone text-blue"></i> {{ env('SCHOOL_PHONE', '+263 78 724 7792') }}
-        </p>
+        <div class="school-brand">
+            <img src="{{ asset('images/school_logo.png') }}" class="school-logo" alt="{{ env('SCHOOL_NAME', 'School') }} logo" onerror="this.hidden=true">
+            <div>
+                <h2>{{ env('SCHOOL_NAME', 'MUKAHLERA ACADEMY') }}</h2>
+                <p><i class="fa fa-map-marker text-indigo"></i> {{ env('SCHOOL_ADDRESS', 'School address') }}<br class="visible-xs">
+                    <span class="hidden-xs">&nbsp; · &nbsp;</span><i class="fa fa-envelope text-indigo"></i> {{ env('SCHOOL_EMAIL', 'admissions@school.com') }}
+                    <span class="hidden-xs">&nbsp; · &nbsp;</span><br class="visible-xs"><i class="fa fa-phone text-indigo"></i> {{ env('SCHOOL_PHONE', 'Contact the school') }}
+                </p>
+            </div>
+        </div>
     </div>
 
     {{-- ALERTS --}}
@@ -96,7 +113,14 @@
         <div class="alert alert-success alert-dismissible no-print" style="border-radius: 8px; box-shadow: 0 4px 10px rgba(16,185,129,0.2);">
             <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
             <h4 style="font-weight: 700;"><i class="icon fa fa-check-circle"></i> Application Submitted!</h4>
-            {!! session('success') !!}
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger no-print" role="alert" style="border-radius: 10px; box-shadow: 0 4px 10px rgba(239,68,68,0.12);">
+            <strong><i class="fa fa-exclamation-circle"></i> We could not complete that request.</strong>
+            <div>{{ session('error') }}</div>
         </div>
     @endif
 
@@ -113,23 +137,24 @@
     @endif
 
     {{-- 2. HUB NAVIGATION --}}
-    <div id="hub-section" class="portal-section {{ (!isset($application) && !$errors->any()) ? 'active' : '' }} no-print">
+    <div id="hub-section" class="portal-section {{ (!isset($application) && (!$errors->any() || (old('identity_number') && !old('name')))) ? 'active' : '' }} no-print">
+        <p class="portal-intro">Welcome to the online admissions portal. Start a new application or check the progress of an application already submitted.</p>
         <div class="row">
             <div class="col-md-6 mb-3">
-                <div class="hub-card hub-card-apply" onclick="showSection('new-app')">
+                <button type="button" class="hub-card hub-card-apply" onclick="showSection('new-app')" aria-label="Start a new application">
                     <i class="fa fa-graduation-cap"></i>
-                    <h3>Apply Now</h3>
+                    <span class="hub-title">Apply Now</span>
                     <p style="font-size: 16px; opacity: 0.9;">Start a new student enrollment application</p>
-                    <div style="margin-top: 20px; font-weight: 600;">OPEN FORM <i class="fa fa-arrow-right"></i></div>
-                </div>
+                    <span class="hub-action">Start application <i class="fa fa-arrow-right"></i></span>
+                </button>
             </div>
             <div class="col-md-6 mb-3">
-                <div class="hub-card hub-card-track" onclick="showSection('track-app')">
+                <button type="button" class="hub-card hub-card-track" onclick="showSection('track-app')" aria-label="Track an existing application">
                     <i class="fa fa-search"></i>
-                    <h3>Track Status</h3>
+                    <span class="hub-title">Track Status</span>
                     <p style="font-size: 16px; opacity: 0.9;">Check progress or print admission letters</p>
-                    <div style="margin-top: 20px; font-weight: 600;">CHECK PROGRESS <i class="fa fa-arrow-right"></i></div>
-                </div>
+                    <span class="hub-action">Check progress <i class="fa fa-arrow-right"></i></span>
+                </button>
             </div>
         </div>
     </div>
@@ -137,7 +162,7 @@
     {{-- 3. TRACKING RESULT --}}
     @if(isset($application))
     <div id="section-result" class="portal-section active">
-        <a href="{{ route('students.apply') }}" class="btn btn-default no-print" style="margin-bottom: 20px; border-radius: 6px; font-weight: 600;">
+        <a href="{{ route('students.apply.index') }}" class="btn btn-default no-print" style="margin-bottom: 20px; border-radius: 6px; font-weight: 600;">
             <i class="fa fa-arrow-left"></i> Back to Hub
         </a>
 
@@ -291,7 +316,7 @@
     @endif
 
     {{-- 4. APPLICATION FORM --}}
-    <div id="section-new-app" class="portal-section {{ ($errors->any() && !isset($application)) ? 'active' : '' }} no-print">
+    <div id="section-new-app" class="portal-section {{ ($errors->any() && !isset($application) && old('name')) ? 'active' : '' }} no-print">
         <a href="javascript:void(0)" onclick="showSection('hub-section'); document.getElementById('hub-section').classList.add('active');" class="btn btn-default" style="margin-bottom: 20px; border-radius: 6px; font-weight: 600;"><i class="fa fa-arrow-left"></i> Back to Hub</a>
         
         <div class="box box-solid">
@@ -302,6 +327,8 @@
             <form action="{{ route('students.apply.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="box-body" style="padding: 30px;">
+
+                    <div class="form-intro"><i class="fa fa-info-circle"></i> Complete the student and guardian details, then attach the latest results. Fields marked <strong>*</strong> are required. Your information is used to assess this application.</div>
 
                     <div class="form-section-title"><i class="fa fa-user"></i> 1. Student Personal Information</div>
                     <div class="row">
@@ -328,9 +355,13 @@
                                 <span class="input-group-addon"><i class="fa fa-level-up"></i></span>
                                 <select name="grade" class="form-control" required>
                                     <option value="">-- Select Grade --</option>
-                                    @foreach(['Form 1', 'Form 2', 'Form 3', 'Form 4', 'Lower 6', 'Upper 6'] as $g)
-                                        <option value="{{ $g }}" {{ old('grade') == $g ? 'selected' : '' }}>{{ $g }}</option>
-                                    @endforeach
+                                    @forelse($gradeLevels as $gradeLevel)
+                                        <option value="{{ $gradeLevel->name }}" {{ old('grade') == $gradeLevel->name ? 'selected' : '' }}>{{ $gradeLevel->name }}</option>
+                                    @empty
+                                        @foreach(['Form 1', 'Form 2', 'Form 3', 'Form 4', 'Lower 6', 'Upper 6'] as $g)
+                                            <option value="{{ $g }}" {{ old('grade') == $g ? 'selected' : '' }}>{{ $g }}</option>
+                                        @endforeach
+                                    @endforelse
                                 </select>
                             </div>
                         </div>
@@ -342,10 +373,21 @@
                             </div>
                         </div>
                         <div class="col-md-4 form-group">
-                            <label>Residential Address <span class="required-star">*</span></label>
+                            <label>Gender <span class="required-star">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-addon"><i class="fa fa-venus-mars"></i></span>
+                                <select class="form-control" name="gender" required>
+                                    <option value="">-- Select Gender --</option>
+                                    <option value="Female" {{ old('gender') === 'Female' ? 'selected' : '' }}>Female</option>
+                                    <option value="Male" {{ old('gender') === 'Male' ? 'selected' : '' }}>Male</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>Residential Address <span class="text-muted">(Optional)</span></label>
                             <div class="input-group">
                                 <span class="input-group-addon"><i class="fa fa-map-marker"></i></span>
-                                <input type="text" class="form-control" name="address" value="{{ old('address') }}" placeholder="Physical Home Address" required>
+                                <input type="text" class="form-control" name="address" value="{{ old('address') }}" placeholder="Physical home address">
                             </div>
                         </div>
                     </div>
@@ -367,10 +409,10 @@
                             </div>
                         </div>
                         <div class="col-md-4 form-group">
-                            <label>Email Address <span class="required-star">*</span></label>
+                            <label>Email Address <span class="text-muted">(Optional)</span></label>
                             <div class="input-group">
                                 <span class="input-group-addon"><i class="fa fa-envelope"></i></span>
-                                <input type="email" class="form-control" name="email" value="{{ old('email') }}" placeholder="For status notifications" required>
+                                <input type="email" class="form-control" name="email" value="{{ old('email') }}" placeholder="For status notifications">
                             </div>
                         </div>
                     </div>
@@ -378,10 +420,10 @@
                     <div class="form-section-title"><i class="fa fa-book"></i> 3. Academic History & Attachments</div>
                     <div class="row">
                         <div class="col-md-6 form-group">
-                            <label>Previous School Attended <span class="required-star">*</span></label>
+                            <label>Previous School Attended <span class="text-muted">(Optional)</span></label>
                             <div class="input-group">
                                 <span class="input-group-addon"><i class="fa fa-institution"></i></span>
-                                <input type="text" class="form-control" name="previous_school" value="{{ old('previous_school') }}" placeholder="Name of last school" required>
+                                <input type="text" class="form-control" name="previous_school" value="{{ old('previous_school') }}" placeholder="Name of last school">
                             </div>
                         </div>
                         <div class="col-md-6 form-group">
@@ -403,14 +445,14 @@
                             <label>Attach Results / Report Book <span class="required-star">*</span></label>
                             <div style="border: 2px dashed #cbd5e1; padding: 15px; border-radius: 6px; background: #f8fafc;">
                                 <input type="file" name="results_file" style="width: 100%;" accept=".pdf,.jpg,.jpeg,.png" required>
-                                <p class="help-block" style="margin-bottom: 0; margin-top: 10px; font-size: 12px;"><i class="fa fa-info-circle"></i> Max size 4MB. PDF, JPG, or PNG.</p>
+                                <p class="help-block" style="margin-bottom: 0; margin-top: 10px; font-size: 12px;"><i class="fa fa-info-circle"></i> Maximum 4 MB. PDF, JPG, or PNG.</p>
                             </div>
                         </div>
                         <div class="col-md-6 form-group">
                             <label>Recommendation / Transfer Letter (Optional)</label>
                             <div style="border: 2px dashed #cbd5e1; padding: 15px; border-radius: 6px; background: #f8fafc;">
                                 <input type="file" name="recommendation_letter" style="width: 100%;" accept=".pdf,.jpg,.jpeg,.png">
-                                <p class="help-block" style="margin-bottom: 0; margin-top: 10px; font-size: 12px;"><i class="fa fa-info-circle"></i> Max size 4MB. PDF, JPG, or PNG.</p>
+                                <p class="help-block" style="margin-bottom: 0; margin-top: 10px; font-size: 12px;"><i class="fa fa-info-circle"></i> File must be less than 5 MB. PDF, JPG, or PNG.</p>
                             </div>
                         </div>
                     </div>
@@ -426,27 +468,26 @@
     </div>
 
     {{-- 5. TRACKING FORM --}}
-    <div id="section-track-app" class="portal-section no-print">
+    <div id="section-track-app" class="portal-section {{ (old('identity_number') && !old('name')) ? 'active' : '' }} no-print">
         <a href="javascript:void(0)" onclick="showSection('hub-section'); document.getElementById('hub-section').classList.add('active');" class="btn btn-default" style="margin-bottom: 20px; border-radius: 6px; font-weight: 600;"><i class="fa fa-arrow-left"></i> Back to Hub</a>
         
-        <div class="box box-solid" style="background: #fff; text-align: center; border-radius: 12px;">
-            <div class="box-body" style="padding: 60px 30px;">
-                <div style="width: 100px; height: 100px; background: #ecfdf5; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 25px;">
-                    <i class="fa fa-search" style="font-size: 40px; color: #10b981;"></i>
-                </div>
-                <h2 style="font-weight: 800; color: #1e293b; margin-bottom: 10px;">Track Application</h2>
-                <p class="text-muted" style="font-size: 16px; margin-bottom: 35px;">Enter the student's <b>National ID</b> or the <b>Tracking ID</b> received after submission.</p>
+        <div class="box box-solid" style="background: #fff;">
+            <div class="tracking-panel">
+                <div class="tracking-icon"><i class="fa fa-search"></i></div>
+                <h2 style="font-weight: 800; color: #0f172a; margin: 0 0 10px;">Track your application</h2>
+                <p class="text-muted" style="font-size: 14px; line-height: 1.7; margin-bottom: 24px;">Enter the student's National ID or the tracking reference sent after submission.</p>
 
                 <form action="{{ route('students.apply.track') }}" method="POST">
                     @csrf
                     <div style="max-width: 500px; margin: 0 auto;">
-                        <div class="input-group input-group-lg" style="box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-radius: 8px;">
-                            <span class="input-group-addon" style="background: #fff; border-right: none; border-radius: 8px 0 0 8px;"><i class="fa fa-id-badge text-green"></i></span>
-                            <input type="text" name="identity_number" class="form-control" style="border-left: none; text-align: center; font-weight: bold; letter-spacing: 1px; border-radius: 0 8px 8px 0;" placeholder="ID Number or KPC-XXXX-XXXXX" required>
+                        <label for="tracking-identity" class="sr-only">National ID or tracking reference</label>
+                        <div class="input-group input-group-lg" style="border-radius: 10px;">
+                            <span class="input-group-addon" style="background: #f8fafc;"><i class="fa fa-id-badge"></i></span>
+                            <input id="tracking-identity" type="text" name="identity_number" value="{{ old('identity_number') }}" class="form-control" style="font-weight: 600;" placeholder="National ID or {{ $schoolAcronym }}-YYYY-XXXXXX" autocomplete="off" required>
                         </div>
-                        <br><br>
-                        <button type="submit" class="btn btn-success btn-lg btn-block" style="border-radius: 8px; font-weight: 700; padding: 12px; box-shadow: 0 4px 15px rgba(16,185,129,0.3);">
-                            <i class="fa fa-chevron-circle-right"></i> CHECK STATUS NOW
+                        <p class="tracking-hint">Your tracking reference starts with {{ $schoolAcronym }} and includes the year and a short code.</p>
+                        <button type="submit" class="btn btn-primary btn-lg btn-block" style="border-radius: 10px; font-weight: 700; padding: 12px; margin-top: 16px;">
+                            <i class="fa fa-search"></i> Check application status
                         </button>
                     </div>
                 </form>

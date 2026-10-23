@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class StudentController extends Controller
 {
@@ -29,7 +30,7 @@ class StudentController extends Controller
      */
     public function index()
     {
-        $students = Student::with(['term', 'schoolClass', 'schoolClass.gradeLevel'])
+        $students = Student::inRegister()->with(['term', 'schoolClass', 'schoolClass.gradeLevel'])
             ->orderBy('surname', 'asc')
             ->get();
 
@@ -161,18 +162,18 @@ class StudentController extends Controller
     public function enrollmentStats()
     {
         // 1. Grade Stream / Level Statistics
-        $classStats = Student::select('grade', DB::raw('count(*) as total'))
+        $classStats = Student::inRegister()->select('grade', DB::raw('count(*) as total'))
             ->groupBy('grade')
             ->orderBy('grade', 'asc')
             ->get();
 
         // 2. Gender Statistics
-        $genderStats = Student::select('gender', DB::raw('count(*) as total'))
+        $genderStats = Student::inRegister()->select('gender', DB::raw('count(*) as total'))
             ->groupBy('gender')
             ->get();
 
         // 3. Term Growth (Top 5 most recent terms with student counts)
-        $termStats = DB::table('students')
+        $termStats = Student::inRegister()
             ->join('terms', 'students.term_id', '=', 'terms.id')
             ->select('terms.term_name', 'terms.academic_year', DB::raw('count(students.id) as total'))
             ->groupBy('terms.id', 'terms.term_name', 'terms.academic_year')
@@ -193,8 +194,8 @@ class StudentController extends Controller
         $gradeLevels = class_exists(GradeLevel::class) 
             ? GradeLevel::with('schoolClasses.students')->orderBy('level_order', 'asc')->get() 
             : collect();
-        $currentTerm = Term::where('is_current', true)->first() ?? Term::latest()->first();
-        $terms = Term::orderBy('id', 'desc')->get();
+        $terms = Term::enrollable()->orderBy('start_date')->get();
+        $currentTerm = $terms->firstWhere('is_current', true) ?? $terms->first();
 
         return view('students.create', compact('classes', 'gradeLevels', 'currentTerm', 'terms'));
     }
@@ -216,12 +217,12 @@ class StudentController extends Controller
             'phone'             => 'required|string',
             'emergency_contact' => 'nullable|string',
             'address'           => 'nullable|string',
-            'term_id'           => 'nullable|exists:terms,id',
+            'term_id'           => ['required', Rule::in(Term::enrollable()->pluck('id')->all())],
         ]);
 
         try {
             return DB::transaction(function () use ($validatedData) {
-                $currentTerm = Term::where('is_current', true)->firstOrFail();
+                $admissionTerm = Term::enrollable()->findOrFail($validatedData['term_id']);
                 // Resolve Class & Grade Assignment
                 $schoolClass = null;
                 if (!empty($validatedData['class_id'])) {
@@ -239,32 +240,34 @@ class StudentController extends Controller
                 $generatedEmail = strtolower(substr($validatedData['name'], 0, 1) . $validatedData['surname']) . $studentCount . '@student.local';
 
                 $studentData = $validatedData;
-                $studentData['term_id'] = $currentTerm->id;
+                $studentData['term_id'] = $admissionTerm->id;
                 $studentData['class_id'] = $schoolClass ? $schoolClass->id : null;
                 $studentData['grade'] = $schoolClass ? $schoolClass->class_name : ($validatedData['grade'] ?? 'Unassigned');
                 $studentData['status'] = 'active';
-                $studentData['enrollment_date'] = now();
+                $studentData['enrollment_date'] = $admissionTerm->start_date->isFuture()
+                    ? $admissionTerm->start_date
+                    : today();
                 $studentData['parent_contact'] = $validatedData['emergency_contact'] ?? $validatedData['phone'];
-                $studentData['age'] = Carbon::parse($validatedData['date_of_birth'])->age;
                 
                 // Assign generated credentials
                 $studentData['student_number'] = $studentNumber;
                 $studentData['email'] = $generatedEmail;
 
                 $student = Student::create($studentData);
+                $student->forceFill(['password' => null])->save();
 
                 User::create([
                     'name'        => $validatedData['name'] . ' ' . $validatedData['surname'],
                     'email'       => $generatedEmail,
                     'national_id' => $validatedData['national_id'],
                     'ec_number'   => $validatedData['national_id'],
-                    'password'    => Hash::make(strtolower($validatedData['surname']) . '123'),
+                    'password'    => Hash::make(Str::random(48)),
                     'role'        => 'student',
                     'base_salary' => 0,
                 ]);
 
                 return redirect()->route('students.index')
-                    ->with('success', "Registration successful: {$student->name} {$student->surname} (ID: {$studentNumber})");
+                    ->with('success', "Registration successful: {$student->name} {$student->surname} (ID: {$studentNumber}). The student must activate their portal account from the student login page.");
             });
         } catch (Exception $e) {
             return back()->withInput()->with('error', 'Error creating student: ' . $e->getMessage());
@@ -326,7 +329,6 @@ class StudentController extends Controller
                 $updateData['grade']    = $schoolClass ? $schoolClass->class_name : ($validatedData['grade'] ?? $student->grade);
 
                 $updateData['parent_contact'] = $validatedData['emergency_contact'] ?? $validatedData['phone'];
-                $updateData['age'] = Carbon::parse($validatedData['date_of_birth'])->age;
 
                 $student->update($updateData);
 
@@ -610,14 +612,10 @@ class StudentController extends Controller
             return back()->with('error', 'Student record not found.');
         }
 
-        $allTerms = Term::orderBy('id', 'desc')->get();
-        $requestedTermId = $request->get('term_id');
-
-        if ($requestedTermId) {
-            $displayTerm = Term::find($requestedTermId);
-        } else {
-            $displayTerm = Term::where('is_current', true)->first() ?? $allTerms->first();
-        }
+        $allTerms = app(StudentFinanceService::class)->availableTerms($student);
+        $requestedTermId = $request->integer('term_id');
+        $displayTerm = $requestedTermId ? $allTerms->firstWhere('id', $requestedTermId) : null;
+        $displayTerm = $displayTerm ?? $allTerms->firstWhere('is_current', true) ?? $allTerms->first();
 
         if (!$displayTerm) {
             return back()->with('error', 'No academic terms found.');

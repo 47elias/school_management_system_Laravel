@@ -14,7 +14,7 @@ class ForgotPasswordController extends Controller
      */
     public function showVerifyForm()
     {
-        return view('verify');
+        return view('auth.verify');
     }
 
     /**

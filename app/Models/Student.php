@@ -42,6 +42,9 @@ class Student extends Authenticatable implements AuditableContract
         'enrollment_status',
         'class_id',
         'face_descriptor',
+        'activation_payment_proof',
+        'activation_payment_status',
+        'activation_payment_remarks',
     ];
 
     /**
@@ -226,6 +229,15 @@ class Student extends Authenticatable implements AuditableContract
 
     public function username() { return 'student_number'; }
 
+    /** Exclude legacy portal activations until their payment proof is approved. */
+    public function scopeInRegister($query)
+    {
+        return $query->where(function ($records) {
+            $records->whereNull('activation_payment_status')
+                ->orWhere('activation_payment_status', 'approved');
+        });
+    }
+
     /* =========================================================================
         BOOT LOGIC
        ========================================================================= */
@@ -250,7 +262,7 @@ class Student extends Authenticatable implements AuditableContract
             $student->email = strtolower($regNumber) . "@" . $schoolDomain;
 
             // 3. Set Default Metadata
-            $student->enrollment_date = now();
+            $student->enrollment_date ??= now();
             $student->status = 'active';
 
             // 4. Default Password (surname123)

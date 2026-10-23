@@ -12,6 +12,7 @@ use App\Models\FeeStructure;
 use App\Models\ActivityMark;
 use App\Models\ClassActivity;
 use App\Services\StudentFinanceService;
+use App\Services\StudentResultAccessService;
 
 class PortalController extends Controller
 {
@@ -44,11 +45,14 @@ class PortalController extends Controller
             ? min(100, max(0, (($totalPaid + max(0, -$carriedForward)) / $paymentBase) * 100))
             : 0;
 
-        // Academic Quick Stats for current term
-        $recentResults = Mark::where('student_id', $student->id)
-            ->whereHas('exam', function($q) use ($currentTerm) {
-                $q->where('term_id', $currentTerm->id);
-            })->with('exam.subject')->get();
+        // Do not expose even dashboard averages before term results are released
+        // and the student's fee account is clear or exempted.
+        $resultAccess = app(StudentResultAccessService::class);
+        $recentResults = $resultAccess->canView($student, $currentTerm)
+            ? Mark::where('student_id', $student->id)
+                ->whereHas('exam', fn ($q) => $q->where('term_id', $currentTerm->id)->where('status', 'published'))
+                ->with('exam.subject')->get()
+            : collect();
 
         // Use the new aggregator so the dashboard average matches the results page average
         $aggregatedResults = $this->aggregateMarksBySubject($recentResults);
@@ -143,28 +147,49 @@ class PortalController extends Controller
     {
         $student = Auth::guard('student')->user();
         $finance = app(StudentFinanceService::class);
+        $resultAccess = app(StudentResultAccessService::class);
         $allTerms = $finance->availableTerms($student);
         $enrollmentDate = $finance->enrollmentDate($student)->toDateString();
 
         // 1. Identify which term to display
         $selectedTermId = $request->get('term_id');
-        if ($selectedTermId) {
-            $activeTerm = $allTerms->firstWhere('id', (int) $selectedTermId);
-        } else {
-            $activeTerm = $allTerms->firstWhere('is_current', true) ?? $allTerms->first();
-        }
+        $activeTerm = $selectedTermId
+            ? $allTerms->firstWhere('id', (int) $selectedTermId)
+            : null;
+        $activeTerm = $activeTerm
+            ?? $allTerms->firstWhere('is_current', true)
+            ?? $allTerms->first();
 
         if (!$activeTerm) {
             return view('student.results', [
                 'student' => $student, 'current_results' => collect(), 'history' => collect(),
                 'average' => 0, 'activeTerm' => null, 'allTerms' => $allTerms,
+                'resultsAvailable' => false, 'accessMessage' => null,
+            ]);
+        }
+
+        $resultsAvailable = $resultAccess->canView($student, $activeTerm);
+        $feeBalance = $resultAccess->feeBalance($student, $activeTerm);
+        $hasFeeExemption = $resultAccess->hasActiveFeeExemption($student, $activeTerm);
+        $accessMessage = null;
+        if (!$resultAccess->isPublished($activeTerm)) {
+            $accessMessage = 'Results for this term have not been published by the school yet.';
+        } elseif ($feeBalance > 0.004 && !$hasFeeExemption) {
+            $accessMessage = 'Results are being held because your school fee account has an outstanding balance of $' . number_format($feeBalance, 2) . '. Please contact the school office if you believe this is incorrect.';
+        }
+
+        if (!$resultsAvailable) {
+            return view('student.results', [
+                'student' => $student, 'current_results' => collect(), 'history' => collect(),
+                'average' => 0, 'activeTerm' => $activeTerm, 'allTerms' => $allTerms,
+                'resultsAvailable' => false, 'accessMessage' => $accessMessage,
             ]);
         }
 
         // 2. Fetch raw marks for the current active/selected term
         $raw_current_results = Mark::where('student_id', $student->id)
             ->whereHas('exam', function($query) use ($activeTerm) {
-                $query->where('term_id', $activeTerm->id);
+                $query->where('term_id', $activeTerm->id)->where('status', 'published');
             })
             ->whereHas('exam', fn ($query) => $query->whereDate('exam_date', '>=', $enrollmentDate))
             ->with(['exam.subject', 'exam.term'])
@@ -177,12 +202,17 @@ class PortalController extends Controller
         $average = $current_results->count() > 0 ? (float) $current_results->avg('average_score') : 0;
 
         // 5. Historical Data: Grouped results for all other terms
+        $visibleHistoryTermIds = $allTerms
+            ->filter(fn ($term) => $resultAccess->canView($student, $term))
+            ->pluck('id');
         $history = Mark::where('student_id', $student->id)
             ->whereHas('exam', function($query) use ($activeTerm, $enrollmentDate, $allTerms) {
                 $query->whereIn('term_id', $allTerms->pluck('id'))
                     ->where('term_id', '!=', $activeTerm->id)
+                    ->where('status', 'published')
                     ->whereDate('exam_date', '>=', $enrollmentDate);
             })
+            ->whereHas('exam', fn ($query) => $query->whereIn('term_id', $visibleHistoryTermIds))
             ->with(['exam.term', 'exam.subject'])
             ->get()
             ->groupBy(fn($item) => $item->exam->term
@@ -194,7 +224,7 @@ class PortalController extends Controller
 
         // Pass exact variable names the Blade view expects
         return view('student.results', compact(
-            'student', 'current_results', 'history', 'average', 'activeTerm', 'allTerms'
+            'student', 'current_results', 'history', 'average', 'activeTerm', 'allTerms', 'resultsAvailable', 'accessMessage'
         ));
     }
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SchoolClass;
 use App\Models\SubjectAssignment;
 use App\Models\Timetable;
+use App\Models\TimetableSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -13,42 +14,109 @@ class TimetableController extends Controller
 {
     public function index()
     {
-        $timetables = Timetable::with(['schoolClass', 'subject', 'teacher'])->get();
-        return view('timetable.index', compact('timetables'));
+        $timetables = Timetable::with(['schoolClass', 'subject', 'teacher'])
+            ->orderByRaw("FIELD(day, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday')")
+            ->orderBy('start_time')
+            ->get();
+        $classes = SchoolClass::where('status', 'active')->orderBy('class_name')->get();
+        $settings = TimetableSetting::query()->find(1)?->settings ?? [
+            'periods_per_day' => 7,
+            'day_start' => '08:00',
+            'period_duration' => 50,
+            'period_gap' => 5,
+            'events' => [
+                ['label' => 'Assembly', 'after_period' => 0, 'duration' => 20],
+                ['label' => 'Tea Break', 'after_period' => 2, 'duration' => 20],
+                ['label' => 'Lunch', 'after_period' => 4, 'duration' => 45],
+            ],
+        ];
+        return view('timetable.index', compact('timetables', 'classes', 'settings'));
     }
 
     public function generate(Request $request)
     {
+        $data = $request->validate([
+            'periods_per_day' => ['required', 'integer', 'min:1', 'max:12'],
+            'day_start' => ['required', 'date_format:H:i'],
+            'period_duration' => ['required', 'integer', 'min:20', 'max:180'],
+            'period_gap' => ['required', 'integer', 'min:0', 'max:60'],
+            'events' => ['nullable', 'array', 'max:8'],
+            'events.*.label' => ['required', 'string', 'max:40'],
+            'events.*.after_period' => ['required', 'integer', 'min:0'],
+            'events.*.duration' => ['required', 'integer', 'min:5', 'max:180'],
+        ]);
+        foreach ($data['events'] ?? [] as $event) {
+            if ($event['after_period'] > $data['periods_per_day']) {
+                return back()->withInput()->withErrors(['events' => 'Each break or activity must be placed after a period that exists.']);
+            }
+        }
+
         DB::beginTransaction();
         try {
-            // 1. Clear existing timetable slots
-            Timetable::truncate();
+            // Keep this inside the transaction; TRUNCATE implicitly commits on MySQL.
+            Timetable::query()->delete();
 
             $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
             
-            // Strictly structured periods avoiding Break (10:00 - 10:30) and Lunch (13:00 - 14:00)
-            $periods = [
-                ['start' => '08:00:00', 'end' => '09:00:00'],
-                ['start' => '09:00:00', 'end' => '10:00:00'],
-                // 10:00 - 10:30 Morning Break (Skipped)
-                ['start' => '10:30:00', 'end' => '11:30:00'],
-                ['start' => '11:30:00', 'end' => '12:30:00'],
-                ['start' => '12:30:00', 'end' => '13:00:00'],
-                // 13:00 - 14:00 Lunch Break (Skipped)
-                ['start' => '14:00:00', 'end' => '15:00:00'],
-                ['start' => '15:00:00', 'end' => '16:00:00'],
-            ];
+            $periodCount = (int) $data['periods_per_day'];
+            $periodMinutes = (int) $data['period_duration'];
+            $gapMinutes = (int) $data['period_gap'];
+            $eventsAfter = collect($data['events'] ?? [])->groupBy(fn ($event) => (int) $event['after_period']);
+            $clockMinutes = ((int) substr($data['day_start'], 0, 2) * 60) + (int) substr($data['day_start'], 3, 2);
+            $dailySlots = [];
+            foreach ($eventsAfter->get(0, collect()) as $event) {
+                $start = $clockMinutes;
+                $clockMinutes += (int) $event['duration'];
+                $dailySlots[] = [
+                    'kind' => 'EVENT', 'label' => trim($event['label']),
+                    'start' => sprintf('%02d:%02d:00', intdiv($start, 60), $start % 60),
+                    'end' => sprintf('%02d:%02d:00', intdiv($clockMinutes, 60), $clockMinutes % 60),
+                ];
+            }
+            for ($periodNumber = 1; $periodNumber <= $periodCount; $periodNumber++) {
+                $start = $clockMinutes;
+                $clockMinutes += $periodMinutes;
+                $dailySlots[] = [
+                    'kind' => 'SUBJECT', 'period' => $periodNumber,
+                    'start' => sprintf('%02d:%02d:00', intdiv($start, 60), $start % 60),
+                    'end' => sprintf('%02d:%02d:00', intdiv($clockMinutes, 60), $clockMinutes % 60),
+                ];
+                foreach ($eventsAfter->get($periodNumber, collect()) as $event) {
+                    $start = $clockMinutes;
+                    $clockMinutes += (int) $event['duration'];
+                    $dailySlots[] = [
+                        'kind' => 'EVENT', 'label' => trim($event['label']),
+                        'start' => sprintf('%02d:%02d:00', intdiv($start, 60), $start % 60),
+                        'end' => sprintf('%02d:%02d:00', intdiv($clockMinutes, 60), $clockMinutes % 60),
+                    ];
+                }
+                if ($periodNumber < $periodCount) {
+                    $clockMinutes += $gapMinutes;
+                }
+            }
+            if ($clockMinutes > (24 * 60)) {
+                DB::rollBack();
+                return back()->withInput()->withErrors(['day_start' => 'The configured periods and activities extend beyond midnight.']);
+            }
 
-            $classes = SchoolClass::where('status', 'active')->get();
+            $classes = SchoolClass::with('gradeLevel')->where('status', 'active')->orderBy('class_name')->get();
 
             if ($classes->isEmpty()) {
                 throw new \Exception('No active school classes found to generate a timetable for.');
             }
 
-            // Prepare tracking arrays for intelligent distribution & shuffling per class
+            // Resolve both stream-specific and grade-wide allocations for each stream.
             $classAssignments = [];
             foreach ($classes as $schoolClass) {
-                $assignments = SubjectAssignment::where('class_id', $schoolClass->id)->get();
+                $assignmentsQuery = SubjectAssignment::where('class_id', $schoolClass->id);
+                if ($schoolClass->gradeLevel?->name) {
+                    $assignmentsQuery->orWhere(function ($query) use ($schoolClass) {
+                        $query->whereNull('class_id')->where('grade', $schoolClass->gradeLevel->name);
+                    });
+                }
+                $assignments = $assignmentsQuery->get()
+                    ->unique(fn ($assignment) => $assignment->subject_id . ':' . $assignment->teacher_id)
+                    ->values();
                 if ($assignments->isNotEmpty()) {
                     // Shuffle daily pool per class so layout starts fresh and mixed up
                     $classAssignments[$schoolClass->id] = [
@@ -58,11 +126,24 @@ class TimetableController extends Controller
                 }
             }
 
-            // Intelligent Matrix Generation: Iterate Day -> Period -> Class
-            // This ensures every class gets an equal opportunity at each time slot without dropping slots.
+            $scheduled = 0;
+            // Schedule each active stream in every period, avoiding teacher, room,
+            // and stream overlaps even if period definitions are later changed.
             foreach ($days as $day) {
-                foreach ($periods as $period) {
+                foreach ($dailySlots as $period) {
                     foreach ($classes as $schoolClass) {
+                        if ($period['kind'] === 'EVENT') {
+                            Timetable::create([
+                                'class_id' => $schoolClass->id,
+                                'day' => $day,
+                                'start_time' => $period['start'],
+                                'end_time' => $period['end'],
+                                'type' => 'SPECIAL',
+                                'special_type' => $period['label'],
+                                'room_number' => $schoolClass->room_number,
+                            ]);
+                            continue;
+                        }
                         if (!isset($classAssignments[$schoolClass->id])) {
                             continue; // Skip classes with zero subject assignments
                         }
@@ -82,13 +163,17 @@ class TimetableController extends Controller
                             $classAssignments[$schoolClass->id]['index']++;
                             $attempts++;
 
-                            // STRICT CLASH CHECK: Is this teacher teaching ANY other class at this exact day & time?
-                            $teacherBusy = Timetable::where('teacher_id', $candidate->teacher_id)
-                                ->where('day', $day)
-                                ->where('start_time', $period['start'])
-                                ->exists();
+                            $overlap = function ($query) use ($day, $period) {
+                                $query->where('day', $day)
+                                    ->where('start_time', '<', $period['end'])
+                                    ->where('end_time', '>', $period['start']);
+                            };
+                            $teacherBusy = $candidate->teacher_id && Timetable::where('teacher_id', $candidate->teacher_id)
+                                ->where($overlap)->exists();
+                            $roomBusy = $schoolClass->room_number && Timetable::where('room_number', $schoolClass->room_number)
+                                ->where($overlap)->exists();
 
-                            if (!$teacherBusy) {
+                            if (!$teacherBusy && !$roomBusy) {
                                 // Teacher is free! Book this slot safely.
                                 Timetable::create([
                                     'class_id'    => $schoolClass->id,
@@ -98,20 +183,29 @@ class TimetableController extends Controller
                                     'start_time'  => $period['start'],
                                     'end_time'    => $period['end'],
                                     'type'        => 'SUBJECT',
-                                    'room_number' => $schoolClass->room_number ?? 'Main Hall',
+                                    'room_number' => $schoolClass->room_number,
                                 ]);
                                 $assigned = true;
+                                $scheduled++;
                             }
                         }
 
-                        // If all teacher options for this class in this period are clashed, 
-                        // we assign a placeholder or leave it unassigned gracefully rather than breaking.
                     }
                 }
             }
 
+            $unfilled = ($classes->count() * count($days) * $periodCount) - $scheduled;
+            $savedSettings = TimetableSetting::query()->firstOrNew(['id' => 1]);
+            $savedSettings->settings = [
+                'periods_per_day' => $periodCount,
+                'day_start' => $data['day_start'],
+                'period_duration' => $periodMinutes,
+                'period_gap' => $gapMinutes,
+                'events' => array_values($data['events'] ?? []),
+            ];
+            $savedSettings->save();
             DB::commit();
-            return redirect()->route('timetable.index')->with('success', 'Intelligent timetable generated successfully! Zero teacher clashes and all class slots filled.');
+            return redirect()->route('timetable.index')->with('success', "Timetable generated for {$classes->count()} active streams: {$scheduled} periods scheduled, {$unfilled} left open because no clash-free allocation was available.");
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Timetable generation failed: ' . $e->getMessage());

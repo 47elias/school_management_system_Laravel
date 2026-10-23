@@ -15,6 +15,8 @@ class Timetable extends Model implements AuditableContract
         'class_id',
         'subject_id',
         'teacher_id',
+        'type',
+        'special_type',
         'day',
         'start_time',
         'end_time',

@@ -28,11 +28,22 @@ class StudentFinanceService
     public function availableTerms(Student $student)
     {
         $enrolled = $this->enrollmentDate($student)->toDateString();
+        $activeTerm = Term::where('is_current', true)->first();
 
         return Term::query()
-            ->whereDate('start_date', '<=', now()->toDateString())
-            ->whereDate('end_date', '>=', $enrolled)
+            ->where(function ($query) use ($enrolled, $activeTerm) {
+                $query->where(function ($eligible) use ($enrolled) {
+                    $eligible->whereDate('start_date', '<=', now()->toDateString())
+                        ->whereDate('end_date', '>=', $enrolled);
+                });
+
+                if ($activeTerm) {
+                    $query->orWhere('id', $activeTerm->id);
+                }
+            })
+            ->orderByDesc('is_current')
             ->orderByDesc('start_date')
+            ->orderByDesc('id')
             ->get();
     }
 

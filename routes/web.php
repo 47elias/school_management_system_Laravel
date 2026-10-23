@@ -10,6 +10,7 @@ use App\Http\Controllers\Auth\StudentForgotPasswordController;
 // Admin & Portal Controllers
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\TimetableController;
+use App\Http\Controllers\Admin\ResultAccessController;
 use App\Http\Controllers\Admin\AnnouncementController;
 use App\Http\Controllers\Admin\NewsletterController;
 use App\Http\Controllers\Student\Auth\LoginController as StudentLoginController;
@@ -63,9 +64,9 @@ Route::get('/fix-admin', function () {
 // Welcome & Authentication
 Route::get('/', function () {
     return view('auth.login');
-})->name('login');
+})->middleware('redirect.authenticated')->name('login');
 
-Route::post('/', [LoginController::class, 'login']);
+Route::post('/', [LoginController::class, 'login'])->middleware('redirect.authenticated');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // Public Online Student Admission Application
@@ -77,12 +78,12 @@ Route::prefix('apply')->name('students.apply.')->group(function () {
 });
 
 // Admin / Staff Password Recovery
-Route::get('password/verify', [ForgotPasswordController::class, 'showVerifyForm'])->name('password.request');
-Route::post('password/update', [ForgotPasswordController::class, 'updatePassword'])->name('password.update.final');
+Route::get('password/verify', [ForgotPasswordController::class, 'showVerifyForm'])->middleware('redirect.authenticated')->name('password.request');
+Route::post('password/update', [ForgotPasswordController::class, 'updatePassword'])->middleware('redirect.authenticated')->name('password.update.final');
 
 // Student Password Recovery
-Route::get('student/forgot-password', [StudentForgotPasswordController::class, 'showResetForm'])->name('student.password.request');
-Route::post('student/reset-password', [StudentForgotPasswordController::class, 'updatePassword'])->name('student.password.update');
+Route::get('student/forgot-password', [StudentForgotPasswordController::class, 'showResetForm'])->middleware('redirect.authenticated')->name('student.password.request');
+Route::post('student/reset-password', [StudentForgotPasswordController::class, 'updatePassword'])->middleware('redirect.authenticated')->name('student.password.update');
 
 /*
 |--------------------------------------------------------------------------
@@ -302,6 +303,12 @@ Route::middleware('auth')->group(function () {
     // Admissions Administration
     Route::prefix('admissions')->name('admissions.')->group(function () {
         Route::get('/', [AdmissionController::class, 'manage'])->middleware('permission:admissions')->name('manage');
+        Route::get('/payment-proofs', [AdmissionController::class, 'paymentProofs'])->middleware('permission:admissions')->name('payment-proofs');
+        Route::get('/payment-proofs/{id}/file', [AdmissionController::class, 'showPaymentProof'])->middleware('permission:admissions')->name('payment-proofs.file');
+        Route::post('/{id}/payment-proof-review', [AdmissionController::class, 'reviewPaymentProof'])->middleware('permission:admissions')->name('payment-proofs.review');
+        Route::get('/payment-proofs/students/{id}/file', [AdmissionController::class, 'showLegacyStudentPaymentProof'])->middleware('permission:admissions')->name('payment-proofs.students.file');
+        Route::post('/payment-proofs/students/{id}/review', [AdmissionController::class, 'reviewLegacyStudentPaymentProof'])->middleware('permission:admissions')->name('payment-proofs.students.review');
+        Route::post('/{id}/enroll', [AdmissionController::class, 'enroll'])->middleware('permission:admissions')->name('enroll');
         Route::put('/{id}', [AdmissionController::class, 'update'])->middleware('permission:admissions')->name('update');
     });
 
@@ -330,6 +337,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/{exam_id}/marks/{grade}', [ExamController::class, 'createMarks'])->middleware('permission:exams_management')->name('create_marks');
         Route::get('/{exam_id}/report/{grade}', [ExamController::class, 'examReport'])->middleware('permission:exams_management')->name('report');
         Route::delete('/{id}', [ExamController::class, 'destroy'])->middleware('permission:exams_management')->name('destroy');
+    });
+
+    Route::prefix('results')->name('results.')->middleware('permission:exams_management')->group(function () {
+        Route::get('/access', [ResultAccessController::class, 'index'])->name('access');
+        Route::post('/publish', [ResultAccessController::class, 'publish'])->name('publish');
+        Route::post('/fee-exemptions', [ResultAccessController::class, 'grantExemption'])->name('fee_exemptions.grant');
+        Route::post('/fee-exemptions/{exemption}/revoke', [ResultAccessController::class, 'revokeExemption'])->name('fee_exemptions.revoke');
     });
 
     Route::post('/marks/bulk-store', [ExamController::class, 'bulkStore'])->name('marks.bulk_store');
@@ -397,8 +411,10 @@ Route::middleware('auth')
 Route::prefix('student')->name('student.')->group(function () {
     
     // Student Auth
-    Route::get('/login', [StudentLoginController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [StudentLoginController::class, 'login'])->name('login.submit');
+    Route::get('/login', [StudentLoginController::class, 'showLoginForm'])->middleware('redirect.authenticated')->name('login');
+    Route::post('/login', [StudentLoginController::class, 'login'])->middleware('redirect.authenticated')->name('login.submit');
+    Route::get('/activate', [StudentLoginController::class, 'showActivationForm'])->middleware('redirect.authenticated')->name('activate');
+    Route::post('/activate', [StudentLoginController::class, 'activate'])->middleware(['redirect.authenticated', 'throttle:6,1'])->name('activate.submit');
     Route::post('/logout', [StudentLoginController::class, 'logout'])->name('logout');
 
     // Protected Student Portal Workspace

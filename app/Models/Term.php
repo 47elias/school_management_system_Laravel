@@ -85,6 +85,16 @@ class Term extends Model implements AuditableContract
         return $query->where('status', 'active');
     }
 
+    /** Terms available for new registrations without changing the current term. */
+    public function scopeEnrollable(Builder $query)
+    {
+        return $query->where('status', '!=', 'closed')
+            ->where(function (Builder $terms) {
+                $terms->where('is_current', true)
+                    ->orWhereDate('start_date', '>', today());
+            });
+    }
+
     /**
      * BILLING LOGIC (3-MONTH CYCLE)
      * -------------------------------------------------------------------------

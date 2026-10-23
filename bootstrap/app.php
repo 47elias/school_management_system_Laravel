@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role'               => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission'         => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+            'redirect.authenticated' => \App\Http\Middleware\RedirectAuthenticatedUser::class,
         ]);
 
         // 2. Where to send users who are NOT logged in (Guests)

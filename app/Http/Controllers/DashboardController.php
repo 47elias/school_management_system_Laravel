@@ -30,12 +30,12 @@ class DashboardController extends Controller
     public function index()
     {
         $currentTerm = Term::where('is_current', true)->first();
-        $studentCount = Student::where('status', 'active')->count();
+        $studentCount = Student::inRegister()->where('status', 'active')->count();
         $examCount = Exam::when($currentTerm, fn ($query) => $query->where('term_id', $currentTerm->id))->count();
         $subjectCount = Subject::count();
         $userCount = User::count();
         $classCount = SchoolClass::count();
-        $newStudentsCount = Student::where('enrollment_date', '>=', Carbon::now()->subDays(30)->startOfDay())->count();
+        $newStudentsCount = Student::inRegister()->where('enrollment_date', '>=', Carbon::now()->subDays(30)->startOfDay())->count();
         $pendingAdmissionsCount = Admission::whereIn('status', ['pending', 'reviewing', 'interview'])->count();
 
         // Financial Metrics for Dashboard
@@ -53,7 +53,7 @@ class DashboardController extends Controller
             ->get();
 
         // Enrollment Chart Data
-        $gradesData = Student::select('grade', DB::raw('count(*) as total'))
+        $gradesData = Student::inRegister()->select('grade', DB::raw('count(*) as total'))
             ->groupBy('grade')
             ->whereNotNull('grade')
             ->get();

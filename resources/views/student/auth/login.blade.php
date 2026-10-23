@@ -27,6 +27,12 @@
                 <p class="text-sm text-gray-500 mt-1">Enter your student number and password to login</p>
             </div>
 
+            @if(session('status'))
+                <div class="mb-5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800" role="status">
+                    {{ session('status') }}
+                </div>
+            @endif
+
             <!-- Form -->
             <form action="{{ route('student.login.submit') }}" method="post" class="space-y-5">
                 @csrf
@@ -95,6 +101,12 @@
 
             <!-- Links -->
             <div class="mt-8 pt-6 border-t border-gray-100 flex flex-col space-y-3">
+                <a href="{{ route('student.activate') }}" class="inline-flex items-center rounded-lg bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 hover:bg-emerald-100 transition-colors">
+                    <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Activate Portal Account
+                </a>
                 <a href="{{ route('student.password.request') }}" class="inline-flex items-center text-sm font-medium text-emerald-600 hover:text-emerald-500 hover:underline transition-colors">
                     <svg class="mr-2 h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />

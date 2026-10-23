@@ -123,7 +123,7 @@
         @endif
 
         {{-- Admissions --}}
-        @can('manage-admissions')
+        @can('admissions')
         <div x-data="{ open: {{ Request::is('admissions*') ? 'true' : 'false' }} }">
             <button @click="open = !open" class="w-full flex items-center justify-between px-3 py-2.5 text-xs font-medium rounded-lg text-slate-200 hover:bg-slate-800 dark:hover:bg-slate-900/80 hover:text-white transition-colors">
                 <div class="flex items-center">
@@ -133,8 +133,11 @@
                 <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 transform transition-transform" :class="{'rotate-180': open}"></i>
             </button>
             <div x-show="open" x-collapse class="pl-8 pr-2 py-1 space-y-1 bg-slate-950/70 rounded-lg mt-1 border border-slate-800/50">
-                <a href="{{ route('admissions.manage') }}" class="block px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:text-white rounded-md {{ Request::is('admissions*') ? 'text-white bg-slate-800' : '' }}">
+                <a href="{{ route('admissions.manage') }}" class="block px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:text-white rounded-md {{ Request::is('admissions') ? 'text-white bg-slate-800' : '' }}">
                     <i class="fa-solid fa-list-check mr-2 text-[10px] text-slate-400"></i> Manage Applications
+                </a>
+                <a href="{{ route('admissions.payment-proofs') }}" class="block px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:text-white rounded-md {{ Request::is('admissions/payment-proofs*') ? 'text-white bg-slate-800' : '' }}">
+                    <i class="fa-solid fa-receipt mr-2 text-[10px] text-slate-400"></i> Payment Proof Approvals
                 </a>
             </div>
         </div>
@@ -277,6 +280,7 @@
             <div x-show="open" x-collapse class="pl-8 pr-2 py-1 space-y-1 bg-slate-950/70 rounded-lg mt-1 border border-slate-800/50">
                 @can('exams_management')
                 <a href="{{ route('exams.index') }}" class="block px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:text-white rounded-md {{ Request::is('exams') ? 'text-white bg-slate-800' : '' }}"><i class="fa-regular fa-circle mr-2 text-[8px] text-slate-400"></i> Exam Schedule</a>
+                <a href="{{ route('results.access') }}" class="block px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:text-white rounded-md {{ Request::is('results/*') ? 'text-white bg-slate-800' : '' }}"><i class="fa-solid fa-unlock-keyhole mr-2 text-[10px]"></i> Publish Results & Exemptions</a>
                 <a href="{{ route('exams.index') }}" class="block px-2.5 py-1.5 text-xs font-medium text-emerald-400 hover:text-emerald-300 rounded-md {{ Request::is('exams/*/verify') ? 'text-white bg-slate-800' : '' }}"><i class="fa-solid fa-user-shield mr-2 text-[10px]"></i> Biometric Gatekeeper</a>
                 @endcan
 

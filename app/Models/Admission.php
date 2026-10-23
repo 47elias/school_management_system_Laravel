@@ -23,6 +23,11 @@ class Admission extends Model implements AuditableContract
         'identity_number',
         'student_name',
         'date_of_birth',
+        'gender',
+        'activation_payment_proof',
+        'activation_payment_status',
+        'activation_payment_remarks',
+        'portal_password',
         'applied_grade',
         'address',
         'guardian_name',
@@ -45,6 +50,8 @@ class Admission extends Model implements AuditableContract
         'updated_at' => 'datetime',
     ];
 
+    protected $hidden = ['portal_password'];
+
     /**
      * MODEL EVENTS
      * Automated logic for record lifecycle.
@@ -55,9 +62,9 @@ class Admission extends Model implements AuditableContract
          * Before creating: Generate Tracking ID and set default status.
          */
         static::creating(function ($admission) {
-            // Format: KPC-2026-X1Y2Z3
             if (empty($admission->tracking_id)) {
-                $admission->tracking_id = 'KPC-' . date('Y') . '-' . strtoupper(Str::random(6));
+                $acronym = strtoupper(preg_replace('/[^A-Za-z0-9]+/', '', env('SCHOOL_ACRONYM', 'SMS')) ?: 'SMS');
+                $admission->tracking_id = $acronym . '-' . date('Y') . '-' . strtoupper(Str::random(6));
             }
 
             // Default status to pending if not provided

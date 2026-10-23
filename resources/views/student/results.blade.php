@@ -31,6 +31,11 @@
         <div class="rounded-xl border border-amber-300 bg-amber-50 p-5 text-sm font-semibold text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
             No term in your enrolment period is currently available. Exam results will appear here when they are recorded for an eligible term.
         </div>
+    @elseif(!$resultsAvailable)
+        <div class="rounded-xl border border-amber-300 bg-amber-50 p-5 text-sm font-semibold text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+            <h2 class="font-black">Results are not available yet</h2>
+            <p class="mt-1">{{ $accessMessage ?? 'Results are not currently available for this term.' }}</p>
+        </div>
     @else
 
     <!-- MAIN GRID -->
