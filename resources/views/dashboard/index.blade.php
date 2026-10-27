@@ -91,13 +91,40 @@
             </a>
         </section>
 
-        <section class="grid grid-cols-1 gap-5 xl:grid-cols-5">
-            <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800 xl:col-span-3">
-                <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-700"><div><h2 class="text-sm font-black text-slate-900 dark:text-white">Learners by grade</h2><p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Enrolment distribution from student records</p></div><i class="fa-solid fa-chart-column text-indigo-500"></i></div>
-                <div class="h-72 p-5"><canvas id="enrollmentChart" aria-label="Learners by grade chart"></canvas></div>
+        <section class="grid grid-cols-1 gap-5 xl:grid-cols-3">
+            <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-700"><div><h2 class="text-sm font-black text-slate-900 dark:text-white">Learners by class</h2><p class="mt-1 text-xs text-slate-500 dark:text-slate-400">All class streams, including empty classes. Scroll to see more.</p></div><i class="fa-solid fa-chart-column text-indigo-500"></i></div>
+                <div class="overflow-x-auto p-5" tabindex="0" role="region" aria-label="Learners by class chart, scroll horizontally to view all classes">
+                    <div class="relative h-72" style="min-width: {{ max(320, $classEnrollmentData->count() * 80) }}px">
+                        <canvas id="enrollmentChart" role="img" aria-label="Learners enrolled in each class"></canvas>
+                    </div>
+                </div>
             </div>
-            <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800 xl:col-span-2">
-                <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-700"><div><h2 class="text-sm font-black text-slate-900 dark:text-white">Stock issued this week</h2><p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Quantity released each day</p></div><a href="{{ route('inventory.logs') }}" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400">Stock log</a></div>
+            <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-700"><div><h2 class="text-sm font-black text-slate-900 dark:text-white">Learner breakdown</h2><p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Active learners by gender</p></div><i class="fa-solid fa-chart-pie text-violet-500"></i></div>
+                <div class="p-5">
+                    <div class="relative mx-auto h-56 w-56 max-w-full">
+                        <canvas id="genderChart" role="img" aria-label="Active learners by gender. {{ $genderData->map(fn ($item) => $item['label'] . ': ' . $item['total'])->implode(', ') ?: 'No active learners' }}"></canvas>
+                        <div class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center" aria-hidden="true">
+                            <span class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">{{ number_format($studentCount) }}</span>
+                            <span class="mt-1 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Active learners</span>
+                        </div>
+                    </div>
+                    @php($genderColors = ['#6366f1', '#f43f5e', '#14b8a6', '#f59e0b', '#8b5cf6'])
+                    <ul class="mt-5 space-y-2.5">
+                        @forelse($genderData as $item)
+                            <li class="flex items-center justify-between gap-3 text-xs">
+                                <span class="flex items-center gap-2 font-semibold text-slate-600 dark:text-slate-300"><span class="h-2.5 w-2.5 shrink-0 rounded-full" style="background-color: {{ $genderColors[$loop->index % count($genderColors)] }}"></span>{{ $item['label'] }}</span>
+                                <span class="font-bold tabular-nums text-slate-900 dark:text-white">{{ number_format($item['total']) }} <span class="ml-1 font-medium text-slate-400">{{ $studentCount ? round($item['total'] / $studentCount * 100) : 0 }}%</span></span>
+                            </li>
+                        @empty
+                            <li class="text-center text-xs text-slate-500 dark:text-slate-400">No active learners registered yet.</li>
+                        @endforelse
+                    </ul>
+                </div>
+            </div>
+            <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                <div class="border-b border-slate-100 px-5 py-4 dark:border-slate-700"><h2 class="text-sm font-black text-slate-900 dark:text-white">Stock issued this week</h2><p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Quantity released each day</p></div>
                 <div class="h-72 p-5"><canvas id="stockChart" aria-label="Weekly stock issued chart"></canvas></div>
             </div>
         </section>
@@ -141,17 +168,61 @@
             const dark = document.documentElement.classList.contains('dark');
             const tickColor = dark ? '#94a3b8' : '#64748b';
             const gridColor = dark ? '#334155' : '#e2e8f0';
-            const grades = @json($gradesData->pluck('grade')->values());
-            const gradeTotals = @json($gradesData->pluck('total')->values());
+            const classLabels = @json($classEnrollmentData->pluck('class_name')->values());
+            const classTotals = @json($classEnrollmentData->pluck('total')->values());
             const stockDays = @json($days->values());
             const stockTotals = @json($stockOutData->values());
+            const genderLabels = @json($genderData->pluck('label')->values());
+            const genderTotals = @json($genderData->pluck('total')->values());
+            const genderColors = @json($genderColors);
+
+            const genderCanvas = document.getElementById('genderChart');
+            if (genderCanvas) new Chart(genderCanvas, {
+                type: 'doughnut',
+                data: {
+                    labels: genderLabels.length ? genderLabels : ['No active learners'],
+                    datasets: [{
+                        data: genderTotals.length ? genderTotals : [1],
+                        backgroundColor: genderTotals.length ? genderTotals.map((_, index) => genderColors[index % genderColors.length]) : [gridColor],
+                        borderWidth: 0,
+                        hoverOffset: genderTotals.length ? 6 : 0,
+                        spacing: genderTotals.length > 1 ? 4 : 0,
+                        borderRadius: genderTotals.length > 1 ? 6 : 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '76%',
+                    layout: { padding: 8 },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            enabled: genderTotals.length > 0,
+                            callbacks: {
+                                label: context => {
+                                    const total = genderTotals.reduce((sum, value) => sum + Number(value), 0);
+                                    return `${context.parsed.toLocaleString()} learners (${Math.round(context.parsed / total * 100)}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
 
             const chartDefaults = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: tickColor } }, y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: tickColor, precision: 0 } } } };
             const enrollmentCanvas = document.getElementById('enrollmentChart');
             if (enrollmentCanvas) new Chart(enrollmentCanvas, {
                 type: 'bar',
-                data: { labels: grades.length ? grades : ['No enrolment data'], datasets: [{ data: grades.length ? gradeTotals : [0], backgroundColor: '#6366f1', hoverBackgroundColor: '#4f46e5', borderRadius: 7, maxBarThickness: 42 }] },
-                options: { ...chartDefaults, plugins: { ...chartDefaults.plugins, tooltip: { callbacks: { label: context => `${context.parsed.y.toLocaleString()} learners` } } } }
+                data: { labels: classLabels.length ? classLabels : ['No classes configured'], datasets: [{ data: classLabels.length ? classTotals : [0], backgroundColor: '#6366f1', hoverBackgroundColor: '#4f46e5', borderRadius: 7, maxBarThickness: 42 }] },
+                options: {
+                    ...chartDefaults,
+                    scales: {
+                        ...chartDefaults.scales,
+                        x: { ...chartDefaults.scales.x, ticks: { color: tickColor, autoSkip: false, minRotation: 45, maxRotation: 45 } }
+                    },
+                    plugins: { ...chartDefaults.plugins, tooltip: { callbacks: { label: context => `${context.parsed.y.toLocaleString()} learners` } } }
+                }
             });
             const stockCanvas = document.getElementById('stockChart');
             if (stockCanvas) new Chart(stockCanvas, {

@@ -79,7 +79,8 @@ Route::prefix('apply')->name('students.apply.')->group(function () {
 
 // Admin / Staff Password Recovery
 Route::get('password/verify', [ForgotPasswordController::class, 'showVerifyForm'])->middleware('redirect.authenticated')->name('password.request');
-Route::post('password/update', [ForgotPasswordController::class, 'updatePassword'])->middleware('redirect.authenticated')->name('password.update.final');
+Route::post('password/otp', [ForgotPasswordController::class, 'sendOtp'])->middleware(['redirect.authenticated', 'throttle:6,1'])->name('password.otp.send');
+Route::post('password/update', [ForgotPasswordController::class, 'updatePassword'])->middleware(['redirect.authenticated', 'throttle:10,1'])->name('password.update.final');
 
 // Student Password Recovery
 Route::get('student/forgot-password', [StudentForgotPasswordController::class, 'showResetForm'])->middleware('redirect.authenticated')->name('student.password.request');

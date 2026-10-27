@@ -33,7 +33,7 @@ class DashboardController extends Controller
         $studentCount = Student::inRegister()->where('status', 'active')->count();
         $examCount = Exam::when($currentTerm, fn ($query) => $query->where('term_id', $currentTerm->id))->count();
         $subjectCount = Subject::count();
-        $userCount = User::count();
+        $userCount = User::where('role', '!=', 'student')->count();
         $classCount = SchoolClass::count();
         $newStudentsCount = Student::inRegister()->where('enrollment_date', '>=', Carbon::now()->subDays(30)->startOfDay())->count();
         $pendingAdmissionsCount = Admission::whereIn('status', ['pending', 'reviewing', 'interview'])->count();
@@ -53,10 +53,17 @@ class DashboardController extends Controller
             ->get();
 
         // Enrollment Chart Data
-        $gradesData = Student::inRegister()->select('grade', DB::raw('count(*) as total'))
-            ->groupBy('grade')
-            ->whereNotNull('grade')
+        $classEnrollmentData = SchoolClass::orderBy('class_name')
+            ->withCount(['students as total' => fn ($query) => $query->inRegister()])
             ->get();
+
+        $genderData = Student::inRegister()->where('status', 'active')
+            ->select('gender', DB::raw('count(*) as total'))
+            ->groupBy('gender')
+            ->get()
+            ->groupBy(fn ($row) => trim($row->gender ?? '') ?: 'Not recorded')
+            ->map(fn ($rows, $gender) => ['label' => $gender, 'total' => (int) $rows->sum('total')])
+            ->sortBy('label')->values();
 
         $activitiesCount = ClassActivity::when($currentTerm, fn ($query) => $query->where('term_id', $currentTerm->id))->count();
         $marksEnteredCount = Mark::whereHas('exam', fn ($query) => $query->when($currentTerm, fn ($termQuery) => $termQuery->where('term_id', $currentTerm->id)))->count();
@@ -86,7 +93,7 @@ class DashboardController extends Controller
             'studentCount', 'examCount', 'subjectCount', 'userCount', 'classCount',
             'newStudentsCount', 'pendingAdmissionsCount', 'activitiesCount', 'marksEnteredCount', 'lowStockCount', 'currentTerm',
             'totalRevenue', 'totalExpenses', 'netBalance',
-            'upcomingExams', 'gradesData',
+            'upcomingExams', 'classEnrollmentData', 'genderData',
             'days', 'stockOutData', 'topIssuedItems'
         ));
     }
